@@ -6,6 +6,9 @@ use App\Http\Controllers\Admin\AdminTrainersManagementController;
 use App\Http\Controllers\Admin\AdminTraineesManagementController;
 use App\Http\Controllers\Admin\AdminCourseController;
 use App\Http\Controllers\Admin\AdminEnrollmentController;
+use App\Http\Controllers\Admin\AdminTrainingScheduleController;
+use App\Http\Controllers\Admin\AdminAttendanceController;
+use App\Http\Controllers\Admin\AdminCertificateController;
 use App\Http\Controllers\Trainer\TrainerController;
 use App\Http\Controllers\Trainee\TraineeController;
 use Illuminate\Support\Facades\Route;
@@ -31,6 +34,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::resource('trainees', AdminTraineesManagementController::class);
     Route::resource('courses', AdminCourseController::class);
     Route::resource('enrollments', AdminEnrollmentController::class);
+    Route::resource('training-schedules', AdminTrainingScheduleController::class);
+    Route::resource('attendances', AdminAttendanceController::class);
+    Route::resource('certificates', AdminCertificateController::class);
 });
 
 Route::prefix('trainer')->name('trainer.')->middleware(['auth', 'role:trainer'])->group(function () {

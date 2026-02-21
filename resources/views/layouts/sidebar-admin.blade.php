@@ -172,14 +172,14 @@
         Enrollments
     </a>
 
-    <a href="#"
-       class="sb-link {{ request()->routeIs('admin.schedules*') ? 'active' : '' }}">
+    <a href="{{ route('admin.training-schedules.index') }}"
+       class="sb-link {{ request()->routeIs('admin.training-schedules*') ? 'active' : '' }}">
         <span class="sb-icon"><i class="fas fa-calendar-alt"></i></span>
         Schedules
     </a>
 
-    <a href="#"
-       class="sb-link {{ request()->routeIs('admin.attendance*') ? 'active' : '' }}">
+    <a href="{{ route('admin.attendances.index') }}"
+       class="sb-link {{ request()->routeIs('admin.attendances*') ? 'active' : '' }}">
         <span class="sb-icon"><i class="fas fa-calendar-check"></i></span>
         Attendance
     </a>
@@ -193,8 +193,8 @@
         Assessments
     </a>
 
-    <a href="#"
-       class="sb-link {{ request()->routeIs('admin.certifications*') ? 'active' : '' }}">
+    <a href="{{ route('admin.certificates.index') }}"
+       class="sb-link {{ request()->routeIs('admin.certificates*') ? 'active' : '' }}">
         <span class="sb-icon"><i class="fas fa-certificate"></i></span>
         Certifications
     </a>
