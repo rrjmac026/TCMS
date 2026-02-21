@@ -16,6 +16,11 @@ class TrainingSchedule extends Model
         'location',
     ];
 
+    protected $casts = [
+        'start_date' => 'date',
+        'end_date'   => 'date',
+    ];
+
     public function course()
     {
         return $this->belongsTo(Course::class);

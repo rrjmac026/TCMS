@@ -3,22 +3,52 @@
 @section('title', 'Enrollments Management')
 
 @section('content')
+<style>
+  :root {
+    --en-surface: #ffffff;
+    --en-border: #c5d8f5;
+    --en-text: #001a4d;
+    --en-text-sec: #5a7aaa;
+    --en-accent: #0057B8;
+    --en-accent-bg: #e8f0fb;
+    --en-red: #CE1126;
+    --en-red-bg: #fff0f2;
+    --en-gold: #F5C518;
+    --en-gold-bg: rgba(245, 197, 24, 0.15);
+    --en-green: #22c55e;
+    --en-green-bg: rgba(34, 197, 94, 0.15);
+  }
+  .dark {
+    --en-surface: #0d1f3c;
+    --en-border: #1e3a6b;
+    --en-text: #dde8ff;
+    --en-text-sec: #3a5a8a;
+    --en-accent: #0057B8;
+    --en-accent-bg: #122550;
+    --en-red: #CE1126;
+    --en-red-bg: #5a0a0a;
+    --en-gold: #F5C518;
+    --en-gold-bg: rgba(245, 197, 24, 0.1);
+    --en-green: #86efac;
+    --en-green-bg: rgba(52, 168, 83, 0.1);
+  }
+</style>
 <div class="space-y-6">
 
     {{-- Page Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-            <h1 class="text-2xl font-bold dark:text-white" style="color:#003087;">
-                <i class="fas fa-clipboard-list mr-2" style="color:#CE1126;"></i>
+            <h1 class="text-2xl font-bold dark:text-white" style="color:var(--en-accent);">
+                <i class="fas fa-clipboard-list mr-2" style="color:var(--en-red);"></i>
                 Enrollments Management
             </h1>
-            <p class="text-sm mt-1" style="color:#5a7aaa;">
+            <p class="text-sm mt-1" style="color:var(--en-text-sec);">
                 Manage trainee course enrollments and enrollment status.
             </p>
         </div>
         <a href="{{ route('admin.enrollments.create') }}"
            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-bold shadow transition hover:-translate-y-0.5"
-           style="background: linear-gradient(135deg,#CE1126,#A50E1E); box-shadow:0 3px 12px rgba(206,17,38,0.28);">
+           style="background: linear-gradient(135deg,var(--en-red),#A50E1E); box-shadow:0 3px 12px rgba(206,17,38,0.28);">
             <i class="fas fa-plus"></i> Add Enrollment
         </a>
     </div>
@@ -26,32 +56,32 @@
     {{-- Flash Messages --}}
     @if (session('success'))
         <div class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium"
-             style="background:#f0fdf4; border:1px solid #bbf7d0; color:#16a34a;">
+             style="background:var(--en-green-bg); border:1px solid var(--en-green); color:var(--en-green);">
             <i class="fas fa-check-circle"></i> {{ session('success') }}
         </div>
     @endif
 
     {{-- Filters --}}
     <div class="rounded-2xl border p-5 dark:bg-[#0d1f3c] dark:border-[#1e3a6b]"
-         style="background:#fff; border-color:#c5d8f5;">
+         style="background:var(--en-surface); border-color:var(--en-border);">
         <form method="GET" action="{{ route('admin.enrollments.index') }}"
               class="flex flex-col sm:flex-row gap-3">
             <div class="relative flex-1">
-                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-xs" style="color:#5a7aaa;"></i>
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-xs" style="color:var(--en-text-sec);"></i>
                 <input type="text" name="search" value="{{ request('search') }}"
                        placeholder="Search by trainee or course..."
                        class="w-full pl-9 pr-4 py-2.5 rounded-xl border text-sm outline-none transition
                               dark:bg-[#0a1628] dark:border-[#1e3a6b] dark:text-white dark:placeholder-[#3a5a8a]"
-                       style="border-color:#c5d8f5; color:#001a4d;"
-                       onfocus="this.style.borderColor='#0057B8'; this.style.boxShadow='0 0 0 3px rgba(0,87,184,0.10)'"
-                       onblur="this.style.borderColor='#c5d8f5'; this.style.boxShadow='none'">
+                       style="border-color:var(--en-border); color:var(--en-text);"
+                       onfocus="this.style.borderColor=getComputedStyle(document.documentElement).getPropertyValue('--en-accent'); this.style.boxShadow='0 0 0 3px rgba(0,87,184,0.10)'"
+                       onblur="this.style.borderColor=getComputedStyle(document.documentElement).getPropertyValue('--en-border'); this.style.boxShadow='none'">
             </div>
             <select name="status"
                     class="px-4 py-2.5 rounded-xl border text-sm outline-none transition
                            dark:bg-[#0a1628] dark:border-[#1e3a6b] dark:text-white"
-                    style="border-color:#c5d8f5; color:#001a4d;"
-                    onfocus="this.style.borderColor='#0057B8'; this.style.boxShadow='0 0 0 3px rgba(0,87,184,0.10)'"
-                    onblur="this.style.borderColor='#c5d8f5'; this.style.boxShadow='none'">
+                    style="border-color:var(--en-border); color:var(--en-text);"
+                    onfocus="this.style.borderColor=getComputedStyle(document.documentElement).getPropertyValue('--en-accent'); this.style.boxShadow='0 0 0 3px rgba(0,87,184,0.10)'"
+                    onblur="this.style.borderColor=getComputedStyle(document.documentElement).getPropertyValue('--en-border'); this.style.boxShadow='none';">
                 <option value="">All Status</option>
                 <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending</option>
                 <option value="approved" {{ request('status') === 'approved' ? 'selected' : '' }}>Approved</option>
@@ -60,13 +90,13 @@
             </select>
             <button type="submit"
                     class="px-5 py-2.5 rounded-xl text-white text-sm font-bold transition hover:-translate-y-0.5"
-                    style="background:linear-gradient(135deg,#0057B8,#003087);">
+                    style="background:linear-gradient(135deg,var(--en-accent),#003087);">
                 <i class="fas fa-filter mr-1"></i> Filter
             </button>
             @if (request()->filled('search') || request()->filled('status'))
                 <a href="{{ route('admin.enrollments.index') }}"
                    class="px-4 py-2.5 rounded-xl text-sm font-semibold border transition hover:bg-[#e8f0fb]"
-                   style="border-color:#c5d8f5; color:#5a7aaa;">
+                   style="border-color:var(--en-border); color:var(--en-text-sec);">
                     Clear
                 </a>
             @endif
@@ -75,44 +105,44 @@
 
     {{-- Table --}}
     <div class="rounded-2xl border overflow-hidden dark:bg-[#0d1f3c] dark:border-[#1e3a6b]"
-         style="background:#fff; border-color:#c5d8f5;">
+         style="background:var(--en-surface); border-color:var(--en-border);">
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead>
-                    <tr style="background:#e8f0fb; border-bottom:1px solid #c5d8f5;">
-                        <th class="px-5 py-3 text-left font-700 text-xs uppercase tracking-wide" style="color:#0057B8;">#</th>
-                        <th class="px-5 py-3 text-left font-700 text-xs uppercase tracking-wide" style="color:#0057B8;">Trainee</th>
-                        <th class="px-5 py-3 text-left font-700 text-xs uppercase tracking-wide" style="color:#0057B8;">Course</th>
-                        <th class="px-5 py-3 text-center font-700 text-xs uppercase tracking-wide" style="color:#0057B8;">Enrolled Date</th>
-                        <th class="px-5 py-3 text-center font-700 text-xs uppercase tracking-wide" style="color:#0057B8;">Status</th>
-                        <th class="px-5 py-3 text-center font-700 text-xs uppercase tracking-wide" style="color:#0057B8;">Actions</th>
+                    <tr style="background:var(--en-accent-bg); border-bottom:1px solid var(--en-border);">
+                        <th class="px-5 py-3 text-left font-700 text-xs uppercase tracking-wide" style="color:var(--en-accent);">#</th>
+                        <th class="px-5 py-3 text-left font-700 text-xs uppercase tracking-wide" style="color:var(--en-accent);">Trainee</th>
+                        <th class="px-5 py-3 text-left font-700 text-xs uppercase tracking-wide" style="color:var(--en-accent);">Course</th>
+                        <th class="px-5 py-3 text-center font-700 text-xs uppercase tracking-wide" style="color:var(--en-accent);">Enrolled Date</th>
+                        <th class="px-5 py-3 text-center font-700 text-xs uppercase tracking-wide" style="color:var(--en-accent);">Status</th>
+                        <th class="px-5 py-3 text-center font-700 text-xs uppercase tracking-wide" style="color:var(--en-accent);">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y dark:divide-[#1e3a6b]" style="divide-color:#e8f0fb;">
+                <tbody class="divide-y dark:divide-[#1e3a6b]" style="divide-color:var(--en-accent-bg);">
                     @forelse ($enrollments as $enrollment)
                         <tr class="transition hover:bg-[#f0f5ff] dark:hover:bg-[#122550]">
-                            <td class="px-5 py-4 font-mono text-xs" style="color:#5a7aaa;">
+                            <td class="px-5 py-4 font-mono text-xs" style="color:var(--en-text-sec);">
                                 {{ $enrollments->firstItem() + $loop->index }}
                             </td>
                             <td class="px-5 py-4">
                                 <div class="flex items-center gap-3">
                                     <div class="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-800 text-white flex-shrink-0"
-                                         style="background:linear-gradient(135deg,#0057B8,#003087);">
+                                         style="background:linear-gradient(135deg,var(--en-accent),#003087);">
                                         {{ strtoupper(substr($enrollment->trainee->name, 0, 1)) }}
                                     </div>
                                     <div>
-                                        <div class="font-700 dark:text-white" style="color:#001a4d;">{{ $enrollment->trainee->name }}</div>
-                                        <div class="text-xs" style="color:#5a7aaa;">{{ $enrollment->trainee->email }}</div>
+                                        <div class="font-700 dark:text-white" style="color:var(--en-text);">{{ $enrollment->trainee->name }}</div>
+                                        <div class="text-xs" style="color:var(--en-text-sec);">{{ $enrollment->trainee->email }}</div>
                                     </div>
                                 </div>
                             </td>
                             <td class="px-5 py-4">
                                 <div>
-                                    <div class="font-700 dark:text-white" style="color:#001a4d;">{{ $enrollment->course->name }}</div>
-                                    <div class="text-xs" style="color:#5a7aaa;">{{ $enrollment->course->code }}</div>
+                                    <div class="font-700 dark:text-white" style="color:var(--en-text);">{{ $enrollment->course->name }}</div>
+                                    <div class="text-xs" style="color:var(--en-text-sec);">{{ $enrollment->course->code }}</div>
                                 </div>
                             </td>
-                            <td class="px-5 py-4 text-center text-xs font-600" style="color:#5a7aaa;">
+                            <td class="px-5 py-4 text-center text-xs font-600" style="color:var(--en-text-sec);">
                                 {{ $enrollment->enrolled_at?->format('M d, Y') }}
                             </td>
                             <td class="px-5 py-4 text-center">
@@ -158,7 +188,7 @@
                     @empty
                         <tr>
                             <td colspan="6" class="px-5 py-16 text-center">
-                                <div class="flex flex-col items-center gap-3" style="color:#5a7aaa;">
+                                <div class="flex flex-col items-center gap-3" style="color:var(--en-text-sec);">
                                     <i class="fas fa-clipboard-list text-4xl opacity-25"></i>
                                     <p class="font-600">No enrollments found</p>
                                     <p class="text-xs">Try adjusting your search or filters.</p>
@@ -171,7 +201,7 @@
         </div>
 
         @if ($enrollments->hasPages())
-            <div class="px-5 py-4 border-t dark:border-[#1e3a6b]" style="border-color:#c5d8f5;">
+            <div class="px-5 py-4 border-t dark:border-[#1e3a6b]" style="border-color:var(--en-border);">
                 {{ $enrollments->links() }}
             </div>
         @endif

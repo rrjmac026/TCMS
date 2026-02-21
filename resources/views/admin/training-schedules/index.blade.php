@@ -3,16 +3,45 @@
 @section('title', 'Training Schedules Management')
 
 @section('content')
+<style>
+    /* ══════════════════════════════════════════
+       TRAINING SCHEDULES LIST DESIGN TOKENS — TESDA Theme
+    ══════════════════════════════════════════ */
+    :root {
+        --ts-surface:      #ffffff;
+        --ts-surface2:     #f0f5ff;
+        --ts-border:       #c5d8f5;
+        --ts-text:         #001a4d;
+        --ts-text-sec:     #1a3a6b;
+        --ts-muted:        #5a7aaa;
+        --ts-accent:       #0057B8;
+        --ts-accent-bg:    #e8f0fb;
+        --ts-primary:      #003087;
+        --ts-red:          #CE1126;
+        --ts-red-bg:       #fff0f2;
+    }
+    .dark {
+        --ts-surface:      #0a1628;
+        --ts-surface2:     #0d1f3c;
+        --ts-border:       #1e3a6b;
+        --ts-text:         #dde8ff;
+        --ts-text-sec:     #adc4f0;
+        --ts-muted:        #6b8abf;
+        --ts-accent-bg:    rgba(0,87,184,0.15);
+        --ts-primary:      #5b9cf6;
+        --ts-red-bg:       rgba(206,17,38,0.12);
+    }
+</style>
 <div class="space-y-6">
 
     {{-- Page Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-            <h1 class="text-2xl font-bold dark:text-white" style="color:#003087;">
-                <i class="fas fa-calendar-check mr-2" style="color:#CE1126;"></i>
+            <h1 class="text-2xl font-bold" style="color:var(--ts-primary);">
+                <i class="fas fa-calendar-check mr-2" style="color:var(--ts-red);"></i>
                 Training Schedules Management
             </h1>
-            <p class="text-sm mt-1" style="color:#5a7aaa;">
+            <p class="text-sm mt-1" style="color:var(--ts-muted);">
                 Manage all training schedules and sessions.
             </p>
         </div>
@@ -32,26 +61,24 @@
     @endif
 
     {{-- Filters --}}
-    <div class="rounded-2xl border p-5 dark:bg-[#0d1f3c] dark:border-[#1e3a6b]"
-         style="background:#fff; border-color:#c5d8f5;">
+    <div class="rounded-2xl border p-5"
+         style="background:var(--ts-surface); border-color:var(--ts-border);">
         <form method="GET" action="{{ route('admin.training-schedules.index') }}"
               class="flex flex-col sm:flex-row gap-3">
             <div class="relative flex-1">
-                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-xs" style="color:#5a7aaa;"></i>
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-xs" style="color:var(--ts-muted);"></i>
                 <input type="text" name="search" value="{{ request('search') }}"
                        placeholder="Search by location, course or trainer..."
-                       class="w-full pl-9 pr-4 py-2.5 rounded-xl border text-sm outline-none transition
-                              dark:bg-[#0a1628] dark:border-[#1e3a6b] dark:text-white dark:placeholder-[#3a5a8a]"
-                       style="border-color:#c5d8f5; color:#001a4d;"
+                       class="w-full pl-9 pr-4 py-2.5 rounded-xl border text-sm outline-none transition"
+                       style="border-color:var(--ts-border); color:var(--ts-text);"
                        onfocus="this.style.borderColor='#0057B8'; this.style.boxShadow='0 0 0 3px rgba(0,87,184,0.10)'"
-                       onblur="this.style.borderColor='#c5d8f5'; this.style.boxShadow='none'">
+                       onblur="this.style.borderColor='var(--ts-border)'; this.style.boxShadow='none'">
             </div>
             <select name="status"
-                    class="px-4 py-2.5 rounded-xl border text-sm outline-none transition
-                           dark:bg-[#0a1628] dark:border-[#1e3a6b] dark:text-white"
-                    style="border-color:#c5d8f5; color:#001a4d;"
+                    class="px-4 py-2.5 rounded-xl border text-sm outline-none transition"
+                    style="border-color:var(--ts-border); color:var(--ts-text);"
                     onfocus="this.style.borderColor='#0057B8'; this.style.boxShadow='0 0 0 3px rgba(0,87,184,0.10)'"
-                    onblur="this.style.borderColor='#c5d8f5'; this.style.boxShadow='none'">
+                    onblur="this.style.borderColor='var(--ts-border)'; this.style.boxShadow='none'">
                 <option value="">All Status</option>
                 <option value="upcoming" {{ request('status') === 'upcoming' ? 'selected' : '' }}>Upcoming</option>
                 <option value="ongoing" {{ request('status') === 'ongoing' ? 'selected' : '' }}>Ongoing</option>
@@ -65,8 +92,8 @@
             </button>
             @if (request()->filled('search') || request()->filled('status'))
                 <a href="{{ route('admin.training-schedules.index') }}"
-                   class="px-4 py-2.5 rounded-xl text-sm font-semibold border transition hover:bg-[#e8f0fb]"
-                   style="border-color:#c5d8f5; color:#5a7aaa;">
+                   class="px-4 py-2.5 rounded-xl text-sm font-semibold border transition"
+                   style="border-color:var(--ts-border); color:var(--ts-muted);">
                     Clear
                 </a>
             @endif
@@ -74,25 +101,25 @@
     </div>
 
     {{-- Table --}}
-    <div class="rounded-2xl border overflow-hidden dark:bg-[#0d1f3c] dark:border-[#1e3a6b]"
-         style="background:#fff; border-color:#c5d8f5;">
+    <div class="rounded-2xl border overflow-hidden"
+         style="background:var(--ts-surface); border-color:var(--ts-border);">
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead>
-                    <tr style="background:#e8f0fb; border-bottom:1px solid #c5d8f5;">
-                        <th class="px-5 py-3 text-left font-700 text-xs uppercase tracking-wide" style="color:#0057B8;">#</th>
-                        <th class="px-5 py-3 text-left font-700 text-xs uppercase tracking-wide" style="color:#0057B8;">Course</th>
-                        <th class="px-5 py-3 text-left font-700 text-xs uppercase tracking-wide" style="color:#0057B8;">Trainer</th>
-                        <th class="px-5 py-3 text-left font-700 text-xs uppercase tracking-wide" style="color:#0057B8;">Location</th>
-                        <th class="px-5 py-3 text-center font-700 text-xs uppercase tracking-wide" style="color:#0057B8;">Date</th>
-                        <th class="px-5 py-3 text-center font-700 text-xs uppercase tracking-wide" style="color:#0057B8;">Status</th>
-                        <th class="px-5 py-3 text-center font-700 text-xs uppercase tracking-wide" style="color:#0057B8;">Actions</th>
+                    <tr style="background:var(--ts-accent-bg); border-bottom:1px solid var(--ts-border);">
+                        <th class="px-5 py-3 text-left font-700 text-xs uppercase tracking-wide" style="color:var(--ts-accent);">#</th>
+                        <th class="px-5 py-3 text-left font-700 text-xs uppercase tracking-wide" style="color:var(--ts-accent);">Course</th>
+                        <th class="px-5 py-3 text-left font-700 text-xs uppercase tracking-wide" style="color:var(--ts-accent);">Trainer</th>
+                        <th class="px-5 py-3 text-left font-700 text-xs uppercase tracking-wide" style="color:var(--ts-accent);">Location</th>
+                        <th class="px-5 py-3 text-center font-700 text-xs uppercase tracking-wide" style="color:var(--ts-accent);">Date</th>
+                        <th class="px-5 py-3 text-center font-700 text-xs uppercase tracking-wide" style="color:var(--ts-accent);">Status</th>
+                        <th class="px-5 py-3 text-center font-700 text-xs uppercase tracking-wide" style="color:var(--ts-accent);">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y dark:divide-[#1e3a6b]" style="divide-color:#e8f0fb;">
+                <tbody class="divide-y" style="border-color:var(--ts-border);">
                     @forelse ($schedules as $schedule)
-                        <tr class="transition hover:bg-[#f0f5ff] dark:hover:bg-[#122550]">
-                            <td class="px-5 py-4 font-mono text-xs" style="color:#5a7aaa;">
+                        <tr style="background:var(--ts-surface);">
+                            <td class="px-5 py-4 font-mono text-xs" style="color:var(--ts-muted);">
                                 {{ $schedules->firstItem() + $loop->index }}
                             </td>
                             <td class="px-5 py-4">
@@ -102,8 +129,8 @@
                                         <i class="fas fa-book"></i>
                                     </div>
                                     <div>
-                                        <div class="font-700 dark:text-white" style="color:#001a4d;">{{ $schedule->course->name }}</div>
-                                        <div class="text-xs" style="color:#5a7aaa;">{{ $schedule->course->code }}</div>
+                                        <div class="font-700" style="color:var(--ts-text);">{{ $schedule->course->name }}</div>
+                                        <div class="text-xs" style="color:var(--ts-muted);">{{ $schedule->course->code }}</div>
                                     </div>
                                 </div>
                             </td>
@@ -113,15 +140,15 @@
                                          style="background:linear-gradient(135deg,#F5C518,#E5B505);">
                                         <i class="fas fa-user"></i>
                                     </div>
-                                    <div class="text-sm font-600 dark:text-white" style="color:#001a4d;">
+                                    <div class="text-sm font-600" style="color:var(--ts-text);">
                                         {{ $schedule->trainer->name }}
                                     </div>
                                 </div>
                             </td>
-                            <td class="px-5 py-4 text-sm" style="color:#5a7aaa;">
+                            <td class="px-5 py-4 text-sm" style="color:var(--ts-muted);">
                                 {{ $schedule->location ?? '—' }}
                             </td>
-                            <td class="px-5 py-4 text-center text-xs font-600" style="color:#5a7aaa;">
+                            <td class="px-5 py-4 text-center text-xs font-600" style="color:var(--ts-muted);">
                                 {{ $schedule->start_date->format('M d') }} - {{ $schedule->end_date->format('M d, Y') }}
                             </td>
                             <td class="px-5 py-4 text-center">
@@ -152,7 +179,7 @@
                                 <div class="flex items-center justify-center gap-2">
                                     <a href="{{ route('admin.training-schedules.show', $schedule) }}"
                                        class="w-8 h-8 rounded-lg flex items-center justify-center text-xs transition hover:scale-110"
-                                       style="background:#e8f0fb; color:#0057B8;" title="View">
+                                       style="background:var(--ts-accent-bg); color:var(--ts-accent);" title="View">
                                         <i class="fas fa-eye"></i>
                                     </a>
                                     <a href="{{ route('admin.training-schedules.edit', $schedule) }}"
@@ -166,7 +193,7 @@
                                         @method('DELETE')
                                         <button type="submit"
                                                 class="w-8 h-8 rounded-lg flex items-center justify-center text-xs transition hover:scale-110"
-                                                style="background:#fff0f2; color:#CE1126;" title="Delete">
+                                                style="background:var(--ts-red-bg); color:var(--ts-red);" title="Delete">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </form>
@@ -176,7 +203,7 @@
                     @empty
                         <tr>
                             <td colspan="7" class="px-5 py-16 text-center">
-                                <div class="flex flex-col items-center gap-3" style="color:#5a7aaa;">
+                                <div class="flex flex-col items-center gap-3" style="color:var(--ts-muted);">
                                     <i class="fas fa-calendar text-4xl opacity-25"></i>
                                     <p class="font-600">No training schedules found</p>
                                     <p class="text-xs">Try adjusting your search or filters.</p>

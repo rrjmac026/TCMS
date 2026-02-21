@@ -47,21 +47,30 @@ class AdminTrainingScheduleController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'course_id'  => ['required', 'exists:courses,id'],
-            'trainer_id' => ['required', 'exists:users,id'],
-            'start_date' => ['required', 'date'],
-            'end_date'   => ['required', 'date', 'after_or_equal:start_date'],
-            'time_start' => ['required'],
-            'time_end'   => ['required', 'after:time_start'],
-            'location'   => ['nullable', 'string', 'max:255'],
-            'status'     => ['required', 'in:upcoming,ongoing,completed,cancelled'],
+        $request->validate([
+            'course_id'  => 'required|exists:courses,id',
+            'trainer_id' => 'required|exists:users,id',
+            'start_date' => 'required|date',
+            'end_date'   => 'required|date|after_or_equal:start_date',
+            'time_start' => 'required',
+            'time_end'   => 'required',
+            'location'   => 'nullable|string|max:255',
+            'status'     => 'required|in:upcoming,ongoing,completed,cancelled',
         ]);
 
-        TrainingSchedule::create($validated);
+        if ($request->time_end <= $request->time_start) {
+            return back()
+                ->withErrors(['time_end' => 'The end time must be after the start time.'])
+                ->withInput();
+        }
+
+        TrainingSchedule::create($request->only([
+            'course_id', 'trainer_id', 'start_date', 'end_date',
+            'time_start', 'time_end', 'location', 'status',
+        ]));
 
         return redirect()->route('admin.training-schedules.index')
-                         ->with('success', 'Training schedule created successfully.');
+                        ->with('success', 'Training schedule created successfully.');
     }
 
     public function show(TrainingSchedule $trainingSchedule)
@@ -81,21 +90,30 @@ class AdminTrainingScheduleController extends Controller
 
     public function update(Request $request, TrainingSchedule $trainingSchedule)
     {
-        $validated = $request->validate([
-            'course_id'  => ['required', 'exists:courses,id'],
-            'trainer_id' => ['required', 'exists:users,id'],
-            'start_date' => ['required', 'date'],
-            'end_date'   => ['required', 'date', 'after_or_equal:start_date'],
-            'time_start' => ['required'],
-            'time_end'   => ['required', 'after:time_start'],
-            'location'   => ['nullable', 'string', 'max:255'],
-            'status'     => ['required', 'in:upcoming,ongoing,completed,cancelled'],
+        $request->validate([
+            'course_id'  => 'required|exists:courses,id',
+            'trainer_id' => 'required|exists:users,id',
+            'start_date' => 'required|date',
+            'end_date'   => 'required|date|after_or_equal:start_date',
+            'time_start' => 'required',
+            'time_end'   => 'required',
+            'location'   => 'nullable|string|max:255',
+            'status'     => 'required|in:upcoming,ongoing,completed,cancelled',
         ]);
 
-        $trainingSchedule->update($validated);
+        if ($request->time_end <= $request->time_start) {
+            return back()
+                ->withErrors(['time_end' => 'The end time must be after the start time.'])
+                ->withInput();
+        }
+
+        $trainingSchedule->update($request->only([
+            'course_id', 'trainer_id', 'start_date', 'end_date',
+            'time_start', 'time_end', 'location', 'status',
+        ]));
 
         return redirect()->route('admin.training-schedules.index')
-                         ->with('success', 'Training schedule updated successfully.');
+                        ->with('success', 'Training schedule updated successfully.');
     }
 
     public function destroy(TrainingSchedule $trainingSchedule)

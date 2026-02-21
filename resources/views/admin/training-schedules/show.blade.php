@@ -3,26 +3,55 @@
 @section('title', 'Training Schedule Details')
 
 @section('content')
+<style>
+    /* ══════════════════════════════════════════
+       TRAINING SCHEDULES DETAIL DESIGN TOKENS — TESDA Theme
+    ══════════════════════════════════════════ */
+    :root {
+        --tsd-surface:      #ffffff;
+        --tsd-surface2:     #f0f5ff;
+        --tsd-border:       #c5d8f5;
+        --tsd-text:         #001a4d;
+        --tsd-text-sec:     #1a3a6b;
+        --tsd-muted:        #5a7aaa;
+        --tsd-accent:       #0057B8;
+        --tsd-accent-bg:    #e8f0fb;
+        --tsd-primary:      #003087;
+        --tsd-red:          #CE1126;
+        --tsd-red-bg:       #fff0f2;
+    }
+    .dark {
+        --tsd-surface:      #0a1628;
+        --tsd-surface2:     #0d1f3c;
+        --tsd-border:       #1e3a6b;
+        --tsd-text:         #dde8ff;
+        --tsd-text-sec:     #adc4f0;
+        --tsd-muted:        #6b8abf;
+        --tsd-accent-bg:    rgba(0,87,184,0.15);
+        --tsd-primary:      #5b9cf6;
+        --tsd-red-bg:       rgba(206,17,38,0.12);
+    }
+</style>
 <div class="max-w-3xl mx-auto space-y-6">
 
     {{-- Page Header --}}
     <div class="flex items-center gap-4">
         <a href="{{ route('admin.training-schedules.index') }}"
-           class="w-9 h-9 rounded-xl flex items-center justify-center border text-sm transition hover:bg-[#e8f0fb]"
-           style="border-color:#c5d8f5; color:#5a7aaa;">
+           class="w-9 h-9 rounded-xl flex items-center justify-center border text-sm transition"
+           style="border-color:var(--tsd-border); color:var(--tsd-muted);">
             <i class="fas fa-arrow-left"></i>
         </a>
         <div>
-            <h1 class="text-2xl font-bold dark:text-white" style="color:#003087;">
-                <i class="fas fa-calendar-check mr-2" style="color:#CE1126;"></i> Schedule Details
+            <h1 class="text-2xl font-bold" style="color:var(--tsd-primary);">
+                <i class="fas fa-calendar-check mr-2" style="color:var(--tsd-red);"></i> Schedule Details
             </h1>
-            <p class="text-sm mt-0.5" style="color:#5a7aaa;">Viewing details for {{ $trainingSchedule->course->name }}</p>
+            <p class="text-sm mt-0.5" style="color:var(--tsd-muted);">Viewing details for {{ $trainingSchedule->course->name }}</p>
         </div>
     </div>
 
     {{-- Schedule Card --}}
-    <div class="rounded-2xl border overflow-hidden dark:bg-[#0d1f3c] dark:border-[#1e3a6b]"
-         style="background:#fff; border-color:#c5d8f5; box-shadow:0 4px 24px rgba(0,48,135,0.07);">
+    <div class="rounded-2xl border overflow-hidden"
+         style="background:var(--tsd-surface); border-color:var(--tsd-border); box-shadow:0 4px 24px rgba(0,48,135,0.07);">
 
         <div class="h-1" style="background:linear-gradient(90deg,#CE1126 33%,#0057B8 33% 66%,#F5C518 66%);"></div>
 
@@ -88,15 +117,15 @@
                 {{-- Course --}}
                 <div class="flex items-start gap-3">
                     <div class="w-10 h-10 rounded-xl flex items-center justify-center text-sm flex-shrink-0"
-                         style="background:#e8f0fb; color:#0057B8;">
+                         style="background:var(--tsd-accent-bg); color:var(--tsd-accent);">
                         <i class="fas fa-book"></i>
                     </div>
                     <div class="flex-1">
-                        <div class="text-xs font-700 uppercase tracking-wide mb-0.5" style="color:#5a7aaa;">Course</div>
-                        <div class="text-sm font-600 dark:text-white" style="color:#001a4d;">
+                        <div class="text-xs font-700 uppercase tracking-wide mb-0.5" style="color:var(--tsd-muted);">Course</div>
+                        <div class="text-sm font-600" style="color:var(--tsd-text);">
                             {{ $trainingSchedule->course->name }}
                         </div>
-                        <div class="text-xs mt-1" style="color:#5a7aaa;">
+                        <div class="text-xs mt-1" style="color:var(--tsd-muted);">
                             {{ $trainingSchedule->course->code }} • {{ $trainingSchedule->course->duration_hours }} hours
                         </div>
                     </div>
@@ -109,11 +138,11 @@
                         <i class="fas fa-user"></i>
                     </div>
                     <div class="flex-1">
-                        <div class="text-xs font-700 uppercase tracking-wide mb-0.5" style="color:#5a7aaa;">Trainer</div>
-                        <div class="text-sm font-600 dark:text-white" style="color:#001a4d;">
+                        <div class="text-xs font-700 uppercase tracking-wide mb-0.5" style="color:var(--tsd-muted);">Trainer</div>
+                        <div class="text-sm font-600" style="color:var(--tsd-text);">
                             {{ $trainingSchedule->trainer->name }}
                         </div>
-                        <div class="text-xs mt-1" style="color:#5a7aaa;">
+                        <div class="text-xs mt-1" style="color:var(--tsd-muted);">
                             @if ($trainingSchedule->trainer->email)
                                 {{ $trainingSchedule->trainer->email }}
                             @else
@@ -131,15 +160,15 @@
                 {{-- Start Date --}}
                 <div class="flex items-start gap-3">
                     <div class="w-10 h-10 rounded-xl flex items-center justify-center text-sm flex-shrink-0"
-                         style="background:#fff0f2; color:#CE1126;">
+                         style="background:var(--tsd-red-bg); color:var(--tsd-red);">
                         <i class="fas fa-calendar-plus"></i>
                     </div>
                     <div class="flex-1">
-                        <div class="text-xs font-700 uppercase tracking-wide mb-0.5" style="color:#5a7aaa;">Start Date</div>
-                        <div class="text-sm font-600 dark:text-white" style="color:#001a4d;">
+                        <div class="text-xs font-700 uppercase tracking-wide mb-0.5" style="color:var(--tsd-muted);">Start Date</div>
+                        <div class="text-sm font-600" style="color:var(--tsd-text);">
                             {{ $trainingSchedule->start_date->format('F d, Y') }}
                         </div>
-                        <div class="text-xs mt-1" style="color:#5a7aaa;">
+                        <div class="text-xs mt-1" style="color:var(--tsd-muted);">
                             {{ $trainingSchedule->start_date->format('l') }}
                         </div>
                     </div>
@@ -152,11 +181,11 @@
                         <i class="fas fa-calendar-check"></i>
                     </div>
                     <div class="flex-1">
-                        <div class="text-xs font-700 uppercase tracking-wide mb-0.5" style="color:#5a7aaa;">End Date</div>
-                        <div class="text-sm font-600 dark:text-white" style="color:#001a4d;">
+                        <div class="text-xs font-700 uppercase tracking-wide mb-0.5" style="color:var(--tsd-muted);">End Date</div>
+                        <div class="text-sm font-600" style="color:var(--tsd-text);">
                             {{ $trainingSchedule->end_date->format('F d, Y') }}
                         </div>
-                        <div class="text-xs mt-1" style="color:#5a7aaa;">
+                        <div class="text-xs mt-1" style="color:var(--tsd-muted);">
                             {{ $trainingSchedule->end_date->format('l') }}
                         </div>
                     </div>
@@ -165,12 +194,12 @@
                 {{-- Start Time --}}
                 <div class="flex items-start gap-3">
                     <div class="w-10 h-10 rounded-xl flex items-center justify-center text-sm flex-shrink-0"
-                         style="background:#e8f0fb; color:#0057B8;">
+                         style="background:var(--tsd-accent-bg); color:var(--tsd-accent);">
                         <i class="fas fa-clock"></i>
                     </div>
                     <div class="flex-1">
-                        <div class="text-xs font-700 uppercase tracking-wide mb-0.5" style="color:#5a7aaa;">Start Time</div>
-                        <div class="text-sm font-600 dark:text-white" style="color:#001a4d;">
+                        <div class="text-xs font-700 uppercase tracking-wide mb-0.5" style="color:var(--tsd-muted);">Start Time</div>
+                        <div class="text-sm font-600" style="color:var(--tsd-text);">
                             {{ \Carbon\Carbon::parse($trainingSchedule->time_start)->format('h:i A') }}
                         </div>
                     </div>
@@ -179,12 +208,12 @@
                 {{-- End Time --}}
                 <div class="flex items-start gap-3">
                     <div class="w-10 h-10 rounded-xl flex items-center justify-center text-sm flex-shrink-0"
-                         style="background:#e8f0fb; color:#0057B8;">
+                         style="background:var(--tsd-accent-bg); color:var(--tsd-accent);">
                         <i class="fas fa-flag-checkered"></i>
                     </div>
                     <div class="flex-1">
-                        <div class="text-xs font-700 uppercase tracking-wide mb-0.5" style="color:#5a7aaa;">End Time</div>
-                        <div class="text-sm font-600 dark:text-white" style="color:#001a4d;">
+                        <div class="text-xs font-700 uppercase tracking-wide mb-0.5" style="color:var(--tsd-muted);">End Time</div>
+                        <div class="text-sm font-600" style="color:var(--tsd-text);">
                             {{ \Carbon\Carbon::parse($trainingSchedule->time_end)->format('h:i A') }}
                         </div>
                     </div>
@@ -202,8 +231,8 @@
                         <i class="fas fa-map-marker-alt"></i>
                     </div>
                     <div class="flex-1">
-                        <div class="text-xs font-700 uppercase tracking-wide mb-0.5" style="color:#5a7aaa;">Location</div>
-                        <div class="text-sm font-600 dark:text-white" style="color:#001a4d;">
+                        <div class="text-xs font-700 uppercase tracking-wide mb-0.5" style="color:var(--tsd-muted);">Location</div>
+                        <div class="text-sm font-600" style="color:var(--tsd-text);">
                             {{ $trainingSchedule->location ?? 'Not specified' }}
                         </div>
                     </div>
@@ -212,14 +241,14 @@
                 {{-- Metadata --}}
                 <div class="grid grid-cols-2 gap-4 pt-2">
                     <div>
-                        <div class="text-xs font-700 uppercase tracking-wide mb-1" style="color:#5a7aaa;">Created</div>
-                        <div class="text-sm font-600 dark:text-white" style="color:#001a4d;">
+                        <div class="text-xs font-700 uppercase tracking-wide mb-1" style="color:var(--tsd-muted);">Created</div>
+                        <div class="text-sm font-600" style="color:var(--tsd-text);">
                             {{ $trainingSchedule->created_at->format('F d, Y') }}
                         </div>
                     </div>
                     <div>
-                        <div class="text-xs font-700 uppercase tracking-wide mb-1" style="color:#5a7aaa;">Updated</div>
-                        <div class="text-sm font-600 dark:text-white" style="color:#001a4d;">
+                        <div class="text-xs font-700 uppercase tracking-wide mb-1" style="color:var(--tsd-muted);">Updated</div>
+                        <div class="text-sm font-600" style="color:var(--tsd-text);">
                             {{ $trainingSchedule->updated_at->format('F d, Y') }}
                         </div>
                     </div>
@@ -246,8 +275,8 @@
             </button>
         </form>
         <a href="{{ route('admin.training-schedules.index') }}"
-           class="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-600 border transition hover:bg-[#e8f0fb]"
-           style="border-color:#c5d8f5; color:#5a7aaa;">
+           class="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-600 border transition"
+           style="border-color:var(--tsd-border); color:var(--tsd-muted);">
             <i class="fas fa-arrow-left"></i> Back
         </a>
     </div>
