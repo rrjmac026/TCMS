@@ -3,24 +3,52 @@
 @section('title', 'Edit Trainee')
 
 @section('content')
+<style>
+    /* ══════════════════════════════════════════
+       TRAINEE FORM DESIGN TOKENS — TESDA Theme
+    ══════════════════════════════════════════ */
+    :root {
+        --tnf-surface:      #ffffff;
+        --tnf-surface2:     #f0f5ff;
+        --tnf-border:       #c5d8f5;
+        --tnf-text:         #001a4d;
+        --tnf-text-sec:     #1a3a6b;
+        --tnf-muted:        #5a7aaa;
+        --tnf-accent:       #0057B8;
+        --tnf-accent-bg:    #e8f0fb;
+        --tnf-primary:      #003087;
+        --tnf-red:          #CE1126;
+        --tnf-red-bg:       #fff0f2;
+        --tnf-error:        #CE1126;
+    }
+    .dark {
+        --tnf-surface:      #0a1628;
+        --tnf-surface2:     #0d1f3c;
+        --tnf-border:       #1e3a6b;
+        --tnf-text:         #dde8ff;
+        --tnf-text-sec:     #adc4f0;
+        --tnf-muted:        #6b8abf;
+        --tnf-primary:      #5b9cf6;
+    }
+</style>
 <div class="max-w-2xl mx-auto space-y-6">
 
     <div class="flex items-center gap-4">
         <a href="{{ route('admin.trainees.show', $trainee) }}"
-           class="w-9 h-9 rounded-xl flex items-center justify-center border text-sm transition hover:bg-[#e8f0fb]"
-           style="border-color:#c5d8f5; color:#5a7aaa;">
+           class="w-9 h-9 rounded-xl flex items-center justify-center border text-sm transition"
+           style="border-color:var(--tnf-border); color:var(--tnf-muted);">
             <i class="fas fa-arrow-left"></i>
         </a>
         <div>
-            <h1 class="text-2xl font-bold dark:text-white" style="color:#003087;">
-                <i class="fas fa-pen mr-2" style="color:#CE1126;"></i> Edit Trainee
+            <h1 class="text-2xl font-bold" style="color:var(--tnf-primary);">
+                <i class="fas fa-pen mr-2" style="color:var(--tnf-red);"></i> Edit Trainee
             </h1>
-            <p class="text-sm mt-0.5" style="color:#5a7aaa;">Updating details for {{ $trainee->name }}</p>
+            <p class="text-sm mt-0.5" style="color:var(--tnf-muted);">Updating details for {{ $trainee->name }}</p>
         </div>
     </div>
 
-    <div class="rounded-2xl border overflow-hidden dark:bg-[#0d1f3c] dark:border-[#1e3a6b]"
-         style="background:#fff; border-color:#c5d8f5; box-shadow:0 4px 24px rgba(0,48,135,0.07);">
+    <div class="rounded-2xl border overflow-hidden"
+         style="background:var(--tnf-surface); border-color:var(--tnf-border); box-shadow:0 4px 24px rgba(0,48,135,0.07);">
 
         <div class="h-1" style="background:linear-gradient(90deg,#CE1126 33%,#0057B8 33% 66%,#F5C518 66%);"></div>
 
@@ -29,63 +57,59 @@
             @method('PUT')
 
             <div>
-                <label class="block text-xs font-700 uppercase tracking-wide mb-1.5" style="color:#5a7aaa;">
-                    Full Name <span style="color:#CE1126;">*</span>
+                <label class="block text-xs font-700 uppercase tracking-wide mb-1.5" style="color:var(--tnf-muted);">
+                    Full Name <span style="color:var(--tnf-red);">*</span>
                 </label>
                 <input type="text" name="name" value="{{ old('name', $trainee->name) }}"
-                       class="w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition
-                              dark:bg-[#0a1628] dark:border-[#1e3a6b] dark:text-white"
-                       style="border-color:{{ $errors->has('name') ? '#CE1126' : '#c5d8f5' }}; color:#001a4d;"
+                       class="w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition"
+                       style="border-color:{{ $errors->has('name') ? 'var(--tnf-red)' : 'var(--tnf-border)' }}; color:var(--tnf-text);"
                        onfocus="this.style.borderColor='#0057B8'; this.style.boxShadow='0 0 0 3px rgba(0,87,184,0.10)'"
-                       onblur="this.style.borderColor='{{ $errors->has('name') ? '#CE1126' : '#c5d8f5' }}'; this.style.boxShadow='none'">
+                       onblur="this.style.borderColor='{{ $errors->has('name') ? 'var(--tnf-red)' : 'var(--tnf-border)' }}'; this.style.boxShadow='none'">
                 @error('name')
-                    <p class="text-xs mt-1" style="color:#CE1126;">{{ $message }}</p>
+                    <p class="text-xs mt-1" style="color:var(--tnf-red);">{{ $message }}</p>
                 @enderror
             </div>
 
             <div>
-                <label class="block text-xs font-700 uppercase tracking-wide mb-1.5" style="color:#5a7aaa;">
-                    Email Address <span style="color:#CE1126;">*</span>
+                <label class="block text-xs font-700 uppercase tracking-wide mb-1.5" style="color:var(--tnf-muted);">
+                    Email Address <span style="color:var(--tnf-red);">*</span>
                 </label>
                 <input type="email" name="email" value="{{ old('email', $trainee->email) }}"
-                       class="w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition
-                              dark:bg-[#0a1628] dark:border-[#1e3a6b] dark:text-white"
-                       style="border-color:{{ $errors->has('email') ? '#CE1126' : '#c5d8f5' }}; color:#001a4d;"
+                       class="w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition"
+                       style="border-color:{{ $errors->has('email') ? 'var(--tnf-red)' : 'var(--tnf-border)' }}; color:var(--tnf-text);"
                        onfocus="this.style.borderColor='#0057B8'; this.style.boxShadow='0 0 0 3px rgba(0,87,184,0.10)'"
-                       onblur="this.style.borderColor='{{ $errors->has('email') ? '#CE1126' : '#c5d8f5' }}'; this.style.boxShadow='none'">
+                       onblur="this.style.borderColor='{{ $errors->has('email') ? 'var(--tnf-red)' : 'var(--tnf-border)' }}'; this.style.boxShadow='none'">
                 @error('email')
-                    <p class="text-xs mt-1" style="color:#CE1126;">{{ $message }}</p>
+                    <p class="text-xs mt-1" style="color:var(--tnf-red);">{{ $message }}</p>
                 @enderror
             </div>
 
             <div>
-                <label class="block text-xs font-700 uppercase tracking-wide mb-1.5" style="color:#5a7aaa;">
+                <label class="block text-xs font-700 uppercase tracking-wide mb-1.5" style="color:var(--tnf-muted);">
                     New Password
-                    <span class="font-400 normal-case" style="color:#5a7aaa;">(leave blank to keep current)</span>
+                    <span class="font-400 normal-case" style="color:var(--tnf-muted);">(leave blank to keep current)</span>
                 </label>
                 <input type="password" name="password"
                        placeholder="Minimum 8 characters"
-                       class="w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition
-                              dark:bg-[#0a1628] dark:border-[#1e3a6b] dark:text-white"
-                       style="border-color:{{ $errors->has('password') ? '#CE1126' : '#c5d8f5' }}; color:#001a4d;"
+                       class="w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition"
+                       style="border-color:{{ $errors->has('password') ? 'var(--tnf-red)' : 'var(--tnf-border)' }}; color:var(--tnf-text);"
                        onfocus="this.style.borderColor='#0057B8'; this.style.boxShadow='0 0 0 3px rgba(0,87,184,0.10)'"
-                       onblur="this.style.borderColor='{{ $errors->has('password') ? '#CE1126' : '#c5d8f5' }}'; this.style.boxShadow='none'">
+                       onblur="this.style.borderColor='{{ $errors->has('password') ? 'var(--tnf-red)' : 'var(--tnf-border)' }}'; this.style.boxShadow='none'">
                 @error('password')
-                    <p class="text-xs mt-1" style="color:#CE1126;">{{ $message }}</p>
+                    <p class="text-xs mt-1" style="color:var(--tnf-red);">{{ $message }}</p>
                 @enderror
             </div>
 
             <div>
-                <label class="block text-xs font-700 uppercase tracking-wide mb-1.5" style="color:#5a7aaa;">
+                <label class="block text-xs font-700 uppercase tracking-wide mb-1.5" style="color:var(--tnf-muted);">
                     Confirm New Password
                 </label>
                 <input type="password" name="password_confirmation"
                        placeholder="Repeat new password"
-                       class="w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition
-                              dark:bg-[#0a1628] dark:border-[#1e3a6b] dark:text-white"
-                       style="border-color:#c5d8f5; color:#001a4d;"
+                       class="w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition"
+                       style="border-color:var(--tnf-border); color:var(--tnf-text);"
                        onfocus="this.style.borderColor='#0057B8'; this.style.boxShadow='0 0 0 3px rgba(0,87,184,0.10)'"
-                       onblur="this.style.borderColor='#c5d8f5'; this.style.boxShadow='none'">
+                       onblur="this.style.borderColor='var(--tnf-border)'; this.style.boxShadow='none'">
             </div>
 
             <div class="flex items-center gap-3 pt-2">
@@ -95,8 +119,8 @@
                     <i class="fas fa-save"></i> Update Trainee
                 </button>
                 <a href="{{ route('admin.trainees.show', $trainee) }}"
-                   class="px-5 py-2.5 rounded-xl text-sm font-600 border transition hover:bg-[#e8f0fb]"
-                   style="border-color:#c5d8f5; color:#5a7aaa;">
+                   class="px-5 py-2.5 rounded-xl text-sm font-600 border transition"
+                   style="border-color:var(--tnf-border); color:var(--tnf-muted);">
                     Cancel
                 </a>
             </div>

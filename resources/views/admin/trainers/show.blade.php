@@ -3,26 +3,55 @@
 @section('title', $trainer->name)
 
 @section('content')
+<style>
+    /* ══════════════════════════════════════════
+       TRAINER DETAIL DESIGN TOKENS — TESDA Theme
+    ══════════════════════════════════════════ */
+    :root {
+        --tr-surface:      #ffffff;
+        --tr-surface2:     #f0f5ff;
+        --tr-border:       #c5d8f5;
+        --tr-text:         #001a4d;
+        --tr-text-sec:     #1a3a6b;
+        --tr-muted:        #5a7aaa;
+        --tr-accent:       #0057B8;
+        --tr-accent-bg:    #e8f0fb;
+        --tr-primary:      #003087;
+        --tr-red:          #CE1126;
+        --tr-red-bg:       #fff0f2;
+    }
+    .dark {
+        --tr-surface:      #0a1628;
+        --tr-surface2:     #0d1f3c;
+        --tr-border:       #1e3a6b;
+        --tr-text:         #dde8ff;
+        --tr-text-sec:     #adc4f0;
+        --tr-muted:        #6b8abf;
+        --tr-accent-bg:    rgba(0,87,184,0.15);
+        --tr-primary:      #5b9cf6;
+        --tr-red-bg:       rgba(206,17,38,0.12);
+    }
+</style>
 <div class="max-w-3xl mx-auto space-y-6">
 
     {{-- Page Header --}}
     <div class="flex items-center gap-4">
         <a href="{{ route('admin.trainers.index') }}"
-           class="w-9 h-9 rounded-xl flex items-center justify-center border text-sm transition hover:bg-[#e8f0fb]"
-           style="border-color:#c5d8f5; color:#5a7aaa;">
+           class="w-9 h-9 rounded-xl flex items-center justify-center border text-sm transition"
+           style="border-color:var(--tr-border); color:var(--tr-muted);">
             <i class="fas fa-arrow-left"></i>
         </a>
         <div>
-            <h1 class="text-2xl font-bold dark:text-white" style="color:#003087;">
-                <i class="fas fa-chalkboard-teacher mr-2" style="color:#CE1126;"></i> Trainer Profile
+            <h1 class="text-2xl font-bold" style="color:var(--tr-primary);">
+                <i class="fas fa-chalkboard-teacher mr-2" style="color:var(--tr-red);"></i> Trainer Profile
             </h1>
-            <p class="text-sm mt-0.5" style="color:#5a7aaa;">Viewing details for {{ $trainer->name }}</p>
+            <p class="text-sm mt-0.5" style="color:var(--tr-muted);">Viewing details for {{ $trainer->name }}</p>
         </div>
     </div>
 
     {{-- Profile Card --}}
-    <div class="rounded-2xl border overflow-hidden dark:bg-[#0d1f3c] dark:border-[#1e3a6b]"
-         style="background:#fff; border-color:#c5d8f5; box-shadow:0 4px 24px rgba(0,48,135,0.07);">
+    <div class="rounded-2xl border overflow-hidden"
+         style="background:var(--tr-surface); border-color:var(--tr-border); box-shadow:0 4px 24px rgba(0,48,135,0.07);">
 
         <div class="h-1" style="background:linear-gradient(90deg,#CE1126 33%,#0057B8 33% 66%,#F5C518 66%);"></div>
 
@@ -73,8 +102,8 @@
                         <i class="fas {{ $d['icon'] }}"></i>
                     </div>
                     <div>
-                        <div class="text-xs font-700 uppercase tracking-wide mb-0.5" style="color:#5a7aaa;">{{ $d['label'] }}</div>
-                        <div class="text-sm font-600 dark:text-white" style="color:#001a4d;">{{ $d['value'] ?? '—' }}</div>
+                        <div class="text-xs font-700 uppercase tracking-wide mb-0.5" style="color:var(--tr-muted);">{{ $d['label'] }}</div>
+                        <div class="text-sm font-600" style="color:var(--tr-text);">{{ $d['value'] ?? '—' }}</div>
                     </div>
                 </div>
             @endforeach
@@ -90,25 +119,25 @@
             ];
         @endphp
         @foreach ($stats as $stat)
-            <div class="rounded-2xl border p-5 text-center dark:bg-[#0d1f3c] dark:border-[#1e3a6b]"
-                 style="background:#fff; border-color:#c5d8f5;">
+            <div class="rounded-2xl border p-5 text-center"
+                 style="background:var(--tr-surface); border-color:var(--tr-border);">
                 <div class="w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-3 text-sm"
                      style="background:{{ $stat['bg'] }}; color:{{ $stat['color'] }};">
                     <i class="fas {{ $stat['icon'] }}"></i>
                 </div>
-                <div class="text-2xl font-800 dark:text-white" style="color:#001a4d;">{{ $stat['value'] }}</div>
-                <div class="text-xs mt-0.5" style="color:#5a7aaa;">{{ $stat['label'] }}</div>
+                <div class="text-2xl font-800" style="color:var(--tr-text);">{{ $stat['value'] }}</div>
+                <div class="text-xs mt-0.5" style="color:var(--tr-muted);">{{ $stat['label'] }}</div>
             </div>
         @endforeach
     </div>
 
     {{-- Danger zone --}}
-    <div class="rounded-2xl border p-6 dark:bg-[#0d1f3c] dark:border-[#1e3a6b]"
-         style="background:#fff; border-color:#f5c5cb;">
+    <div class="rounded-2xl border p-6"
+         style="background:var(--tr-surface); border-color:#f5c5cb;">
         <h3 class="text-sm font-800 mb-1 flex items-center gap-2" style="color:#CE1126;">
             <i class="fas fa-triangle-exclamation"></i> Danger Zone
         </h3>
-        <p class="text-xs mb-4" style="color:#5a7aaa;">Deleting this trainer is permanent and cannot be undone.</p>
+        <p class="text-xs mb-4" style="color:var(--tr-muted);">Deleting this trainer is permanent and cannot be undone.</p>
         <form method="POST" action="{{ route('admin.trainers.destroy', $trainer) }}"
               onsubmit="return confirm('Permanently delete {{ addslashes($trainer->name) }}?')">
             @csrf

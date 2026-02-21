@@ -3,25 +3,54 @@
 @section('title', $trainee->name)
 
 @section('content')
+<style>
+    /* ══════════════════════════════════════════
+       TRAINEE DETAIL DESIGN TOKENS — TESDA Theme
+    ══════════════════════════════════════════ */
+    :root {
+        --tnd-surface:      #ffffff;
+        --tnd-surface2:     #f0f5ff;
+        --tnd-border:       #c5d8f5;
+        --tnd-text:         #001a4d;
+        --tnd-text-sec:     #1a3a6b;
+        --tnd-muted:        #5a7aaa;
+        --tnd-accent:       #0057B8;
+        --tnd-accent-bg:    #e8f0fb;
+        --tnd-primary:      #003087;
+        --tnd-red:          #CE1126;
+        --tnd-red-bg:       #fff0f2;
+    }
+    .dark {
+        --tnd-surface:      #0a1628;
+        --tnd-surface2:     #0d1f3c;
+        --tnd-border:       #1e3a6b;
+        --tnd-text:         #dde8ff;
+        --tnd-text-sec:     #adc4f0;
+        --tnd-muted:        #6b8abf;
+        --tnd-accent-bg:    rgba(0,87,184,0.15);
+        --tnd-primary:      #5b9cf6;
+        --tnd-red-bg:       rgba(206,17,38,0.12);
+    }
+</style>
 <div class="max-w-3xl mx-auto space-y-6">
 
     <div class="flex items-center gap-4">
         <a href="{{ route('admin.trainees.index') }}"
-           class="w-9 h-9 rounded-xl flex items-center justify-center border text-sm transition hover:bg-[#e8f0fb]"
-           style="border-color:#c5d8f5; color:#5a7aaa;">
+           class="w-9 h-9 rounded-xl flex items-center justify-center border text-sm transition"
+           style="border-color:var(--tnd-border); color:var(--tnd-muted);">
             <i class="fas fa-arrow-left"></i>
         </a>
         <div>
-            <h1 class="text-2xl font-bold dark:text-white" style="color:#003087;">
-                <i class="fas fa-user mr-2" style="color:#CE1126;"></i> Trainee Profile
+            <h1 class="text-2xl font-bold" style="color:var(--tnd-primary);">
+                <i class="fas fa-user mr-2" style="color:var(--tnd-red);"></i> Trainee Profile
             </h1>
-            <p class="text-sm mt-0.5" style="color:#5a7aaa;">Viewing details for {{ $trainee->name }}</p>
+            <p class="text-sm mt-0.5" style="color:var(--tnd-muted);">Viewing details for {{ $trainee->name }}</p>
         </div>
     </div>
 
     {{-- Profile Card --}}
-    <div class="rounded-2xl border overflow-hidden dark:bg-[#0d1f3c] dark:border-[#1e3a6b]"
-         style="background:#fff; border-color:#c5d8f5; box-shadow:0 4px 24px rgba(0,48,135,0.07);">
+    <div class="rounded-2xl border overflow-hidden"
+         style="background:var(--tnd-surface); border-color:var(--tnd-border); box-shadow:0 4px 24px rgba(0,48,135,0.07);">
 
         <div class="h-1" style="background:linear-gradient(90deg,#CE1126 33%,#0057B8 33% 66%,#F5C518 66%);"></div>
 
@@ -69,8 +98,8 @@
                         <i class="fas {{ $d['icon'] }}"></i>
                     </div>
                     <div>
-                        <div class="text-xs font-700 uppercase tracking-wide mb-0.5" style="color:#5a7aaa;">{{ $d['label'] }}</div>
-                        <div class="text-sm font-600 dark:text-white" style="color:#001a4d;">{{ $d['value'] ?? '—' }}</div>
+                        <div class="text-xs font-700 uppercase tracking-wide mb-0.5" style="color:var(--tnd-muted);">{{ $d['label'] }}</div>
+                        <div class="text-sm font-600" style="color:var(--tnd-text);">{{ $d['value'] ?? '—' }}</div>
                     </div>
                 </div>
             @endforeach
@@ -86,39 +115,39 @@
             ];
         @endphp
         @foreach ($stats as $stat)
-            <div class="rounded-2xl border p-5 text-center dark:bg-[#0d1f3c] dark:border-[#1e3a6b]"
-                 style="background:#fff; border-color:#c5d8f5;">
+            <div class="rounded-2xl border p-5 text-center"
+                 style="background:var(--tnd-surface); border-color:var(--tnd-border);">
                 <div class="w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-3 text-sm"
                      style="background:{{ $stat['bg'] }}; color:{{ $stat['color'] }};">
                     <i class="fas {{ $stat['icon'] }}"></i>
                 </div>
-                <div class="text-2xl font-800 dark:text-white" style="color:#001a4d;">{{ $stat['value'] }}</div>
-                <div class="text-xs mt-0.5" style="color:#5a7aaa;">{{ $stat['label'] }}</div>
+                <div class="text-2xl font-800" style="color:var(--tnd-text);">{{ $stat['value'] }}</div>
+                <div class="text-xs mt-0.5" style="color:var(--tnd-muted);">{{ $stat['label'] }}</div>
             </div>
         @endforeach
     </div>
 
     {{-- Enrollments Table --}}
-    <div class="rounded-2xl border overflow-hidden dark:bg-[#0d1f3c] dark:border-[#1e3a6b]"
-         style="background:#fff; border-color:#c5d8f5;">
-        <div class="px-5 py-4 border-b dark:border-[#1e3a6b]" style="border-color:#c5d8f5;">
-            <h3 class="text-sm font-700" style="color:#003087;">
-                <i class="fas fa-list mr-1" style="color:#CE1126;"></i> Enrollment History
+    <div class="rounded-2xl border overflow-hidden"
+         style="background:var(--tnd-surface); border-color:var(--tnd-border);">
+        <div class="px-5 py-4 border-b" style="border-color:var(--tnd-border);">
+            <h3 class="text-sm font-700" style="color:var(--tnd-primary);">
+                <i class="fas fa-list mr-1" style="color:var(--tnd-red);"></i> Enrollment History
             </h3>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead>
-                    <tr style="background:#e8f0fb; border-bottom:1px solid #c5d8f5;">
-                        <th class="px-5 py-3 text-left text-xs font-700 uppercase tracking-wide" style="color:#0057B8;">Course</th>
-                        <th class="px-5 py-3 text-left text-xs font-700 uppercase tracking-wide" style="color:#0057B8;">Status</th>
-                        <th class="px-5 py-3 text-left text-xs font-700 uppercase tracking-wide" style="color:#0057B8;">Enrolled At</th>
+                    <tr style="background:var(--tnd-accent-bg); border-bottom:1px solid var(--tnd-border);">
+                        <th class="px-5 py-3 text-left text-xs font-700 uppercase tracking-wide" style="color:var(--tnd-accent);">Course</th>
+                        <th class="px-5 py-3 text-left text-xs font-700 uppercase tracking-wide" style="color:var(--tnd-accent);">Status</th>
+                        <th class="px-5 py-3 text-left text-xs font-700 uppercase tracking-wide" style="color:var(--tnd-accent);">Enrolled At</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y dark:divide-[#1e3a6b]" style="divide-color:#e8f0fb;">
+                <tbody class="divide-y" style="border-color:var(--tnd-border);">
                     @forelse ($trainee->enrollments as $enrollment)
-                        <tr class="transition hover:bg-[#f0f5ff] dark:hover:bg-[#122550]">
-                            <td class="px-5 py-3 font-600 dark:text-white" style="color:#001a4d;">
+                        <tr style="background:var(--tnd-surface);">
+                            <td class="px-5 py-3 font-600" style="color:var(--tnd-text);">
                                 {{ $enrollment->course->name }}
                             </td>
                             <td class="px-5 py-3">
@@ -136,13 +165,13 @@
                                     {{ ucfirst($enrollment->status) }}
                                 </span>
                             </td>
-                            <td class="px-5 py-3 text-xs" style="color:#5a7aaa;">
+                            <td class="px-5 py-3 text-xs" style="color:var(--tnd-muted);">
                                 {{ $enrollment->enrolled_at?->format('M d, Y') ?? '—' }}
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="3" class="px-5 py-10 text-center text-xs" style="color:#5a7aaa;">
+                            <td colspan="3" class="px-5 py-10 text-center text-xs" style="color:var(--tnd-muted);">
                                 No enrollments yet.
                             </td>
                         </tr>
@@ -153,12 +182,12 @@
     </div>
 
     {{-- Danger Zone --}}
-    <div class="rounded-2xl border p-6 dark:bg-[#0d1f3c] dark:border-[#1e3a6b]"
-         style="background:#fff; border-color:#f5c5cb;">
+    <div class="rounded-2xl border p-6"
+         style="background:var(--tnd-surface); border-color:#f5c5cb;">
         <h3 class="text-sm font-800 mb-1 flex items-center gap-2" style="color:#CE1126;">
             <i class="fas fa-triangle-exclamation"></i> Danger Zone
         </h3>
-        <p class="text-xs mb-4" style="color:#5a7aaa;">Deleting this trainee is permanent and cannot be undone.</p>
+        <p class="text-xs mb-4" style="color:var(--tnd-muted);">Deleting this trainee is permanent and cannot be undone.</p>
         <form method="POST" action="{{ route('admin.trainees.destroy', $trainee) }}"
               onsubmit="return confirm('Permanently delete {{ addslashes($trainee->name) }}?')">
             @csrf

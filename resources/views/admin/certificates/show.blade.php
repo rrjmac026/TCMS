@@ -3,28 +3,55 @@
 @section('title', 'Certificate Details')
 
 @section('content')
+<style>
+    /* ══════════════════════════════════════════
+       CERTIFICATE DETAIL DESIGN TOKENS — TESDA Theme
+    ══════════════════════════════════════════ */
+    :root {
+        --certd-surface:      #ffffff;
+        --certd-surface2:     #f0f5ff;
+        --certd-border:       #c5d8f5;
+        --certd-text:         #001a4d;
+        --certd-text-sec:     #1a3a6b;
+        --certd-muted:        #5a7aaa;
+        --certd-accent:       #0057B8;
+        --certd-accent-bg:    #e8f0fb;
+        --certd-primary:      #003087;
+        --certd-red:          #CE1126;
+        --certd-red-bg:       #fff0f2;
+    }
+    .dark {
+        --certd-surface:      #0a1628;
+        --certd-surface2:     #0d1f3c;
+        --certd-border:       #1e3a6b;
+        --certd-text:         #dde8ff;
+        --certd-text-sec:     #adc4f0;
+        --certd-muted:        #6b8abf;
+        --certd-accent-bg:    rgba(0,87,184,0.15);
+        --certd-primary:      #5b9cf6;
+        --certd-red-bg:       rgba(206,17,38,0.12);
+    }
+</style>
 <div class="max-w-3xl mx-auto space-y-6">
 
     {{-- Page Header --}}
     <div class="flex items-center gap-4">
         <a href="{{ route('admin.certificates.index') }}"
-           class="w-9 h-9 rounded-xl flex items-center justify-center border text-sm transition hover:bg-[#e8f0fb]"
-           style="border-color:#c5d8f5; color:#5a7aaa;">
+           class="w-9 h-9 rounded-xl flex items-center justify-center border text-sm transition"
+           style="border-color:var(--certd-border); color:var(--certd-muted);">
             <i class="fas fa-arrow-left"></i>
         </a>
         <div>
-            <h1 class="text-2xl font-bold dark:text-white" style="color:#003087;">
-                <i class="fas fa-certificate mr-2" style="color:#CE1126;"></i> Certificate Details
+            <h1 class="text-2xl font-bold" style="color:var(--certd-primary);">
+                <i class="fas fa-certificate mr-2" style="color:var(--certd-red);"></i> Certificate Details
             </h1>
-            <p class="text-sm mt-0.5" style="color:#5a7aaa;">Viewing certificate {{ $certificate->certificate_number }}</p>
+            <p class="text-sm mt-0.5" style="color:var(--certd-muted);">Viewing certificate {{ $certificate->certificate_number }}</p>
         </div>
-
-        
     </div>
 
     {{-- Certificate Card --}}
-    <div class="rounded-2xl border overflow-hidden dark:bg-[#0d1f3c] dark:border-[#1e3a6b]"
-         style="background:#fff; border-color:#c5d8f5; box-shadow:0 4px 24px rgba(0,48,135,0.07);">
+    <div class="rounded-2xl border overflow-hidden"
+         style="background:var(--certd-surface); border-color:var(--certd-border); box-shadow:0 4px 24px rgba(0,48,135,0.07);">
 
         <div class="h-1" style="background:linear-gradient(90deg,#CE1126 33%,#0057B8 33% 66%,#F5C518 66%);"></div>
 
@@ -73,11 +100,11 @@
                         <i class="fas fa-user"></i>
                     </div>
                     <div class="flex-1">
-                        <div class="text-xs font-700 uppercase tracking-wide mb-0.5" style="color:#5a7aaa;">Trainee</div>
-                        <div class="text-sm font-600 dark:text-white" style="color:#001a4d;">
+                        <div class="text-xs font-700 uppercase tracking-wide mb-0.5" style="color:var(--certd-muted);">Trainee</div>
+                        <div class="text-sm font-600" style="color:var(--certd-text);">
                             {{ $certificate->enrollment->trainee->name }}
                         </div>
-                        <div class="text-xs mt-1" style="color:#5a7aaa;">
+                        <div class="text-xs mt-1" style="color:var(--certd-muted);">
                             {{ $certificate->enrollment->trainee->email }}
                         </div>
                     </div>
@@ -86,15 +113,15 @@
                 {{-- Course --}}
                 <div class="flex items-start gap-3">
                     <div class="w-10 h-10 rounded-xl flex items-center justify-center text-sm flex-shrink-0"
-                         style="background:#e8f0fb; color:#0057B8;">
+                         style="background:var(--certd-accent-bg); color:var(--certd-accent);">
                         <i class="fas fa-book"></i>
                     </div>
                     <div class="flex-1">
-                        <div class="text-xs font-700 uppercase tracking-wide mb-0.5" style="color:#5a7aaa;">Course</div>
-                        <div class="text-sm font-600 dark:text-white" style="color:#001a4d;">
+                        <div class="text-xs font-700 uppercase tracking-wide mb-0.5" style="color:var(--certd-muted);">Course</div>
+                        <div class="text-sm font-600" style="color:var(--certd-text);">
                             {{ $certificate->enrollment->course->name }}
                         </div>
-                        <div class="text-xs mt-1" style="color:#5a7aaa;">
+                        <div class="text-xs mt-1" style="color:var(--certd-muted);">
                             {{ $certificate->enrollment->course->code }} • {{ $certificate->enrollment->course->duration_hours }} hours
                         </div>
                     </div>
@@ -108,12 +135,12 @@
                 {{-- Certificate Number --}}
                 <div class="flex items-start gap-3">
                     <div class="w-10 h-10 rounded-xl flex items-center justify-center text-sm flex-shrink-0"
-                         style="background:#fff0f2; color:#CE1126;">
+                         style="background:var(--certd-red-bg); color:var(--certd-red);">
                         <i class="fas fa-hashtag"></i>
                     </div>
                     <div class="flex-1">
-                        <div class="text-xs font-700 uppercase tracking-wide mb-0.5" style="color:#5a7aaa;">Certificate Number</div>
-                        <div class="font-mono text-sm font-700 dark:text-white" style="color:#001a4d;">
+                        <div class="text-xs font-700 uppercase tracking-wide mb-0.5" style="color:var(--certd-muted);">Certificate Number</div>
+                        <div class="font-mono text-sm font-700" style="color:var(--certd-text);">
                             {{ $certificate->certificate_number }}
                         </div>
                     </div>
@@ -122,15 +149,15 @@
                 {{-- Issued Date --}}
                 <div class="flex items-start gap-3">
                     <div class="w-10 h-10 rounded-xl flex items-center justify-center text-sm flex-shrink-0"
-                         style="background:#fff0f2; color:#CE1126;">
+                         style="background:var(--certd-red-bg); color:var(--certd-red);">
                         <i class="fas fa-calendar-plus"></i>
                     </div>
                     <div class="flex-1">
-                        <div class="text-xs font-700 uppercase tracking-wide mb-0.5" style="color:#5a7aaa;">Issued Date</div>
-                        <div class="text-sm font-600 dark:text-white" style="color:#001a4d;">
+                        <div class="text-xs font-700 uppercase tracking-wide mb-0.5" style="color:var(--certd-muted);">Issued Date</div>
+                        <div class="text-sm font-600" style="color:var(--certd-text);">
                             {{ $certificate->issued_at->format('F d, Y') }}
                         </div>
-                        <div class="text-xs mt-1" style="color:#5a7aaa;">
+                        <div class="text-xs mt-1" style="color:var(--certd-muted);">
                             {{ $certificate->issued_at->format('l') }}
                         </div>
                     </div>
@@ -143,19 +170,19 @@
                         <i class="fas {{ $certificate->expires_at ? 'fa-calendar-times' : 'fa-infinity' }}"></i>
                     </div>
                     <div class="flex-1">
-                        <div class="text-xs font-700 uppercase tracking-wide mb-0.5" style="color:#5a7aaa;">Expiry Date</div>
+                        <div class="text-xs font-700 uppercase tracking-wide mb-0.5" style="color:var(--certd-muted);">Expiry Date</div>
                         @if ($certificate->expires_at)
-                            <div class="text-sm font-600 dark:text-white" style="color:#001a4d;">
+                            <div class="text-sm font-600" style="color:var(--certd-text);">
                                 {{ $certificate->expires_at->format('F d, Y') }}
                             </div>
-                            <div class="text-xs mt-1" style="color:#5a7aaa;">
+                            <div class="text-xs mt-1" style="color:var(--certd-muted);">
                                 {{ $certificate->expires_at->format('l') }}
                             </div>
                         @else
-                            <div class="text-sm font-600 dark:text-white" style="color:#001a4d;">
+                            <div class="text-sm font-600" style="color:var(--certd-text);">
                                 No Expiry
                             </div>
-                            <div class="text-xs mt-1" style="color:#5a7aaa;">
+                            <div class="text-xs mt-1" style="color:var(--certd-muted);">
                                 This certificate does not expire
                             </div>
                         @endif
@@ -169,21 +196,21 @@
                         <i class="fas {{ $isExpired ? 'fa-times-circle' : 'fa-check-circle' }}"></i>
                     </div>
                     <div class="flex-1">
-                        <div class="text-xs font-700 uppercase tracking-wide mb-0.5" style="color:#5a7aaa;">Status</div>
-                        <div class="text-sm font-600 dark:text-white" style="color:{{ $isExpired ? '#CE1126' : '#22C55E' }};">
+                        <div class="text-xs font-700 uppercase tracking-wide mb-0.5" style="color:var(--certd-muted);">Status</div>
+                        <div class="text-sm font-600" style="color:{{ $isExpired ? '#CE1126' : '#22C55E' }};">
                             {{ $isExpired ? 'Expired' : 'Active' }}
                         </div>
                         @if ($isExpired)
-                            <div class="text-xs mt-1" style="color:#5a7aaa;">
+                            <div class="text-xs mt-1" style="color:var(--certd-muted);">
                                 Expired on {{ $certificate->expires_at->format('M d, Y') }}
                             </div>
                         @else
                             @if ($certificate->expires_at)
-                                <div class="text-xs mt-1" style="color:#5a7aaa;">
+                                <div class="text-xs mt-1" style="color:var(--certd-muted);">
                                     {{ $certificate->expires_at->diffForHumans() }}
                                 </div>
                             @else
-                                <div class="text-xs mt-1" style="color:#5a7aaa;">
+                                <div class="text-xs mt-1" style="color:var(--certd-muted);">
                                     Valid indefinitely
                                 </div>
                             @endif
@@ -197,20 +224,20 @@
             {{-- Metadata --}}
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <div class="text-xs font-700 uppercase tracking-wide mb-1" style="color:#5a7aaa;">Created</div>
-                    <div class="text-sm font-600 dark:text-white" style="color:#001a4d;">
+                    <div class="text-xs font-700 uppercase tracking-wide mb-1" style="color:var(--certd-muted);">Created</div>
+                    <div class="text-sm font-600" style="color:var(--certd-text);">
                         {{ $certificate->created_at->format('F d, Y') }}
                     </div>
-                    <div class="text-xs mt-0.5" style="color:#5a7aaa;">
+                    <div class="text-xs mt-0.5" style="color:var(--certd-muted);">
                         {{ $certificate->created_at->format('h:i A') }}
                     </div>
                 </div>
                 <div>
-                    <div class="text-xs font-700 uppercase tracking-wide mb-1" style="color:#5a7aaa;">Updated</div>
-                    <div class="text-sm font-600 dark:text-white" style="color:#001a4d;">
+                    <div class="text-xs font-700 uppercase tracking-wide mb-1" style="color:var(--certd-muted);">Updated</div>
+                    <div class="text-sm font-600" style="color:var(--certd-text);">
                         {{ $certificate->updated_at->format('F d, Y') }}
                     </div>
-                    <div class="text-xs mt-0.5" style="color:#5a7aaa;">
+                    <div class="text-xs mt-0.5" style="color:var(--certd-muted);">
                         {{ $certificate->updated_at->format('h:i A') }}
                     </div>
                 </div>
@@ -247,8 +274,8 @@
                 </button>
             </form>
             <a href="{{ route('admin.certificates.index') }}"
-            class="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-600 border transition hover:bg-[#e8f0fb]"
-            style="border-color:#c5d8f5; color:#5a7aaa;">
+            class="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-600 border transition"
+            style="border-color:var(--certd-border); color:var(--certd-muted);">
                 <i class="fas fa-arrow-left"></i> Back
             </a>
         </div>
