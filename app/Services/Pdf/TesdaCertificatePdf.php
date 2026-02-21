@@ -249,12 +249,12 @@ class TesdaCertificatePdf
         $this->setColor('text', self::DGRAY);
         $this->pdf->SetFont('Times', 'I', 13);
         $this->pdf->SetXY(0, 47);
-        $this->pdf->Cell(self::W, 0, 'Certificate', 0, 0, 'C');
+        $this->pdf->Cell(self::W, 0, '', 0, 0, 'C');
 
         $this->setColor('text', self::NAVY);
         $this->pdf->SetFont('Times', 'B', 26);
         $this->pdf->SetXY(0, 54);
-        $this->pdf->Cell(self::W, 0, 'of Completion', 0, 0, 'C');
+        $this->pdf->Cell(self::W, 0, ' Certificate of Completion', 0, 0, 'C');
     }
 
     protected function drawDivider(float $y): void
