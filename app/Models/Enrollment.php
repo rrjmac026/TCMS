@@ -9,7 +9,7 @@ class Enrollment extends Model
     protected $fillable = [
         'trainee_id',
         'course_id',
-        'status', // pending, approved, completed, dropped
+        'status', // pending, approved, completed, dropped ni siya
         'enrolled_at',
     ];
 

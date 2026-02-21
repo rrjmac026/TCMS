@@ -11,21 +11,19 @@ return new class extends Migration
         Schema::create('assessments', function (Blueprint $table) {
             $table->id();
 
-            // Links to which enrollment (trainee + course combo) is being assessed
+            
             $table->foreignId('enrollment_id')
                   ->constrained()
                   ->cascadeOnDelete();
 
-            // Links to the trainer who conducted the assessment
-            // This gets filled by auth()->id() in the controller
             $table->foreignId('trainer_id')
                   ->constrained('users')
                   ->cascadeOnDelete();
 
-            $table->decimal('score', 5, 2)->nullable(); // e.g. 98.50
+            $table->decimal('score', 5, 2)->nullable(); 
             $table->text('remarks')->nullable();
 
-            // Only two possible values based on TESDA standards
+            
             $table->enum('result', ['competent', 'not_yet_competent']);
 
             $table->timestamp('assessed_at')->nullable();

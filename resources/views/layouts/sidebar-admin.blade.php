@@ -151,7 +151,7 @@
         Trainees
     </a>
 
-    <a href="#"
+    <a href="{{ route('admin.users.index') }}"
        class="sb-link {{ request()->routeIs('admin.users*') ? 'active' : '' }}">
         <span class="sb-icon"><i class="fas fa-user-shield"></i></span>
         Users

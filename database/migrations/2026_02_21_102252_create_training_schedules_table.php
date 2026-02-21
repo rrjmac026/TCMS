@@ -11,13 +11,11 @@ return new class extends Migration
         Schema::create('training_schedules', function (Blueprint $table) {
             $table->id();
 
-            // Which course this schedule belongs to
+
             $table->foreignId('course_id')
                   ->constrained()
                   ->cascadeOnDelete();
 
-            // Which trainer is assigned to this schedule
-            // Uses constrained('users') because trainer_id points to users table
             $table->foreignId('trainer_id')
                   ->constrained('users')
                   ->cascadeOnDelete();

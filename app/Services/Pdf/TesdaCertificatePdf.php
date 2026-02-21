@@ -353,11 +353,12 @@ class TesdaCertificatePdf
     {
         $cert   = $this->certificate;
         $course = $cert->enrollment->course->name;
+        $trainerName = $cert->trainer?->name ?? 'Trainer / Assessor';
 
         $sigs = [
             ['name' => 'Training Center Director', 'title' => 'Authorized Signatory'],
             ['name' => 'TESDA Regional Director',  'title' => 'TESDA Authority'],
-            ['name' => 'Trainer / Assessor',        'title' => $course],
+            ['name' => $trainerName,        'title' => 'Trainer / Assessor'],
         ];
 
         $lineW  = 60;

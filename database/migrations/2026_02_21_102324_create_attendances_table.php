@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('attendances', function (Blueprint $table) {
             $table->id();
 
-            // Links to which enrollment this attendance belongs to
+           
             $table->foreignId('enrollment_id')
                   ->constrained()
                   ->cascadeOnDelete();

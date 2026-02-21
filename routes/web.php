@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\AdminEnrollmentController;
 use App\Http\Controllers\Admin\AdminTrainingScheduleController;
 use App\Http\Controllers\Admin\AdminAttendanceController;
 use App\Http\Controllers\Admin\AdminCertificateController;
+use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Trainer\TrainerController;
 use App\Http\Controllers\Trainee\TraineeController;
 use Illuminate\Support\Facades\Route;
@@ -37,12 +38,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::resource('training-schedules', AdminTrainingScheduleController::class);
     Route::resource('attendances', AdminAttendanceController::class);
 
-    Route::get('/certificates/{certificate}',          [AdminCertificateController::class, 'show'])->name('certificates.show');
     Route::get('certificates/{certificate}/preview', [AdminCertificateController::class, 'preview'])
      ->name('certificates.preview');
     Route::get('certificates/{certificate}/download', [AdminCertificateController::class, 'download'])
      ->name('certificates.download');
     Route::resource('certificates', AdminCertificateController::class);
+
+    Route::resource('users', AdminUserController::class);
 });
 
 Route::prefix('trainer')->name('trainer.')->middleware(['auth', 'role:trainer'])->group(function () {

@@ -11,6 +11,7 @@ class Certificate extends Model
         'certificate_number',
         'issued_at',
         'expires_at',
+        'trainer_id'
     ];
 
     protected $casts = [
@@ -21,5 +22,10 @@ class Certificate extends Model
     public function enrollment()
     {
         return $this->belongsTo(Enrollment::class);
+    }
+
+    public function trainer()
+    {
+        return $this->belongsTo(User::class, 'trainer_id');
     }
 }

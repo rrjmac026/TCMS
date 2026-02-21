@@ -127,6 +127,27 @@
             }
             .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 5px 16px rgba(0,87,184,0.32); }
 
+            .btn-dashboard {
+                display: inline-flex; align-items: center; gap: 7px;
+                padding: 8px 20px; border-radius: 8px;
+                font-size: 13px; font-weight: 700; text-decoration: none;
+                border: 1.5px solid var(--tesda-gold); color: #fff;
+                background: linear-gradient(135deg, var(--tesda-gold) 0%, #d4a800 100%);
+                transition: all 0.18s; font-family: inherit;
+                box-shadow: 0 2px 10px rgba(245,197,24,0.25);
+            }
+            .btn-dashboard:hover { transform: translateY(-1px); box-shadow: 0 5px 16px rgba(245,197,24,0.35); }
+
+            .btn-ghost {
+                display: inline-flex; align-items: center; gap: 7px;
+                padding: 8px 20px; border-radius: 8px;
+                font-size: 13px; font-weight: 600; text-decoration: none;
+                border: 1.5px solid var(--tesda-border); color: #1a3a6b;
+                background: transparent;
+                transition: all 0.18s; font-family: inherit;
+            }
+            .btn-ghost:hover { border-color: var(--tesda-blue); color: var(--tesda-blue); background: var(--tesda-light); }
+
             /* Main card */
             .main-card {
                 width: 100%; max-width: 900px;
@@ -270,6 +291,9 @@
                 .feature-text span   { color: #4a6a9f; }
                 .btn-cta-secondary { background: #122550; border-color: #1e3a6b; color: #adc4f0; }
                 .btn-cta-secondary:hover { background: #1e3a6b; border-color: #5b9cf6; color: #5b9cf6; }
+                .btn-dashboard { border-color: #b38a00; box-shadow: 0 2px 10px rgba(245,197,24,0.15); }
+                .btn-ghost { border-color: #1e3a6b; color: #adc4f0; }
+                .btn-ghost:hover { border-color: #5b9cf6; color: #5b9cf6; background: #122550; }
                 footer { color: #3a5a8a; }
             }
         </style>
@@ -291,17 +315,24 @@
             </a>
 
             @if (Route::has('login'))
-                <nav class="header-nav">
+                <nav class="nav-links">
                     @auth
-                        <a href="{{ url('/dashboard') }}" class="btn-primary">
-                            <i class="fas fa-th-large" style="font-size:11px;"></i> Dashboard
+                        @php
+                            $role = Auth::user()->role ?? null;
+                            $dashboardRoute = match($role) {
+                                'admin' => 'admin.dashboard',
+                                'trainer'  => 'trainer.dashboard',
+                                'trainee'  => 'trainee.dashboard',
+                                default => 'dashboard'
+                            };
+                        @endphp
+                        <a href="{{ route($dashboardRoute) }}" class="btn-dashboard">
+                            <i class="fas fa-tachometer-alt" style="margin-right:7px;"></i>Dashboard
                         </a>
                     @else
-                        <a href="{{ route('login') }}" class="btn-outline">Log In</a>
+                        <a href="{{ route('login') }}" class="btn-ghost">Log in</a>
                         @if (Route::has('register'))
-                            <a href="{{ route('register') }}" class="btn-primary">
-                                <i class="fas fa-user-plus" style="font-size:11px;"></i> Register
-                            </a>
+                            <a href="{{ route('register') }}" class="btn-primary">Register</a>
                         @endif
                     @endauth
                 </nav>

@@ -53,6 +53,29 @@
                 @enderror
             </div>
 
+            {{-- Trainer --}}
+            <div>
+                <label class="block text-xs font-700 uppercase tracking-wide mb-1.5" style="color:#5a7aaa;">
+                    Trainer / Assessor <span style="color:#CE1126;">*</span>
+                </label>
+                <select name="trainer_id"
+                        class="w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition
+                            dark:bg-[#0a1628] dark:border-[#1e3a6b] dark:text-white"
+                        style="border-color:{{ $errors->has('trainer_id') ? '#CE1126' : '#c5d8f5' }}; color:#001a4d;"
+                        onfocus="this.style.borderColor='#0057B8'; this.style.boxShadow='0 0 0 3px rgba(0,87,184,0.10)'"
+                        onblur="this.style.borderColor='{{ $errors->has('trainer_id') ? '#CE1126' : '#c5d8f5' }}'; this.style.boxShadow='none'">
+                    <option value="">— Select Trainer —</option>
+                    @foreach ($trainers as $trainer)
+                        <option value="{{ $trainer->id }}" {{ old('trainer_id', $certificate->trainer_id) == $trainer->id ? 'selected' : '' }}>
+                            {{ $trainer->name }}
+                        </option>
+                    @endforeach
+                </select>
+                @error('trainer_id')
+                    <p class="text-xs mt-1" style="color:#CE1126;">{{ $message }}</p>
+                @enderror
+            </div>
+
             {{-- Certificate Number --}}
             <div>
                 <label class="block text-xs font-700 uppercase tracking-wide mb-1.5" style="color:#5a7aaa;">

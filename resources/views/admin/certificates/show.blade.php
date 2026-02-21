@@ -219,39 +219,39 @@
     </div>
 
     {{-- Action Buttons --}}
-    <div class="flex flex-col sm:flex-row gap-3">
-        <a href="{{ route('admin.certificates.preview', $certificate) }}"
-           class="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-white text-sm font-700 transition hover:-translate-y-0.5"
-           style="background:linear-gradient(135deg,#F5C518,#CE1126); box-shadow:0 3px 12px rgba(245,197,24,0.25);"
-           target="_blank">
-            <i class="fas fa-eye"></i> View Certificate
-        </a>
-        <a href="{{ route('admin.certificates.edit', $certificate) }}"
-           class="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-white text-sm font-700 transition hover:-translate-y-0.5"
-           style="background:linear-gradient(135deg,#0057B8,#003087); box-shadow:0 3px 12px rgba(0,87,184,0.25);">
-            <i class="fas fa-pen"></i> Edit Certificate
-        </a>
-        <a href="{{ route('admin.certificates.download', $certificate) }}"
-        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-700 transition hover:-translate-y-0.5"
-        style="background:linear-gradient(135deg,#0057B8,#003087);">
-            <i class="fas fa-download"></i> Download Certificate
-        </a>
-        <form method="POST" action="{{ route('admin.certificates.destroy', $certificate) }}" class="flex-1 sm:flex-initial"
-              onsubmit="return confirm('Delete this certificate? This action cannot be undone.')">
-            @csrf
-            @method('DELETE')
-            <button type="submit"
-                    class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-700 transition hover:scale-105"
-                    style="background:#fff0f2; border:1px solid #ffccd5; color:#CE1126;">
-                <i class="fas fa-trash"></i> Delete
-            </button>
-        </form>
-        <a href="{{ route('admin.certificates.index') }}"
-           class="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-600 border transition hover:bg-[#e8f0fb]"
-           style="border-color:#c5d8f5; color:#5a7aaa;">
-            <i class="fas fa-arrow-left"></i> Back
-        </a>
-    </div>
+        <div class="flex flex-col sm:flex-row flex-wrap gap-3">
+            <a href="{{ route('admin.certificates.preview', $certificate) }}"
+            class="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-white text-sm font-700 transition hover:-translate-y-0.5"
+            style="background:linear-gradient(135deg,#F5C518,#CE1126); box-shadow:0 3px 12px rgba(245,197,24,0.25);"
+            target="_blank">
+                <i class="fas fa-eye"></i> View Certificate
+            </a>
+            <a href="{{ route('admin.certificates.download', $certificate) }}"
+            class="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-white text-sm font-700 transition hover:-translate-y-0.5"
+            style="background:linear-gradient(135deg,#22C55E,#16A34A); box-shadow:0 3px 12px rgba(34,197,94,0.25);">
+                <i class="fas fa-download"></i> Download
+            </a>
+            <a href="{{ route('admin.certificates.edit', $certificate) }}"
+            class="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-white text-sm font-700 transition hover:-translate-y-0.5"
+            style="background:linear-gradient(135deg,#0057B8,#003087); box-shadow:0 3px 12px rgba(0,87,184,0.25);">
+                <i class="fas fa-pen"></i> Edit
+            </a>
+            <form method="POST" action="{{ route('admin.certificates.destroy', $certificate) }}"
+                onsubmit="return confirm('Delete this certificate? This action cannot be undone.')">
+                @csrf
+                @method('DELETE')
+                <button type="submit"
+                        class="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-700 transition hover:-translate-y-0.5"
+                        style="background:linear-gradient(135deg,#CE1126,#a00d1e); color:#fff; box-shadow:0 3px 12px rgba(206,17,38,0.25);">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </form>
+            <a href="{{ route('admin.certificates.index') }}"
+            class="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-600 border transition hover:bg-[#e8f0fb]"
+            style="border-color:#c5d8f5; color:#5a7aaa;">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
+        </div>
 
 </div>
 @endsection

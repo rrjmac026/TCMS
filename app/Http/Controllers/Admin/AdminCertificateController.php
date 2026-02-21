@@ -7,6 +7,7 @@ use App\Models\Certificate;
 use App\Models\Enrollment;
 use Illuminate\Http\Request;
 use App\Services\Pdf\TesdaCertificatePdf;
+use App\Models\User;
 
 
 
@@ -46,14 +47,16 @@ class AdminCertificateController extends Controller
 
     public function create()
     {
-        // Only completed enrollments can receive a certificate
         $enrollments = Enrollment::with(['trainee', 'course'])
-                                 ->where('status', 'completed')
-                                 ->orderBy('created_at', 'desc')
-                                 ->get();
+                                ->where('status', 'completed')
+                                ->orderBy('created_at', 'desc')
+                                ->get();
 
-        return view('admin.certificates.create', compact('enrollments'));
+        $trainers = User::where('role', 'trainer')->orderBy('name')->get();
+
+        return view('admin.certificates.create', compact('enrollments', 'trainers'));
     }
+
 
     public function store(Request $request)
     {
@@ -62,6 +65,7 @@ class AdminCertificateController extends Controller
             'certificate_number' => ['required', 'string', 'unique:certificates,certificate_number'],
             'issued_at'          => ['required', 'date'],
             'expires_at'         => ['nullable', 'date', 'after:issued_at'],
+            'trainer_id' => ['required', 'exists:users,id'],
         ]);
 
         // One certificate per enrollment only
@@ -88,11 +92,13 @@ class AdminCertificateController extends Controller
     public function edit(Certificate $certificate)
     {
         $enrollments = Enrollment::with(['trainee', 'course'])
-                                 ->where('status', 'completed')
-                                 ->orderBy('created_at', 'desc')
-                                 ->get();
+                                ->where('status', 'completed')
+                                ->orderBy('created_at', 'desc')
+                                ->get();
 
-        return view('admin.certificates.edit', compact('certificate', 'enrollments'));
+        $trainers = User::where('role', 'trainer')->orderBy('name')->get();
+
+        return view('admin.certificates.edit', compact('certificate', 'enrollments', 'trainers'));
     }
 
     public function update(Request $request, Certificate $certificate)
@@ -102,22 +108,22 @@ class AdminCertificateController extends Controller
             'certificate_number' => ['required', 'string', 'unique:certificates,certificate_number,' . $certificate->id],
             'issued_at'          => ['required', 'date'],
             'expires_at'         => ['nullable', 'date', 'after:issued_at'],
+            'trainer_id'         => ['nullable', 'exists:users,id'], // add this
         ]);
 
-        // Prevent duplicate but exclude current record
         $exists = Certificate::where('enrollment_id', $validated['enrollment_id'])
-                             ->where('id', '!=', $certificate->id)
-                             ->exists();
+                            ->where('id', '!=', $certificate->id)
+                            ->exists();
 
         if ($exists) {
             return back()->withInput()
-                         ->withErrors(['enrollment_id' => 'A certificate for this enrollment already exists.']);
+                        ->withErrors(['enrollment_id' => 'A certificate for this enrollment already exists.']);
         }
 
         $certificate->update($validated);
 
         return redirect()->route('admin.certificates.index')
-                         ->with('success', 'Certificate updated successfully.');
+                        ->with('success', 'Certificate updated successfully.');
     }
 
     public function destroy(Certificate $certificate)
@@ -130,7 +136,7 @@ class AdminCertificateController extends Controller
 
     public function preview(Certificate $certificate)
     {
-        $certificate->load('enrollment.trainee', 'enrollment.course');
+        $certificate->load('enrollment.trainee', 'enrollment.course', 'trainer');
 
         return (new TesdaCertificatePdf($certificate))->stream(
             "certificate-{$certificate->certificate_number}.pdf"
@@ -139,7 +145,7 @@ class AdminCertificateController extends Controller
 
     public function download(Certificate $certificate)
     {
-        $certificate->load('enrollment.trainee', 'enrollment.course');
+        $certificate->load('enrollment.trainee', 'enrollment.course', 'trainer');
 
         return (new TesdaCertificatePdf($certificate))->download(
             "certificate-{$certificate->certificate_number}.pdf"

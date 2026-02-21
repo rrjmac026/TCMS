@@ -7,8 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 class Trainee extends Model
 {
     protected $fillable = [
-        // Inherited from User: name, email, password, etc.
-        'enrollment_date',     // Trainee-specific
+        
+        'enrollment_date',
         'student_number',
         'batch_number',
         'learning_path',
