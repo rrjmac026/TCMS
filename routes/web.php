@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\AdminTrainersManagementController;
 use App\Http\Controllers\Trainer\TrainerController;
 use App\Http\Controllers\Trainee\TraineeController;
 use Illuminate\Support\Facades\Route;
@@ -23,6 +24,8 @@ Route::middleware('auth')->group(function () {
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/dashboard', function () {
         return view('admin.dashboard');})->name('dashboard');
+
+    Route::resource('trainers', AdminTrainersManagementController::class);
 });
 
 Route::prefix('trainer')->name('trainer.')->middleware(['auth', 'role:trainer'])->group(function () {
