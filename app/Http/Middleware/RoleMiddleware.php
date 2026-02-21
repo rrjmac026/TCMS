@@ -8,25 +8,12 @@ use Symfony\Component\HttpFoundation\Response;
 
 class RoleMiddleware
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure(\Illuminate\Http\Request): \Symfony\Component\HttpFoundation\Response  $next
-     * @param  mixed  ...$roles  List of allowed roles (e.g., admin, manager)
-     * @return \Symfony\Component\HttpFoundation\Response
-     */
     public function handle(Request $request, Closure $next, ...$roles): Response
     {
-        
-        if (!auth()->check()) {
-            abort(403, 'Unauthorized. Please log in.');
-        }
+        $user = $request->user();
 
-        $userRole = auth()->user()->role;
-
-        if (!in_array($userRole, $roles)) {
-            abort(403, 'Access denied. Insufficient role.');
+        if (!$user || !in_array($user->role, $roles)) {
+            abort(403, 'Unauthorized');
         }
 
         return $next($request);

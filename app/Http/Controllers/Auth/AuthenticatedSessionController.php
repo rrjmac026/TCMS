@@ -25,10 +25,17 @@ class AuthenticatedSessionController extends Controller
     public function store(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
-
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        $user = Auth::user();
+
+        return match ($user->role) {
+            'superadmin'  => redirect()->intended(route('superadmin.dashboard')),
+            'admin'  => redirect()->intended(route('admin.dashboard')),
+            'trainer'  => redirect()->intended(route('trainer.dashboard')),
+            'trainee'  => redirect()->intended(route('trainee.dashboard')),
+            default  => redirect()->intended(route('dashboard')),
+        };
     }
 
     /**
