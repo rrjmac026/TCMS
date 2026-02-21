@@ -36,6 +36,12 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::resource('enrollments', AdminEnrollmentController::class);
     Route::resource('training-schedules', AdminTrainingScheduleController::class);
     Route::resource('attendances', AdminAttendanceController::class);
+
+    Route::get('/certificates/{certificate}',          [AdminCertificateController::class, 'show'])->name('certificates.show');
+    Route::get('certificates/{certificate}/preview', [AdminCertificateController::class, 'preview'])
+     ->name('certificates.preview');
+    Route::get('certificates/{certificate}/download', [AdminCertificateController::class, 'download'])
+     ->name('certificates.download');
     Route::resource('certificates', AdminCertificateController::class);
 });
 

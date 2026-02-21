@@ -18,6 +18,8 @@
             </h1>
             <p class="text-sm mt-0.5" style="color:#5a7aaa;">Viewing certificate {{ $certificate->certificate_number }}</p>
         </div>
+
+        
     </div>
 
     {{-- Certificate Card --}}
@@ -218,10 +220,21 @@
 
     {{-- Action Buttons --}}
     <div class="flex flex-col sm:flex-row gap-3">
+        <a href="{{ route('admin.certificates.preview', $certificate) }}"
+           class="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-white text-sm font-700 transition hover:-translate-y-0.5"
+           style="background:linear-gradient(135deg,#F5C518,#CE1126); box-shadow:0 3px 12px rgba(245,197,24,0.25);"
+           target="_blank">
+            <i class="fas fa-eye"></i> View Certificate
+        </a>
         <a href="{{ route('admin.certificates.edit', $certificate) }}"
            class="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-white text-sm font-700 transition hover:-translate-y-0.5"
            style="background:linear-gradient(135deg,#0057B8,#003087); box-shadow:0 3px 12px rgba(0,87,184,0.25);">
             <i class="fas fa-pen"></i> Edit Certificate
+        </a>
+        <a href="{{ route('admin.certificates.download', $certificate) }}"
+        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-700 transition hover:-translate-y-0.5"
+        style="background:linear-gradient(135deg,#0057B8,#003087);">
+            <i class="fas fa-download"></i> Download Certificate
         </a>
         <form method="POST" action="{{ route('admin.certificates.destroy', $certificate) }}" class="flex-1 sm:flex-initial"
               onsubmit="return confirm('Delete this certificate? This action cannot be undone.')">

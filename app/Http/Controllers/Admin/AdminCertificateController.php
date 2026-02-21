@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Certificate;
 use App\Models\Enrollment;
 use Illuminate\Http\Request;
+use App\Services\Pdf\TesdaCertificatePdf;
+
+
 
 class AdminCertificateController extends Controller
 {
@@ -123,5 +126,31 @@ class AdminCertificateController extends Controller
 
         return redirect()->route('admin.certificates.index')
                          ->with('success', 'Certificate deleted successfully.');
+    }
+
+    public function preview(Certificate $certificate)
+    {
+        $certificate->load('enrollment.trainee', 'enrollment.course');
+
+        return (new TesdaCertificatePdf($certificate))->stream(
+            "certificate-{$certificate->certificate_number}.pdf"
+        );
+    }
+
+    public function download(Certificate $certificate)
+    {
+        $certificate->load('enrollment.trainee', 'enrollment.course');
+
+        return (new TesdaCertificatePdf($certificate))->download(
+            "certificate-{$certificate->certificate_number}.pdf"
+        );
+    }
+
+    public function save(Certificate $certificate)
+    {
+        $certificate->load('enrollment.trainee', 'enrollment.course');
+
+        $path = storage_path("app/certificates/{$certificate->certificate_number}.pdf");
+        (new TesdaCertificatePdf($certificate))->save($path);
     }
 }
