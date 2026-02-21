@@ -8,11 +8,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 
-class AdminTrainersManagementController extends Controller
+class AdminTraineesManagementController extends Controller
 {
     public function index(Request $request)
     {
-        $query = User::where('role', 'trainer');
+        $query = User::where('role', 'trainee');
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -22,14 +22,14 @@ class AdminTrainersManagementController extends Controller
             });
         }
 
-        $trainers = $query->latest()->paginate(10)->withQueryString();
+        $trainees = $query->latest()->paginate(10)->withQueryString();
 
-        return view('admin.trainers.index', compact('trainers'));
+        return view('admin.trainees.index', compact('trainees'));
     }
 
     public function create()
     {
-        return view('admin.trainers.create');
+        return view('admin.trainees.create');
     }
 
     public function store(Request $request)
@@ -44,30 +44,30 @@ class AdminTrainersManagementController extends Controller
             'name'     => $validated['name'],
             'email'    => $validated['email'],
             'password' => Hash::make($validated['password']),
-            'role'     => 'trainer',
+            'role'     => 'trainee',
         ]);
 
-        return redirect()->route('admin.trainers.index')
-                         ->with('success', 'Trainer created successfully.');
+        return redirect()->route('admin.trainees.index')
+                         ->with('success', 'Trainee created successfully.');
     }
 
-    public function show(User $trainer)
+    public function show(User $trainee)
     {
-        $trainer->load(['assessments', 'schedules']);
+        $trainee->load(['enrollments.course', 'enrollments.attendanceRecords']);
 
-        return view('admin.trainers.show', compact('trainer'));
+        return view('admin.trainees.show', compact('trainee'));
     }
 
-    public function edit(User $trainer)
+    public function edit(User $trainee)
     {
-        return view('admin.trainers.edit', compact('trainer'));
+        return view('admin.trainees.edit', compact('trainee'));
     }
 
-    public function update(Request $request, User $trainer)
+    public function update(Request $request, User $trainee)
     {
         $validated = $request->validate([
             'name'     => ['required', 'string', 'max:255'],
-            'email'    => ['required', 'email', 'unique:users,email,' . $trainer->id],
+            'email'    => ['required', 'email', 'unique:users,email,' . $trainee->id],
             'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
         ]);
 
@@ -80,17 +80,17 @@ class AdminTrainersManagementController extends Controller
             $data['password'] = Hash::make($validated['password']);
         }
 
-        $trainer->update($data);
+        $trainee->update($data);
 
-        return redirect()->route('admin.trainers.index')
-                         ->with('success', 'Trainer updated successfully.');
+        return redirect()->route('admin.trainees.index')
+                         ->with('success', 'Trainee updated successfully.');
     }
 
-    public function destroy(User $trainer)
+    public function destroy(User $trainee)
     {
-        $trainer->delete();
+        $trainee->delete();
 
-        return redirect()->route('admin.trainers.index')
-                         ->with('success', 'Trainer deleted successfully.');
+        return redirect()->route('admin.trainees.index')
+                         ->with('success', 'Trainee deleted successfully.');
     }
 }

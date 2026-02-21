@@ -145,7 +145,7 @@
         Trainers
     </a>
 
-    <a href="#"
+    <a href="{{ route('admin.trainees.index') }}"
        class="sb-link {{ request()->routeIs('admin.trainees*') ? 'active' : '' }}">
         <span class="sb-icon"><i class="fas fa-user-graduate"></i></span>
         Trainees
@@ -160,13 +160,13 @@
     <div class="sb-divider"></div>
     <span class="sb-section-label">Training</span>
 
-    <a href="#"
+    <a href="{{ route('admin.courses.index') }}"
        class="sb-link {{ request()->routeIs('admin.courses*') ? 'active' : '' }}">
         <span class="sb-icon"><i class="fas fa-book-open"></i></span>
         Courses
     </a>
 
-    <a href="#"
+    <a href="{{ route('admin.enrollments.index') }}"
        class="sb-link {{ request()->routeIs('admin.enrollments*') ? 'active' : '' }}">
         <span class="sb-icon"><i class="fas fa-user-plus"></i></span>
         Enrollments

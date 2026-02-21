@@ -31,4 +31,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Assessment::class, 'trainer_id');
     }
+
+    public function schedules()
+    {
+        return $this->hasMany(TrainingSchedule::class, 'trainer_id');
+    }
 }

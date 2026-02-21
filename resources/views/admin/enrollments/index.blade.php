@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Trainers Management')
+@section('title', 'Enrollments Management')
 
 @section('content')
 <div class="space-y-6">
@@ -9,17 +9,17 @@
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
             <h1 class="text-2xl font-bold dark:text-white" style="color:#003087;">
-                <i class="fas fa-chalkboard-teacher mr-2" style="color:#CE1126;"></i>
-                Trainers Management
+                <i class="fas fa-clipboard-list mr-2" style="color:#CE1126;"></i>
+                Enrollments Management
             </h1>
             <p class="text-sm mt-1" style="color:#5a7aaa;">
-                Manage all registered trainers and assessors across training centers.
+                Manage trainee course enrollments and enrollment status.
             </p>
         </div>
-        <a href="{{ route('admin.trainers.create') }}"
+        <a href="{{ route('admin.enrollments.create') }}"
            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-bold shadow transition hover:-translate-y-0.5"
            style="background: linear-gradient(135deg,#CE1126,#A50E1E); box-shadow:0 3px 12px rgba(206,17,38,0.28);">
-            <i class="fas fa-plus"></i> Add Trainer
+            <i class="fas fa-plus"></i> Add Enrollment
         </a>
     </div>
 
@@ -34,25 +34,37 @@
     {{-- Filters --}}
     <div class="rounded-2xl border p-5 dark:bg-[#0d1f3c] dark:border-[#1e3a6b]"
          style="background:#fff; border-color:#c5d8f5;">
-        <form method="GET" action="{{ route('admin.trainers.index') }}"
+        <form method="GET" action="{{ route('admin.enrollments.index') }}"
               class="flex flex-col sm:flex-row gap-3">
             <div class="relative flex-1">
                 <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-xs" style="color:#5a7aaa;"></i>
                 <input type="text" name="search" value="{{ request('search') }}"
-                       placeholder="Search by name or email..."
+                       placeholder="Search by trainee or course..."
                        class="w-full pl-9 pr-4 py-2.5 rounded-xl border text-sm outline-none transition
                               dark:bg-[#0a1628] dark:border-[#1e3a6b] dark:text-white dark:placeholder-[#3a5a8a]"
                        style="border-color:#c5d8f5; color:#001a4d;"
                        onfocus="this.style.borderColor='#0057B8'; this.style.boxShadow='0 0 0 3px rgba(0,87,184,0.10)'"
                        onblur="this.style.borderColor='#c5d8f5'; this.style.boxShadow='none'">
             </div>
+            <select name="status"
+                    class="px-4 py-2.5 rounded-xl border text-sm outline-none transition
+                           dark:bg-[#0a1628] dark:border-[#1e3a6b] dark:text-white"
+                    style="border-color:#c5d8f5; color:#001a4d;"
+                    onfocus="this.style.borderColor='#0057B8'; this.style.boxShadow='0 0 0 3px rgba(0,87,184,0.10)'"
+                    onblur="this.style.borderColor='#c5d8f5'; this.style.boxShadow='none'">
+                <option value="">All Status</option>
+                <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending</option>
+                <option value="approved" {{ request('status') === 'approved' ? 'selected' : '' }}>Approved</option>
+                <option value="completed" {{ request('status') === 'completed' ? 'selected' : '' }}>Completed</option>
+                <option value="dropped" {{ request('status') === 'dropped' ? 'selected' : '' }}>Dropped</option>
+            </select>
             <button type="submit"
                     class="px-5 py-2.5 rounded-xl text-white text-sm font-bold transition hover:-translate-y-0.5"
                     style="background:linear-gradient(135deg,#0057B8,#003087);">
                 <i class="fas fa-filter mr-1"></i> Filter
             </button>
-            @if (request()->filled('search'))
-                <a href="{{ route('admin.trainers.index') }}"
+            @if (request()->filled('search') || request()->filled('status'))
+                <a href="{{ route('admin.enrollments.index') }}"
                    class="px-4 py-2.5 rounded-xl text-sm font-semibold border transition hover:bg-[#e8f0fb]"
                    style="border-color:#c5d8f5; color:#5a7aaa;">
                     Clear
@@ -69,46 +81,69 @@
                 <thead>
                     <tr style="background:#e8f0fb; border-bottom:1px solid #c5d8f5;">
                         <th class="px-5 py-3 text-left font-700 text-xs uppercase tracking-wide" style="color:#0057B8;">#</th>
-                        <th class="px-5 py-3 text-left font-700 text-xs uppercase tracking-wide" style="color:#0057B8;">Trainer</th>
-                        <th class="px-5 py-3 text-left font-700 text-xs uppercase tracking-wide" style="color:#0057B8;">Date Joined</th>
+                        <th class="px-5 py-3 text-left font-700 text-xs uppercase tracking-wide" style="color:#0057B8;">Trainee</th>
+                        <th class="px-5 py-3 text-left font-700 text-xs uppercase tracking-wide" style="color:#0057B8;">Course</th>
+                        <th class="px-5 py-3 text-center font-700 text-xs uppercase tracking-wide" style="color:#0057B8;">Enrolled Date</th>
+                        <th class="px-5 py-3 text-center font-700 text-xs uppercase tracking-wide" style="color:#0057B8;">Status</th>
                         <th class="px-5 py-3 text-center font-700 text-xs uppercase tracking-wide" style="color:#0057B8;">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y dark:divide-[#1e3a6b]" style="divide-color:#e8f0fb;">
-                    @forelse ($trainers as $trainer)
+                    @forelse ($enrollments as $enrollment)
                         <tr class="transition hover:bg-[#f0f5ff] dark:hover:bg-[#122550]">
                             <td class="px-5 py-4 font-mono text-xs" style="color:#5a7aaa;">
-                                {{ $trainers->firstItem() + $loop->index }}
+                                {{ $enrollments->firstItem() + $loop->index }}
                             </td>
                             <td class="px-5 py-4">
                                 <div class="flex items-center gap-3">
                                     <div class="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-800 text-white flex-shrink-0"
                                          style="background:linear-gradient(135deg,#0057B8,#003087);">
-                                        {{ strtoupper(substr($trainer->name, 0, 1)) }}
+                                        {{ strtoupper(substr($enrollment->trainee->name, 0, 1)) }}
                                     </div>
                                     <div>
-                                        <div class="font-700 dark:text-white" style="color:#001a4d;">{{ $trainer->name }}</div>
-                                        <div class="text-xs" style="color:#5a7aaa;">{{ $trainer->email }}</div>
+                                        <div class="font-700 dark:text-white" style="color:#001a4d;">{{ $enrollment->trainee->name }}</div>
+                                        <div class="text-xs" style="color:#5a7aaa;">{{ $enrollment->trainee->email }}</div>
                                     </div>
                                 </div>
                             </td>
-                            <td class="px-5 py-4 text-xs" style="color:#5a7aaa;">
-                                {{ $trainer->created_at?->format('M d, Y') }}
+                            <td class="px-5 py-4">
+                                <div>
+                                    <div class="font-700 dark:text-white" style="color:#001a4d;">{{ $enrollment->course->name }}</div>
+                                    <div class="text-xs" style="color:#5a7aaa;">{{ $enrollment->course->code }}</div>
+                                </div>
+                            </td>
+                            <td class="px-5 py-4 text-center text-xs font-600" style="color:#5a7aaa;">
+                                {{ $enrollment->enrolled_at?->format('M d, Y') }}
+                            </td>
+                            <td class="px-5 py-4 text-center">
+                                @php
+                                    $statusColors = [
+                                        'pending' => ['bg' => 'rgba(234,179,8,0.15)', 'color' => '#ea b308', 'icon' => 'fa-hourglass-half'],
+                                        'approved' => ['bg' => 'rgba(59,130,246,0.15)', 'color' => '#3b82f6', 'icon' => 'fa-check-circle'],
+                                        'completed' => ['bg' => 'rgba(34,197,94,0.15)', 'color' => '#22c55e', 'icon' => 'fa-check-double'],
+                                        'dropped' => ['bg' => 'rgba(206,17,38,0.15)', 'color' => '#CE1126', 'icon' => 'fa-times-circle'],
+                                    ];
+                                    $statusColor = $statusColors[$enrollment->status] ?? $statusColors['pending'];
+                                @endphp
+                                <span class="px-2.5 py-1 rounded-lg text-xs font-700 inline-block"
+                                      style="background:{{ $statusColor['bg'] }}; color:{{ $statusColor['color'] }};">
+                                    <i class="fas {{ $statusColor['icon'] }} mr-1" style="font-size:9px;"></i> {{ ucfirst($enrollment->status) }}
+                                </span>
                             </td>
                             <td class="px-5 py-4">
                                 <div class="flex items-center justify-center gap-2">
-                                    <a href="{{ route('admin.trainers.show', $trainer) }}"
+                                    <a href="{{ route('admin.enrollments.show', $enrollment) }}"
                                        class="w-8 h-8 rounded-lg flex items-center justify-center text-xs transition hover:scale-110"
                                        style="background:#e8f0fb; color:#0057B8;" title="View">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    <a href="{{ route('admin.trainers.edit', $trainer) }}"
+                                    <a href="{{ route('admin.enrollments.edit', $enrollment) }}"
                                        class="w-8 h-8 rounded-lg flex items-center justify-center text-xs transition hover:scale-110"
                                        style="background:rgba(245,197,24,0.15); color:#b38a00;" title="Edit">
                                         <i class="fas fa-pen"></i>
                                     </a>
-                                    <form method="POST" action="{{ route('admin.trainers.destroy', $trainer) }}"
-                                          onsubmit="return confirm('Delete trainer {{ addslashes($trainer->name) }}? This cannot be undone.')">
+                                    <form method="POST" action="{{ route('admin.enrollments.destroy', $enrollment) }}"
+                                          onsubmit="return confirm('Delete enrollment for {{ addslashes($enrollment->trainee->name) }}? This cannot be undone.')">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit"
@@ -122,10 +157,10 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="px-5 py-16 text-center">
+                            <td colspan="6" class="px-5 py-16 text-center">
                                 <div class="flex flex-col items-center gap-3" style="color:#5a7aaa;">
-                                    <i class="fas fa-chalkboard-teacher text-4xl opacity-25"></i>
-                                    <p class="font-600">No trainers found</p>
+                                    <i class="fas fa-clipboard-list text-4xl opacity-25"></i>
+                                    <p class="font-600">No enrollments found</p>
                                     <p class="text-xs">Try adjusting your search or filters.</p>
                                 </div>
                             </td>
@@ -135,9 +170,9 @@
             </table>
         </div>
 
-        @if ($trainers->hasPages())
+        @if ($enrollments->hasPages())
             <div class="px-5 py-4 border-t dark:border-[#1e3a6b]" style="border-color:#c5d8f5;">
-                {{ $trainers->links() }}
+                {{ $enrollments->links() }}
             </div>
         @endif
     </div>
