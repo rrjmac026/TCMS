@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+//Admin Controllers
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\AdminTrainersManagementController;
 use App\Http\Controllers\Admin\AdminTraineesManagementController;
@@ -10,12 +11,19 @@ use App\Http\Controllers\Admin\AdminTrainingScheduleController;
 use App\Http\Controllers\Admin\AdminAttendanceController;
 use App\Http\Controllers\Admin\AdminCertificateController;
 use App\Http\Controllers\Admin\AdminUserController;
+// Trainer Controllers
 use App\Http\Controllers\Trainer\TrainerController;
-use App\Http\Controllers\Trainee\TraineeController;
 use App\Http\Controllers\Trainer\TrainerScheduleController;
 use App\Http\Controllers\Trainer\TrainerAttendanceController;
 use App\Http\Controllers\Trainer\TrainerAssessmentController;
 use App\Http\Controllers\Trainer\TrainerTraineeController;
+// Trainee Controllers
+use App\Http\Controllers\Trainee\TraineeController;
+use App\Http\Controllers\Trainee\TraineeCourseController;
+use App\Http\Controllers\Trainee\TraineeEnrollmentController;
+use App\Http\Controllers\Trainee\TraineeScheduleController;
+use App\Http\Controllers\Trainee\TraineeAssessmentController;
+use App\Http\Controllers\Trainee\TraineeCertificateController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -70,8 +78,31 @@ Route::prefix('trainer')->name('trainer.')->middleware(['auth', 'role:trainer'])
 });
 
 Route::prefix('trainee')->name('trainee.')->middleware(['auth', 'role:trainee'])->group(function () {
-    Route::get('/dashboard', function () {
-        return view('trainee.dashboard');})->name('dashboard');
+    Route::get('/dashboard', [TraineeController::class, 'dashboard'])->name('dashboard');
+
+    // Browse courses & enroll
+    Route::get('/courses',                      [TraineeCourseController::class, 'index'])->name('courses.index');
+    Route::get('/courses/{course}',             [TraineeCourseController::class, 'show'])->name('courses.show');
+    Route::post('/courses/{course}/enroll',     [TraineeCourseController::class, 'enroll'])->name('courses.enroll');
+
+    // My enrollments — read only
+    Route::get('/enrollments',                  [TraineeEnrollmentController::class, 'index'])->name('enrollments.index');
+    Route::get('/enrollments/{enrollment}',     [TraineeEnrollmentController::class, 'show'])->name('enrollments.show');
+
+    // Training schedules — read only
+    Route::get('/schedules',                    [TraineeScheduleController::class, 'index'])->name('schedules.index');
+    Route::get('/schedules/{trainingSchedule}', [TraineeScheduleController::class, 'show'])->name('schedules.show');
+
+    // Assessment results — read only
+    Route::get('/assessments',                  [TraineeAssessmentController::class, 'index'])->name('assessments.index');
+    Route::get('/assessments/{assessment}',     [TraineeAssessmentController::class, 'show'])->name('assessments.show');
+
+    // Certificates — view + download
+    Route::get('/certificates',                         [TraineeCertificateController::class, 'index'])->name('certificates.index');
+    Route::get('/certificates/{certificate}',           [TraineeCertificateController::class, 'show'])->name('certificates.show');
+    Route::get('/certificates/{certificate}/download',  [TraineeCertificateController::class, 'download'])->name('certificates.download');
+    Route::get('/certificates/{certificate}/preview',   [TraineeCertificateController::class, 'preview'])->name('certificates.preview');
+
 });
 
 require __DIR__.'/auth.php';
