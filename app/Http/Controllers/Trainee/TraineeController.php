@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Trainee;
 
 use App\Http\Controllers\Controller;
 use App\Models\Assessment;
-use App\Models\Attendance;
 use App\Models\Certificate;
 use App\Models\Enrollment;
 
@@ -28,12 +27,6 @@ class TraineeController extends Controller
 
         $enrollmentIds = $enrollments->pluck('id');
 
-        // Attendance summary
-        $totalAttendance  = Attendance::whereIn('enrollment_id', $enrollmentIds)->count();
-        $presentCount     = Attendance::whereIn('enrollment_id', $enrollmentIds)->where('status', 'present')->count();
-        $absentCount      = Attendance::whereIn('enrollment_id', $enrollmentIds)->where('status', 'absent')->count();
-        $lateCount        = Attendance::whereIn('enrollment_id', $enrollmentIds)->where('status', 'late')->count();
-
         // Assessment summary
         $assessments          = Assessment::whereIn('enrollment_id', $enrollmentIds)->get();
         $competentCount       = $assessments->where('result', 'competent')->count();
@@ -50,10 +43,6 @@ class TraineeController extends Controller
             'approvedCount',
             'completedCount',
             'droppedCount',
-            'totalAttendance',
-            'presentCount',
-            'absentCount',
-            'lateCount',
             'competentCount',
             'notYetCompetentCount',
             'certificatesCount',

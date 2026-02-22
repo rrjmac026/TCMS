@@ -31,7 +31,7 @@ class TraineeCourseController extends Controller
 
         $courses = $query->latest()->paginate(12)->withQueryString();
 
-        // Track which courses the trainee is already enrolled in
+        // Track which courses this trainee is already enrolled in
         $enrolledCourseIds = Enrollment::where('trainee_id', auth()->id())
             ->pluck('course_id')
             ->toArray();
@@ -44,6 +44,9 @@ class TraineeCourseController extends Controller
      */
     public function show(Course $course)
     {
+        // withCount so the blade can display $course->enrollments_count
+        $course->loadCount('enrollments');
+
         $course->load(['schedules' => function ($q) {
             $q->whereIn('status', ['upcoming', 'ongoing'])
               ->with('trainer')
@@ -82,7 +85,7 @@ class TraineeCourseController extends Controller
         Enrollment::create([
             'trainee_id'  => $traineeId,
             'course_id'   => $course->id,
-            'status'      => 'pending', // Admin must approve
+            'status'      => 'pending',
             'enrolled_at' => now(),
         ]);
 
