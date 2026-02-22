@@ -1,0 +1,171 @@
+<?php
+
+namespace App\Http\Controllers\Trainer;
+
+use App\Http\Controllers\Controller;
+use App\Models\Attendance;
+use App\Models\Enrollment;
+use Illuminate\Http\Request;
+
+class TrainerAttendanceController extends Controller
+{
+    /**
+     * Get enrollment IDs that belong to this trainer's courses.
+     */
+    private function trainerEnrollmentIds(): \Illuminate\Support\Collection
+    {
+        $trainerId = auth()->id();
+
+        return Enrollment::whereHas('course.schedules', function ($q) use ($trainerId) {
+            $q->where('trainer_id', $trainerId);
+        })->pluck('id');
+    }
+
+    public function index(Request $request)
+    {
+        $enrollmentIds = $this->trainerEnrollmentIds();
+
+        $query = Attendance::with(['enrollment.trainee', 'enrollment.course'])
+            ->whereIn('enrollment_id', $enrollmentIds);
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->whereHas('enrollment.trainee', function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            })->orWhereHas('enrollment.course', function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('date')) {
+            $query->whereDate('date', $request->date);
+        }
+
+        $attendances = $query->latest('date')->paginate(10)->withQueryString();
+
+        return view('trainer.attendances.index', compact('attendances'));
+    }
+
+    public function create()
+    {
+        $enrollmentIds = $this->trainerEnrollmentIds();
+
+        // Only approved enrollments under trainer's courses
+        $enrollments = Enrollment::with(['trainee', 'course'])
+            ->whereIn('id', $enrollmentIds)
+            ->where('status', 'approved')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('trainer.attendances.create', compact('enrollments'));
+    }
+
+    public function store(Request $request)
+    {
+        $enrollmentIds = $this->trainerEnrollmentIds();
+
+        $validated = $request->validate([
+            'enrollment_id' => ['required', 'exists:enrollments,id'],
+            'date'          => ['required', 'date'],
+            'status'        => ['required', 'in:present,absent,late'],
+        ]);
+
+        // Ensure the enrollment belongs to this trainer
+        if (! $enrollmentIds->contains($validated['enrollment_id'])) {
+            abort(403, 'You are not authorized to record attendance for this enrollment.');
+        }
+
+        // Prevent duplicate attendance for same enrollment on same date
+        $exists = Attendance::where('enrollment_id', $validated['enrollment_id'])
+            ->whereDate('date', $validated['date'])
+            ->exists();
+
+        if ($exists) {
+            return back()->withInput()
+                ->withErrors(['date' => 'Attendance for this trainee on this date already exists.']);
+        }
+
+        Attendance::create($validated);
+
+        return redirect()->route('trainer.attendances.index')
+            ->with('success', 'Attendance recorded successfully.');
+    }
+
+    public function show(Attendance $attendance)
+    {
+        $enrollmentIds = $this->trainerEnrollmentIds();
+
+        // Ensure this attendance belongs to trainer's enrollments
+        abort_if(! $enrollmentIds->contains($attendance->enrollment_id), 403);
+
+        $attendance->load(['enrollment.trainee', 'enrollment.course']);
+
+        return view('trainer.attendances.show', compact('attendance'));
+    }
+
+    public function edit(Attendance $attendance)
+    {
+        $enrollmentIds = $this->trainerEnrollmentIds();
+
+        abort_if(! $enrollmentIds->contains($attendance->enrollment_id), 403);
+
+        $enrollments = Enrollment::with(['trainee', 'course'])
+            ->whereIn('id', $enrollmentIds)
+            ->where('status', 'approved')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('trainer.attendances.edit', compact('attendance', 'enrollments'));
+    }
+
+    public function update(Request $request, Attendance $attendance)
+    {
+        $enrollmentIds = $this->trainerEnrollmentIds();
+
+        abort_if(! $enrollmentIds->contains($attendance->enrollment_id), 403);
+
+        $validated = $request->validate([
+            'enrollment_id' => ['required', 'exists:enrollments,id'],
+            'date'          => ['required', 'date'],
+            'status'        => ['required', 'in:present,absent,late'],
+        ]);
+
+        // Ensure the new enrollment_id also belongs to this trainer
+        if (! $enrollmentIds->contains($validated['enrollment_id'])) {
+            abort(403, 'You are not authorized to record attendance for this enrollment.');
+        }
+
+        // Prevent duplicate but exclude current record
+        $exists = Attendance::where('enrollment_id', $validated['enrollment_id'])
+            ->whereDate('date', $validated['date'])
+            ->where('id', '!=', $attendance->id)
+            ->exists();
+
+        if ($exists) {
+            return back()->withInput()
+                ->withErrors(['date' => 'Attendance for this trainee on this date already exists.']);
+        }
+
+        $attendance->update($validated);
+
+        return redirect()->route('trainer.attendances.index')
+            ->with('success', 'Attendance updated successfully.');
+    }
+
+    public function destroy(Attendance $attendance)
+    {
+        $enrollmentIds = $this->trainerEnrollmentIds();
+
+        abort_if(! $enrollmentIds->contains($attendance->enrollment_id), 403);
+
+        $attendance->delete();
+
+        return redirect()->route('trainer.attendances.index')
+            ->with('success', 'Attendance deleted successfully.');
+    }
+}

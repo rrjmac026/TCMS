@@ -14,6 +14,7 @@ class TrainingSchedule extends Model
         'time_start',
         'time_end',
         'location',
+        'status', // upcoming, ongoing, completed, cancelled
     ];
 
     protected $casts = [

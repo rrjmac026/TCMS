@@ -12,6 +12,10 @@ use App\Http\Controllers\Admin\AdminCertificateController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Trainer\TrainerController;
 use App\Http\Controllers\Trainee\TraineeController;
+use App\Http\Controllers\Trainer\TrainerScheduleController;
+use App\Http\Controllers\Trainer\TrainerAttendanceController;
+use App\Http\Controllers\Trainer\TrainerAssessmentController;
+use App\Http\Controllers\Trainer\TrainerTraineeController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -48,8 +52,21 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
 });
 
 Route::prefix('trainer')->name('trainer.')->middleware(['auth', 'role:trainer'])->group(function () {
-    Route::get('/dashboard', function () {
-        return view('trainer.dashboard');})->name('dashboard');
+    Route::get('/dashboard', [TrainerController::class, 'dashboard'])->name('dashboard');
+
+    // Schedules — read only
+    Route::get('/schedules',       [TrainerScheduleController::class, 'index'])->name('schedules.index');
+    Route::get('/schedules/{trainingSchedule}', [TrainerScheduleController::class, 'show'])->name('schedules.show');
+
+    // Attendance — full CRUD
+    Route::resource('attendances', TrainerAttendanceController::class);
+
+    // Assessments — full CRUD
+    Route::resource('assessments', TrainerAssessmentController::class);
+
+    // Trainees — read only
+    Route::get('/trainees',              [TrainerTraineeController::class, 'index'])->name('trainees.index');
+    Route::get('/trainees/{trainee}',    [TrainerTraineeController::class, 'show'])->name('trainees.show');
 });
 
 Route::prefix('trainee')->name('trainee.')->middleware(['auth', 'role:trainee'])->group(function () {
