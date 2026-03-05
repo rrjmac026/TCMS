@@ -320,10 +320,11 @@
                         @php
                             $role = Auth::user()->role ?? null;
                             $dashboardRoute = match($role) {
+                                'superadmin' => 'superadmin.dashboard',
                                 'admin' => 'admin.dashboard',
                                 'trainer'  => 'trainer.dashboard',
                                 'trainee'  => 'trainee.dashboard',
-                                default => 'dashboard'
+                                default => 'login'
                             };
                         @endphp
                         <a href="{{ route($dashboardRoute) }}" class="btn-dashboard">
