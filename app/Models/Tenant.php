@@ -2,9 +2,7 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Stancl\Tenancy\Database\Models\Tenant as BaseTenant;
 use Stancl\Tenancy\Contracts\TenantWithDatabase;
@@ -35,49 +33,15 @@ class Tenant extends BaseTenant implements TenantWithDatabase
         'subscription',
         'status',
         'expires_at',
-        'data'
+        'data',
     ];
 
     protected $casts = [
-        'data' => 'array',
-        'is_active' => 'boolean',
+        'data'       => 'array',
         'expires_at' => 'datetime',
     ];
 
-    /**
-     * Get all users that belong to this tenant.
-     */
-    public function users()
-    {
-        return $this->hasMany(User::class);
-    }
-
-    /**
-     * Check if the tenant is on a specific plan.
-     */
-    public function hasSubscription(string $type): bool
-    {
-        return $this->subscription === $type;
-    }
-
-
-
-    /**
-     * Check if the subscription is active and not expired.
-     */
-    public function isSubscribed(): bool
-    {
-        return $this->is_active && (! $this->expires_at || $this->expires_at->isFuture());
-    }
-
-    /**
-     * Accessor for logo URL (if stored publicly).
-     */
-    public function getLogoUrlAttribute()
-    {
-        return $this->logo_path ? asset('storage/' . $this->logo_path) : null;
-    }
-
+    // Required by Stancl Tenancy — tells it which are real DB columns
     public static function getCustomColumns(): array
     {
         return [
@@ -91,33 +55,19 @@ class Tenant extends BaseTenant implements TenantWithDatabase
         ];
     }
 
-    public function setCustomAttribute($key, $value)
+    public function users()
     {
-        if (in_array($key, self::getCustomColumns())) {
-            $this->attributes[$key] = $value;
-        } else {
-            $data = $this->data ?? [];
-            $data[$key] = $value;
-            $this->data = $data;
-        }
+        return $this->hasMany(User::class);
     }
 
-    public function getCustomAttribute($key)
+    public function hasSubscription(string $type): bool
     {
-        if (!is_string($key) && !is_int($key)) {
-            return null;
-        }
-
-        $data = $this->data;
-
-        if (!is_array($data)) {
-            return null;
-        }
-
-        return $data[$key] ?? null;
+        return $this->subscription === $type;
     }
 
-
-
-
+    public function isSubscribed(): bool
+    {
+        return $this->status === 'approved' &&
+               (! $this->expires_at || $this->expires_at->isFuture());
+    }
 }

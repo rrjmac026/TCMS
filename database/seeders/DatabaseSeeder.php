@@ -7,6 +7,7 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
+
 class DatabaseSeeder extends Seeder
 {
     use WithoutModelEvents;
@@ -23,11 +24,11 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
         ]);
 
-        // User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        //     'password' => bcrypt('password'),
-        //     'role' => 'user',
-        // ]);
+        User::factory()->create([
+            'name' => env('LANDLORD_USER_NAME'),
+            'email' => env('LANDLORD_USER_EMAIL'),
+            'role' => env('LANDLORD_USER_ROLE'),
+            'password' => bcrypt(env('LANDLORD_USER_PASSWORD')),
+        ]);
     }
 }

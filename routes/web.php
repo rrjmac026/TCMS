@@ -1,115 +1,54 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
-//Admin Controllers
-use App\Http\Controllers\Admin\AdminController;
-use App\Http\Controllers\Admin\AdminTrainersManagementController;
-use App\Http\Controllers\Admin\AdminTraineesManagementController;
-use App\Http\Controllers\Admin\AdminCourseController;
-use App\Http\Controllers\Admin\AdminEnrollmentController;
-use App\Http\Controllers\Admin\AdminTrainingScheduleController;
-use App\Http\Controllers\Admin\AdminAttendanceController;
-use App\Http\Controllers\Admin\AdminCertificateController;
-use App\Http\Controllers\Admin\AdminUserController;
-// Trainer Controllers
-use App\Http\Controllers\Trainer\TrainerController;
-use App\Http\Controllers\Trainer\TrainerScheduleController;
-use App\Http\Controllers\Trainer\TrainerAttendanceController;
-use App\Http\Controllers\Trainer\TrainerAssessmentController;
-use App\Http\Controllers\Trainer\TrainerTraineeController;
-// Trainee Controllers
-use App\Http\Controllers\Trainee\TraineeController;
-use App\Http\Controllers\Trainee\TraineeCourseController;
-use App\Http\Controllers\Trainee\TraineeEnrollmentController;
-use App\Http\Controllers\Trainee\TraineeScheduleController;
-use App\Http\Controllers\Trainee\TraineeAssessmentController;
-use App\Http\Controllers\Trainee\TraineeCertificateController;
+use App\Http\Controllers\SuperAdmin\SuperAdminController;
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Auth\NewPasswordController;
+use App\Http\Controllers\Auth\ConfirmablePasswordController;
+use App\Http\Controllers\Auth\PasswordController;
 use Illuminate\Support\Facades\Route;
-
-
 
 foreach (config('tenancy.central_domains') as $domain) {
     Route::domain($domain)->group(function () {
+
+        // Landing / login page
         Route::get('/', function () {
             return view('superadmin.welcome');
         });
+
+        // Guest auth routes (login only — no register for superadmin)
+        Route::middleware('guest')->group(function () {
+            Route::get('/login',  [AuthenticatedSessionController::class, 'create'])->name('login');
+            Route::post('/login', [AuthenticatedSessionController::class, 'store']);
+
+            Route::get('/forgot-password',  [PasswordResetLinkController::class, 'create'])->name('password.request');
+            Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->name('password.email');
+
+            Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])->name('password.reset');
+            Route::post('/reset-password',         [NewPasswordController::class, 'store'])->name('password.store');
+        });
+
+        // Authenticated routes
+        Route::middleware('auth')->group(function () {
+            Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
+
+            Route::get('/confirm-password',  [ConfirmablePasswordController::class, 'show'])->name('password.confirm');
+            Route::post('/confirm-password', [ConfirmablePasswordController::class, 'store']);
+            Route::put('/password',          [PasswordController::class, 'update'])->name('password.update');
+        });
+
+        // SuperAdmin protected routes
+        Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('superadmin.')->group(function () {
+            Route::get('/dashboard', [SuperAdminController::class, 'dashboard'])->name('dashboard');
+
+            Route::get('/tenants',                    [SuperAdminController::class, 'index'])->name('tenants.index');
+            Route::get('/tenants/create',             [SuperAdminController::class, 'create'])->name('tenants.create');
+            Route::post('/tenants',                   [SuperAdminController::class, 'store'])->name('tenants.store');
+            Route::get('/tenants/{tenant}',           [SuperAdminController::class, 'show'])->name('tenants.show');
+            Route::delete('/tenants/{tenant}',        [SuperAdminController::class, 'destroy'])->name('tenants.destroy');
+            Route::post('/tenants/{tenant}/approve',  [SuperAdminController::class, 'approve'])->name('tenants.approve');
+            Route::post('/tenants/{tenant}/reject',   [SuperAdminController::class, 'reject'])->name('tenants.reject');
+            Route::post('/tenants/{tenant}/upgrade',  [SuperAdminController::class, 'upgrade'])->name('tenants.upgrade');
+        });
     });
 }
-
-
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
-
-Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-});
-
-Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->group(function () {
-    Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
-
-    Route::resource('trainers', AdminTrainersManagementController::class);
-    Route::resource('trainees', AdminTraineesManagementController::class);
-    Route::resource('courses', AdminCourseController::class);
-    Route::resource('enrollments', AdminEnrollmentController::class);
-    Route::resource('training-schedules', AdminTrainingScheduleController::class);
-    Route::resource('attendances', AdminAttendanceController::class);
-
-    Route::get('certificates/{certificate}/preview', [AdminCertificateController::class, 'preview'])
-     ->name('certificates.preview');
-    Route::get('certificates/{certificate}/download', [AdminCertificateController::class, 'download'])
-     ->name('certificates.download');
-    Route::resource('certificates', AdminCertificateController::class);
-
-    Route::resource('users', AdminUserController::class);
-});
-
-Route::prefix('trainer')->name('trainer.')->middleware(['auth', 'role:trainer'])->group(function () {
-    Route::get('/dashboard', [TrainerController::class, 'dashboard'])->name('dashboard');
-
-    // Schedules — read only
-    Route::get('/schedules',       [TrainerScheduleController::class, 'index'])->name('schedules.index');
-    Route::get('/schedules/{trainingSchedule}', [TrainerScheduleController::class, 'show'])->name('schedules.show');
-
-    // Attendance — full CRUD
-    Route::resource('attendances', TrainerAttendanceController::class);
-
-    // Assessments — full CRUD
-    Route::resource('assessments', TrainerAssessmentController::class);
-
-    // Trainees — read only
-    Route::get('/trainees',              [TrainerTraineeController::class, 'index'])->name('trainees.index');
-    Route::get('/trainees/{trainee}',    [TrainerTraineeController::class, 'show'])->name('trainees.show');
-});
-
-Route::prefix('trainee')->name('trainee.')->middleware(['auth', 'role:trainee'])->group(function () {
-    Route::get('/dashboard', [TraineeController::class, 'dashboard'])->name('dashboard');
-
-    // Browse courses & enroll
-    Route::get('/courses',                      [TraineeCourseController::class, 'index'])->name('courses.index');
-    Route::get('/courses/{course}',             [TraineeCourseController::class, 'show'])->name('courses.show');
-    Route::post('/courses/{course}/enroll',     [TraineeCourseController::class, 'enroll'])->name('courses.enroll');
-
-    // My enrollments — read only
-    Route::get('/enrollments',                  [TraineeEnrollmentController::class, 'index'])->name('enrollments.index');
-    Route::get('/enrollments/{enrollment}',     [TraineeEnrollmentController::class, 'show'])->name('enrollments.show');
-
-    // Training schedules — read only
-    Route::get('/schedules',                    [TraineeScheduleController::class, 'index'])->name('schedules.index');
-    Route::get('/schedules/{trainingSchedule}', [TraineeScheduleController::class, 'show'])->name('schedules.show');
-
-    // Assessment results — read only
-    Route::get('/assessments',                  [TraineeAssessmentController::class, 'index'])->name('assessments.index');
-    Route::get('/assessments/{assessment}',     [TraineeAssessmentController::class, 'show'])->name('assessments.show');
-
-    // Certificates — view + download
-    Route::get('/certificates',                         [TraineeCertificateController::class, 'index'])->name('certificates.index');
-    Route::get('/certificates/{certificate}',           [TraineeCertificateController::class, 'show'])->name('certificates.show');
-    Route::get('/certificates/{certificate}/download',  [TraineeCertificateController::class, 'download'])->name('certificates.download');
-    Route::get('/certificates/{certificate}/preview',   [TraineeCertificateController::class, 'preview'])->name('certificates.preview');
-
-});
-
-require __DIR__.'/auth.php';
