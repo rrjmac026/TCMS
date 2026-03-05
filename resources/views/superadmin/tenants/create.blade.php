@@ -156,11 +156,14 @@
                 <label class="form-label">Subscription Plan *</label>
                 <select name="subscription" class="form-select" required>
                     <option value="">-- Select a Plan --</option>
-                    <option value="free" {{ old('subscription') === 'free' ? 'selected' : '' }}>
-                        Free Plan (30 days trial)
+                    <option value="basic" {{ old('subscription') === 'basic' ? 'selected' : '' }}>
+                        Basic Plan (30 days)
                     </option>
-                    <option value="pro" {{ old('subscription') === 'pro' ? 'selected' : '' }}>
-                        Pro Plan (Premium features)
+                    <option value="standard" {{ old('subscription') === 'standard' ? 'selected' : '' }}>
+                        Standard Plan (6 months)
+                    </option>
+                    <option value="premium" {{ old('subscription') === 'premium' ? 'selected' : '' }}>
+                        Premium Plan (1 year)
                     </option>
                 </select>
                 @error('subscription')

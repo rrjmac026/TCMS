@@ -8,4 +8,12 @@ export default defineConfig({
             refresh: true,
         }),
     ],
+    server: {
+        host: '0.0.0.0',        // listen on all interfaces, not just [::1]
+        port: 5173,
+        cors: true,              // allow cross-origin requests
+        hmr: {
+            host: 'tcm.com',     // tell the browser to connect HMR here
+        },
+    },
 });
