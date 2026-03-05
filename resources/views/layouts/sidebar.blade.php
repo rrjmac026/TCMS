@@ -41,7 +41,9 @@
              @click="if (($event.target.tagName === 'A' || $event.target.closest('a')) && window.innerWidth < 1024) {
                  $store.sidebar.isOpen = false
              }">
-            @if($role === 'admin' || $role === 'superadmin')
+            @if($role === 'superadmin')
+                @include('layouts.sidebar-superadmin')
+            @elseif($role === 'admin')
                 @include('layouts.sidebar-admin')
             @elseif($role === 'trainer')
                 @include('layouts.sidebar-trainer')
