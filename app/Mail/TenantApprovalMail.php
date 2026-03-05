@@ -2,33 +2,26 @@
 
 namespace App\Mail;
 
-use App\Models\Tenant;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
-use Illuminate\Mail\Mailables\Content;
-use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
 class TenantApprovalMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public function __construct(
-        public Tenant $tenant,
-        public string $password
-    ) {}
+    public $tenant;
+    public $password;
 
-    public function envelope(): Envelope
+    public function __construct($tenant, $password)
     {
-        return new Envelope(
-            subject: 'Your Training Center Account Has Been Approved — ' . config('app.name'),
-        );
+        $this->tenant = $tenant;
+        $this->password = $password;
     }
 
-    public function content(): Content
+    public function build()
     {
-        return new Content(
-            view: 'emails.tenant.approved',
-        );
+        return $this->markdown('emails.tenant.approved')
+                    ->subject('Your Tenant Application Has Been Approved');
     }
 }

@@ -9,14 +9,16 @@ use App\Http\Controllers\Auth\PasswordController;
 use Illuminate\Support\Facades\Route;
 
 foreach (config('tenancy.central_domains') as $domain) {
-    Route::domain($domain)->group(function () {
+    Route::domain($domain)
+        ->middleware('web')   // <-- THIS WAS MISSING — without it, no session on dashboard
+        ->group(function () {
 
-        // Landing / login page
+        // Landing page
         Route::get('/', function () {
             return view('superadmin.welcome');
         });
 
-        // Guest auth routes (login only — no register for superadmin)
+        // Guest auth routes
         Route::middleware('guest')->group(function () {
             Route::get('/login',  [AuthenticatedSessionController::class, 'create'])->name('login');
             Route::post('/login', [AuthenticatedSessionController::class, 'store']);
@@ -38,17 +40,23 @@ foreach (config('tenancy.central_domains') as $domain) {
         });
 
         // SuperAdmin protected routes
-        Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('superadmin.')->group(function () {
-            Route::get('/dashboard', [SuperAdminController::class, 'dashboard'])->name('dashboard');
+        Route::middleware(['auth', 'role:superadmin'])
+            ->prefix('superadmin')
+            ->name('superadmin.')
+            ->group(function () {
+                Route::get('/dashboard', [SuperAdminController::class, 'dashboard'])->name('dashboard');
 
-            Route::get('/tenants',                    [SuperAdminController::class, 'index'])->name('tenants.index');
-            Route::get('/tenants/create',             [SuperAdminController::class, 'create'])->name('tenants.create');
-            Route::post('/tenants',                   [SuperAdminController::class, 'store'])->name('tenants.store');
-            Route::get('/tenants/{tenant}',           [SuperAdminController::class, 'show'])->name('tenants.show');
-            Route::delete('/tenants/{tenant}',        [SuperAdminController::class, 'destroy'])->name('tenants.destroy');
-            Route::post('/tenants/{tenant}/approve',  [SuperAdminController::class, 'approve'])->name('tenants.approve');
-            Route::post('/tenants/{tenant}/reject',   [SuperAdminController::class, 'reject'])->name('tenants.reject');
-            Route::post('/tenants/{tenant}/upgrade',  [SuperAdminController::class, 'upgrade'])->name('tenants.upgrade');
-        });
+                // Static routes BEFORE wildcard {tenant}
+                Route::get('/tenants',        [SuperAdminController::class, 'index'])->name('tenants.index');
+                Route::get('/tenants/create', [SuperAdminController::class, 'create'])->name('tenants.create');
+                Route::post('/tenants',       [SuperAdminController::class, 'store'])->name('tenants.store');
+
+                // Wildcard {tenant} routes AFTER static routes
+                Route::get('/tenants/{tenant}',           [SuperAdminController::class, 'show'])->name('tenants.show');
+                Route::delete('/tenants/{tenant}',        [SuperAdminController::class, 'destroy'])->name('tenants.destroy');
+                Route::post('/tenants/{tenant}/approve',  [SuperAdminController::class, 'approve'])->name('tenants.approve');
+                Route::post('/tenants/{tenant}/reject',   [SuperAdminController::class, 'reject'])->name('tenants.reject');
+                Route::patch('/tenants/{tenant}/upgrade', [SuperAdminController::class, 'upgrade'])->name('tenants.upgrade');
+            });
     });
 }
