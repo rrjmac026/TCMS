@@ -8,28 +8,24 @@ use Illuminate\Support\Facades\Schema;
 
 class CreateTenantsTable extends Migration
 {
-    /**
-     * Run the migrations.
-     *
-     * @return void
-     */
     public function up(): void
     {
         Schema::create('tenants', function (Blueprint $table) {
             $table->string('id')->primary();
 
-            // your custom columns may go here
+            // Custom columns
+            $table->string('name');
+            $table->string('admin_email')->unique();
+            $table->string('subdomain')->unique();
+            $table->enum('subscription', ['basic', 'standard', 'premium'])->default('basic');
+            $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
+            $table->timestamp('expires_at')->nullable();
 
             $table->timestamps();
             $table->json('data')->nullable();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
     public function down(): void
     {
         Schema::dropIfExists('tenants');
