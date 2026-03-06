@@ -7,42 +7,34 @@ use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
 // Controllers — Auth
-use App\Http\Controllers\Auth\AuthenticatedSessionController;
-use App\Http\Controllers\Auth\ConfirmablePasswordController;
-use App\Http\Controllers\Auth\EmailVerificationNotificationController;
-use App\Http\Controllers\Auth\EmailVerificationPromptController;
-use App\Http\Controllers\Auth\NewPasswordController;
-use App\Http\Controllers\Auth\PasswordController;
-use App\Http\Controllers\Auth\PasswordResetLinkController;
-use App\Http\Controllers\Auth\RegisteredUserController;
-use App\Http\Controllers\Auth\VerifyEmailController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Auth\TenantLoginController;
 
 // Controllers — Admin
-use App\Http\Controllers\Admin\AdminController;
-use App\Http\Controllers\Admin\AdminTrainersManagementController;
-use App\Http\Controllers\Admin\AdminTraineesManagementController;
-use App\Http\Controllers\Admin\AdminCourseController;
-use App\Http\Controllers\Admin\AdminEnrollmentController;
-use App\Http\Controllers\Admin\AdminTrainingScheduleController;
-use App\Http\Controllers\Admin\AdminAttendanceController;
-use App\Http\Controllers\Admin\AdminCertificateController;
-use App\Http\Controllers\Admin\AdminUserController;
+use App\Http\Controllers\Tenant\Admin\AdminController;
+use App\Http\Controllers\Tenant\Admin\AdminTrainersManagementController;
+use App\Http\Controllers\Tenant\Admin\AdminTraineesManagementController;
+use App\Http\Controllers\Tenant\Admin\AdminCourseController;
+use App\Http\Controllers\Tenant\Admin\AdminEnrollmentController;
+use App\Http\Controllers\Tenant\Admin\AdminTrainingScheduleController;
+use App\Http\Controllers\Tenant\Admin\AdminAttendanceController;
+use App\Http\Controllers\Tenant\Admin\AdminCertificateController;
+use App\Http\Controllers\Tenant\Admin\AdminUserController;
 
 // Controllers — Trainer
-use App\Http\Controllers\Trainer\TrainerController;
-use App\Http\Controllers\Trainer\TrainerScheduleController;
-use App\Http\Controllers\Trainer\TrainerAttendanceController;
-use App\Http\Controllers\Trainer\TrainerAssessmentController;
-use App\Http\Controllers\Trainer\TrainerTraineeController;
+use App\Http\Controllers\Tenant\Trainer\TrainerController;
+use App\Http\Controllers\Tenant\Trainer\TrainerScheduleController;
+use App\Http\Controllers\Tenant\Trainer\TrainerAttendanceController;
+use App\Http\Controllers\Tenant\Trainer\TrainerAssessmentController;
+use App\Http\Controllers\Tenant\Trainer\TrainerTraineeController;
 
 // Controllers — Trainee
-use App\Http\Controllers\Trainee\TraineeController;
-use App\Http\Controllers\Trainee\TraineeCourseController;
-use App\Http\Controllers\Trainee\TraineeEnrollmentController;
-use App\Http\Controllers\Trainee\TraineeScheduleController;
-use App\Http\Controllers\Trainee\TraineeAssessmentController;
-use App\Http\Controllers\Trainee\TraineeCertificateController;
+use App\Http\Controllers\Tenant\Trainee\TraineeController;
+use App\Http\Controllers\Tenant\Trainee\TraineeCourseController;
+use App\Http\Controllers\Tenant\Trainee\TraineeEnrollmentController;
+use App\Http\Controllers\Tenant\Trainee\TraineeScheduleController;
+use App\Http\Controllers\Tenant\Trainee\TraineeAssessmentController;
+use App\Http\Controllers\Tenant\Trainee\TraineeCertificateController;
 
 Route::middleware([
     'web',
@@ -50,33 +42,20 @@ Route::middleware([
     PreventAccessFromCentralDomains::class,
 ])->group(function () {
 
-    // ── Guest auth (Breeze) ────────────────────────────────────────────────
-    Route::middleware('guest')->group(function () {
-        Route::get('register',  [RegisteredUserController::class, 'create'])->name('register');
-        Route::post('register', [RegisteredUserController::class, 'store']);
-
-        Route::get('login',  [AuthenticatedSessionController::class, 'create'])->name('login');
-        Route::post('login', [AuthenticatedSessionController::class, 'store']);
-
-        Route::get('forgot-password',  [PasswordResetLinkController::class, 'create'])->name('password.request');
-        Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])->name('password.email');
-
-        Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])->name('password.reset');
-        Route::post('reset-password',         [NewPasswordController::class, 'store'])->name('password.store');
+    // ── Root redirect ──────────────────────────────────────────────────────
+    Route::get('/', function () {
+        return redirect()->route('login');
     });
 
-    // ── Authenticated auth (Breeze) ────────────────────────────────────────
-    Route::middleware('auth')->group(function () {
-        Route::get('verify-email', EmailVerificationPromptController::class)->name('verification.notice');
-        Route::get('verify-email/{id}/{hash}', VerifyEmailController::class)
-            ->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
-        Route::post('email/verification-notification', [EmailVerificationNotificationController::class, 'store'])
-            ->middleware('throttle:6,1')->name('verification.send');
+    // ── Guest routes ───────────────────────────────────────────────────────
+    Route::middleware('guest')->group(function () {
+        Route::get('/login',  [TenantLoginController::class, 'showLoginForm'])->name('login');
+        Route::post('/login', [TenantLoginController::class, 'login']);
+    });
 
-        Route::get('confirm-password',  [ConfirmablePasswordController::class, 'show'])->name('password.confirm');
-        Route::post('confirm-password', [ConfirmablePasswordController::class, 'store']);
-        Route::put('password',          [PasswordController::class, 'update'])->name('password.update');
-        Route::post('logout',           [AuthenticatedSessionController::class, 'destroy'])->name('logout');
+    // ── Authenticated routes ───────────────────────────────────────────────
+    Route::middleware('auth')->group(function () {
+        Route::post('/logout', [TenantLoginController::class, 'logout'])->name('logout');
 
         Route::get('/profile',    [ProfileController::class, 'edit'])->name('profile.edit');
         Route::patch('/profile',  [ProfileController::class, 'update'])->name('profile.update');
@@ -86,13 +65,14 @@ Route::middleware([
     // ── Admin ──────────────────────────────────────────────────────────────
     Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->group(function () {
         Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
-        Route::resource('trainers', AdminTrainersManagementController::class);
-        Route::resource('trainees', AdminTraineesManagementController::class);
-        Route::resource('courses', AdminCourseController::class);
-        Route::resource('enrollments', AdminEnrollmentController::class);
+        Route::resource('trainers',          AdminTrainersManagementController::class);
+        Route::resource('trainees',          AdminTraineesManagementController::class);
+        Route::resource('courses',           AdminCourseController::class);
+        Route::resource('enrollments',       AdminEnrollmentController::class);
         Route::resource('training-schedules', AdminTrainingScheduleController::class);
-        Route::resource('attendances', AdminAttendanceController::class);
+        Route::resource('attendances',       AdminAttendanceController::class);
 
+        // Custom certificate routes BEFORE resource to avoid {certificate} conflict
         Route::get('certificates/{certificate}/preview',  [AdminCertificateController::class, 'preview'])->name('certificates.preview');
         Route::get('certificates/{certificate}/download', [AdminCertificateController::class, 'download'])->name('certificates.download');
         Route::resource('certificates', AdminCertificateController::class);
@@ -102,8 +82,8 @@ Route::middleware([
     // ── Trainer ────────────────────────────────────────────────────────────
     Route::prefix('trainer')->name('trainer.')->middleware(['auth', 'role:trainer'])->group(function () {
         Route::get('/dashboard', [TrainerController::class, 'dashboard'])->name('dashboard');
-        Route::get('/schedules',                        [TrainerScheduleController::class, 'index'])->name('schedules.index');
-        Route::get('/schedules/{trainingSchedule}',     [TrainerScheduleController::class, 'show'])->name('schedules.show');
+        Route::get('/schedules',                    [TrainerScheduleController::class, 'index'])->name('schedules.index');
+        Route::get('/schedules/{trainingSchedule}', [TrainerScheduleController::class, 'show'])->name('schedules.show');
         Route::resource('attendances', TrainerAttendanceController::class);
         Route::resource('assessments', TrainerAssessmentController::class);
         Route::get('/trainees',           [TrainerTraineeController::class, 'index'])->name('trainees.index');
@@ -122,10 +102,12 @@ Route::middleware([
         Route::get('/schedules/{trainingSchedule}', [TraineeScheduleController::class, 'show'])->name('schedules.show');
         Route::get('/assessments',                  [TraineeAssessmentController::class, 'index'])->name('assessments.index');
         Route::get('/assessments/{assessment}',     [TraineeAssessmentController::class, 'show'])->name('assessments.show');
-        Route::get('/certificates',                          [TraineeCertificateController::class, 'index'])->name('certificates.index');
-        Route::get('/certificates/{certificate}',            [TraineeCertificateController::class, 'show'])->name('certificates.show');
-        Route::get('/certificates/{certificate}/download',   [TraineeCertificateController::class, 'download'])->name('certificates.download');
-        Route::get('/certificates/{certificate}/preview',    [TraineeCertificateController::class, 'preview'])->name('certificates.preview');
+
+        // Custom certificate routes BEFORE resource
+        Route::get('/certificates/{certificate}/download', [TraineeCertificateController::class, 'download'])->name('certificates.download');
+        Route::get('/certificates/{certificate}/preview',  [TraineeCertificateController::class, 'preview'])->name('certificates.preview');
+        Route::get('/certificates',             [TraineeCertificateController::class, 'index'])->name('certificates.index');
+        Route::get('/certificates/{certificate}', [TraineeCertificateController::class, 'show'])->name('certificates.show');
     });
 
 });

@@ -1,45 +1,34 @@
 <?php
 
-use App\Http\Controllers\SuperAdmin\SuperAdminController;
-use App\Http\Controllers\Auth\AuthenticatedSessionController;
-use App\Http\Controllers\Auth\PasswordResetLinkController;
-use App\Http\Controllers\Auth\NewPasswordController;
-use App\Http\Controllers\Auth\ConfirmablePasswordController;
-use App\Http\Controllers\Auth\PasswordController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Auth\SuperAdminLoginController;
+use App\Http\Controllers\Auth\SuperAdminRegisterController;
+use App\Http\Controllers\SuperAdmin\SuperAdminController;
 
 foreach (config('tenancy.central_domains') as $domain) {
     Route::domain($domain)
-        ->middleware('web')   // <-- THIS WAS MISSING — without it, no session on dashboard
+        ->middleware('web')
         ->group(function () {
 
-        // Landing page
+        // ── Landing page ───────────────────────────────────────────────────
         Route::get('/', function () {
             return view('superadmin.welcome');
         });
 
-        // Guest auth routes
+        // ── Guest routes ───────────────────────────────────────────────────
         Route::middleware('guest')->group(function () {
-            Route::get('/login',  [AuthenticatedSessionController::class, 'create'])->name('login');
-            Route::post('/login', [AuthenticatedSessionController::class, 'store']);
-
-            Route::get('/forgot-password',  [PasswordResetLinkController::class, 'create'])->name('password.request');
-            Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->name('password.email');
-
-            Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])->name('password.reset');
-            Route::post('/reset-password',         [NewPasswordController::class, 'store'])->name('password.store');
+            Route::get('/login',     [SuperAdminLoginController::class, 'showLoginForm'])->name('superadmin.login');
+            Route::post('/login',    [SuperAdminLoginController::class, 'login']);
+            Route::get('/register',  [SuperAdminRegisterController::class, 'showRegistrationForm'])->name('superadmin.register');
+            Route::post('/register', [SuperAdminRegisterController::class, 'register']);
         });
 
-        // Authenticated routes
+        // ── Authenticated routes ───────────────────────────────────────────
         Route::middleware('auth')->group(function () {
-            Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
-
-            Route::get('/confirm-password',  [ConfirmablePasswordController::class, 'show'])->name('password.confirm');
-            Route::post('/confirm-password', [ConfirmablePasswordController::class, 'store']);
-            Route::put('/password',          [PasswordController::class, 'update'])->name('password.update');
+            Route::post('/logout', [SuperAdminLoginController::class, 'logout'])->name('superadmin.logout');
         });
 
-        // SuperAdmin protected routes
+        // ── SuperAdmin protected routes ────────────────────────────────────
         Route::middleware(['auth', 'superadmin'])
             ->prefix('superadmin')
             ->name('superadmin.')

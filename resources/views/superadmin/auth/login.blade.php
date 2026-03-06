@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>Log In — {{ config('app.name', 'TCMS') }}</title>
+    <title>Super Admin — {{ config('app.name', 'TCMS') }}</title>
 
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700,800&display=swap" rel="stylesheet" />
@@ -24,7 +24,6 @@
             --red:    #CE1126;
             --red-dk: #A50E1E;
             --gold:   #F5C518;
-            --light:  #e8f0fb;
             --border: #c5d8f5;
             --text:   #001a4d;
             --muted:  #5a7aaa;
@@ -33,7 +32,7 @@
         html, body {
             min-height: 100vh;
             font-family: 'Figtree', sans-serif;
-            background: #f0f5ff;
+            background: #0a0f1e;
             overflow-x: hidden;
         }
 
@@ -50,31 +49,32 @@
             content: '';
             position: fixed; inset: 0; pointer-events: none; z-index: 0;
             background:
-                radial-gradient(ellipse 80% 60% at 15% 10%,  rgba(0,87,184,0.10)  0%, transparent 60%),
-                radial-gradient(ellipse 60% 50% at 85% 90%,  rgba(206,17,38,0.07) 0%, transparent 60%),
-                radial-gradient(ellipse 50% 40% at 50% 50%,  rgba(0,48,135,0.04)  0%, transparent 70%);
+                radial-gradient(ellipse 70% 50% at 20% 20%, rgba(0,87,184,0.15) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 50% at 80% 80%, rgba(206,17,38,0.10) 0%, transparent 60%),
+                radial-gradient(ellipse 40% 40% at 50% 50%, rgba(245,197,24,0.04) 0%, transparent 70%);
         }
 
+        /* Gold top stripe for superadmin — different from tenant */
         .stripe {
             position: fixed; top: 0; left: 0; right: 0; height: 4px; z-index: 100;
             background: linear-gradient(90deg,
-                #CE1126 0%, #CE1126 33%,
-                #0057B8 33%, #0057B8 66%,
-                #F5C518 66%, #F5C518 100%);
+                #F5C518 0%, #F5C518 33%,
+                #003087 33%, #003087 66%,
+                #CE1126 66%, #CE1126 100%);
         }
 
         .login-card {
             position: relative; z-index: 1;
             width: 100%; max-width: 440px;
-            background: #fff;
+            background: #0d1f3c;
             border-radius: 20px;
-            border: 1px solid var(--border);
-            box-shadow: 0 8px 40px rgba(0,48,135,0.10), 0 2px 8px rgba(0,48,135,0.06);
+            border: 1px solid #1e3a6b;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.50), 0 2px 8px rgba(0,0,0,0.30);
             overflow: hidden;
         }
 
         .card-top {
-            background: linear-gradient(135deg, var(--navy) 0%, var(--blue) 100%);
+            background: linear-gradient(135deg, #001a4d 0%, #003087 100%);
             padding: 32px 36px 28px;
             position: relative; overflow: hidden;
         }
@@ -82,12 +82,12 @@
         .card-top::before {
             content: ''; position: absolute; top: -30px; right: -30px;
             width: 140px; height: 140px; border-radius: 50%;
-            background: rgba(255,255,255,0.06);
+            background: rgba(245,197,24,0.08);
         }
         .card-top::after {
             content: ''; position: absolute; bottom: -40px; left: -20px;
             width: 120px; height: 120px; border-radius: 50%;
-            background: rgba(245,197,24,0.08);
+            background: rgba(206,17,38,0.06);
         }
 
         .card-brand {
@@ -98,8 +98,8 @@
 
         .card-logo {
             width: 44px; height: 44px; border-radius: 10px;
-            background: rgba(255,255,255,0.15);
-            border: 1px solid rgba(255,255,255,0.20);
+            background: rgba(245,197,24,0.15);
+            border: 1px solid rgba(245,197,24,0.25);
             display: flex; align-items: center; justify-content: center;
             overflow: hidden; flex-shrink: 0;
         }
@@ -107,18 +107,31 @@
 
         .card-brand-text { line-height: 1.15; }
         .card-brand-name { font-size: 15px; font-weight: 800; color: #fff; letter-spacing: 0.3px; }
-        .card-brand-sub  { font-size: 9.5px; font-weight: 500; color: rgba(255,255,255,0.60); letter-spacing: 1.2px; text-transform: uppercase; }
+        .card-brand-sub  { font-size: 9.5px; font-weight: 500; color: rgba(255,255,255,0.50); letter-spacing: 1.2px; text-transform: uppercase; }
+
+        /* Gold badge */
+        .superadmin-badge {
+            display: inline-flex; align-items: center; gap: 5px;
+            background: rgba(245,197,24,0.15);
+            border: 1px solid rgba(245,197,24,0.30);
+            color: #F5C518;
+            font-size: 10px; font-weight: 700;
+            letter-spacing: 1.2px; text-transform: uppercase;
+            padding: 3px 9px; border-radius: 20px;
+            margin-bottom: 10px;
+            position: relative; z-index: 1;
+        }
 
         .card-headline { position: relative; z-index: 1; }
         .card-headline h1 { font-size: 22px; font-weight: 800; color: #fff; line-height: 1.2; }
-        .card-headline p  { font-size: 13px; color: rgba(255,255,255,0.62); margin-top: 4px; line-height: 1.5; }
+        .card-headline p  { font-size: 13px; color: rgba(255,255,255,0.50); margin-top: 4px; line-height: 1.5; }
 
         .card-body { padding: 32px 36px 36px; }
 
         .alert-status {
             padding: 10px 14px; border-radius: 10px; margin-bottom: 20px;
-            background: #f0fdf4; border: 1px solid #bbf7d0;
-            font-size: 13px; color: #16a34a; font-weight: 500;
+            background: rgba(245,197,24,0.08); border: 1px solid rgba(245,197,24,0.20);
+            font-size: 13px; color: #F5C518; font-weight: 500;
             display: flex; align-items: center; gap: 8px;
         }
 
@@ -126,68 +139,61 @@
 
         .field label {
             display: block; font-size: 12.5px; font-weight: 700;
-            color: var(--text); margin-bottom: 6px; letter-spacing: 0.2px;
+            color: #adc4f0; margin-bottom: 6px; letter-spacing: 0.2px;
         }
 
         .input-wrap { position: relative; }
 
         .input-wrap i {
             position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
-            font-size: 13px; color: var(--muted); pointer-events: none;
+            font-size: 13px; color: #3a5a8a; pointer-events: none;
         }
 
         .field input[type="email"],
         .field input[type="password"],
         .field input[type="text"] {
             width: 100%; padding: 11px 14px 11px 38px;
-            border-radius: 10px; border: 1.5px solid var(--border);
-            font-family: inherit; font-size: 13.5px; color: var(--text);
-            background: #fff; outline: none;
+            border-radius: 10px; border: 1.5px solid #1e3a6b;
+            font-family: inherit; font-size: 13.5px; color: #dde8ff;
+            background: #0a1628; outline: none;
             transition: border-color 0.18s, box-shadow 0.18s;
         }
 
         .field input:focus {
-            border-color: var(--blue);
-            box-shadow: 0 0 0 3px rgba(0,87,184,0.10);
+            border-color: #F5C518;
+            box-shadow: 0 0 0 3px rgba(245,197,24,0.10);
         }
 
         .field input.is-invalid { border-color: var(--red); }
-        .field input.is-invalid:focus { box-shadow: 0 0 0 3px rgba(206,17,38,0.10); }
+        .field input.is-invalid:focus { box-shadow: 0 0 0 3px rgba(206,17,38,0.15); }
 
         .toggle-pw {
             position: absolute; right: 13px; top: 50%; transform: translateY(-50%);
             background: none; border: none; cursor: pointer;
-            color: var(--muted); font-size: 13px; padding: 2px;
+            color: #3a5a8a; font-size: 13px; padding: 2px;
             transition: color 0.15s;
         }
-        .toggle-pw:hover { color: var(--blue); }
+        .toggle-pw:hover { color: #F5C518; }
 
         .field-error {
             display: flex; align-items: center; gap: 5px;
-            margin-top: 5px; font-size: 11.5px; color: var(--red); font-weight: 500;
+            margin-top: 5px; font-size: 11.5px; color: #f87171; font-weight: 500;
         }
         .field-error i { font-size: 10px; }
 
         .remember-row {
-            display: flex; align-items: center; gap: 8px; margin-bottom: 22px;
+            display: flex; align-items: center; gap: 8px;
         }
 
         .remember-row input[type="checkbox"] {
             width: 16px; height: 16px; border-radius: 4px;
-            border: 1.5px solid var(--border);
-            accent-color: var(--blue); cursor: pointer; flex-shrink: 0;
+            accent-color: #F5C518; cursor: pointer; flex-shrink: 0;
         }
 
         .remember-row label {
-            font-size: 13px; color: var(--muted); cursor: pointer;
+            font-size: 13px; color: #6b8abf; cursor: pointer;
             user-select: none;
         }
-
-        .forgot-link {
-            font-size: 12.5px; color: var(--blue); text-decoration: none;
-            font-weight: 600; transition: color 0.15s;
-        }
-        .forgot-link:hover { color: var(--navy); text-decoration: underline; }
 
         .form-footer-row {
             display: flex; align-items: center;
@@ -195,37 +201,23 @@
             margin-bottom: 22px;
         }
 
+        /* Gold submit button for superadmin */
         .btn-login {
             width: 100%; padding: 13px;
             border-radius: 10px; border: none; cursor: pointer;
             font-family: inherit; font-size: 15px; font-weight: 700;
-            color: #fff; letter-spacing: 0.2px;
-            background: linear-gradient(135deg, var(--red) 0%, var(--red-dk) 100%);
-            box-shadow: 0 3px 12px rgba(206,17,38,0.28);
+            color: #001a4d; letter-spacing: 0.2px;
+            background: linear-gradient(135deg, #F5C518 0%, #d4a800 100%);
+            box-shadow: 0 3px 12px rgba(245,197,24,0.30);
             transition: all 0.18s;
             display: flex; align-items: center; justify-content: center; gap: 8px;
         }
-        .btn-login:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(206,17,38,0.38); }
+        .btn-login:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(245,197,24,0.42); }
         .btn-login:active { transform: translateY(0); }
 
         .page-footer {
-            margin-top: 20px; font-size: 11px; color: #8aa4cc;
+            margin-top: 20px; font-size: 11px; color: #3a5a8a;
             text-align: center; position: relative; z-index: 1;
-        }
-
-        @media (prefers-color-scheme: dark) {
-            body { background: #060d1f; }
-            .login-card { background: #0d1f3c; border-color: #1e3a6b; box-shadow: 0 8px 40px rgba(0,0,0,0.45); }
-            .field label { color: #adc4f0; }
-            .field input[type="email"],
-            .field input[type="password"],
-            .field input[type="text"] { background: #0a1628; border-color: #1e3a6b; color: #dde8ff; }
-            .field input:focus { border-color: #5b9cf6; box-shadow: 0 0 0 3px rgba(91,156,246,0.12); }
-            .input-wrap i { color: #3a5a8a; }
-            .remember-row label { color: #6b8abf; }
-            .forgot-link { color: #5b9cf6; }
-            .forgot-link:hover { color: #adc4f0; }
-            .page-footer { color: #3a5a8a; }
         }
     </style>
 </head>
@@ -245,9 +237,13 @@
                     <div class="card-brand-sub">TESDA Training Management</div>
                 </div>
             </a>
+            <div class="superadmin-badge">
+                <i class="fas fa-shield-halved"></i>
+                Super Admin Portal
+            </div>
             <div class="card-headline">
-                <h1>Welcome back!</h1>
-                <p>Sign in to access your training center dashboard.</p>
+                <h1>Admin Access</h1>
+                <p>Restricted area. Authorized personnel only.</p>
             </div>
         </div>
 
@@ -255,13 +251,13 @@
 
             @if (session('status'))
                 <div class="alert-status">
-                    <i class="fas fa-check-circle"></i>
+                    <i class="fas fa-info-circle"></i>
                     {{ session('status') }}
                 </div>
             @endif
 
-            {{-- Action points to tenant login route --}}
-            <form method="POST" action="{{ route('login') }}">
+            {{-- Action points to superadmin login route --}}
+            <form method="POST" action="{{ route('superadmin.login') }}">
                 @csrf
 
                 <!-- Email -->
@@ -276,7 +272,7 @@
                             value="{{ old('email') }}"
                             required autofocus
                             autocomplete="username"
-                            placeholder="you@example.com"
+                            placeholder="admin@tcms.com"
                             class="{{ $errors->has('email') ? 'is-invalid' : '' }}"
                         >
                     </div>
@@ -316,15 +312,15 @@
 
                 <!-- Remember me -->
                 <div class="form-footer-row">
-                    <div class="remember-row" style="margin-bottom:0;">
+                    <div class="remember-row">
                         <input id="remember_me" type="checkbox" name="remember">
                         <label for="remember_me">Remember me</label>
                     </div>
                 </div>
 
                 <button type="submit" class="btn-login">
-                    <i class="fas fa-sign-in-alt" style="font-size:14px;"></i>
-                    Log In
+                    <i class="fas fa-shield-halved" style="font-size:14px;"></i>
+                    Access Dashboard
                 </button>
 
             </form>
