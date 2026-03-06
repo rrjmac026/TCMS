@@ -227,6 +227,14 @@
             <span class="sb-lock-badge">Standard</span>
         </span>
     @endplan
+    @plan('reports')
+        <a href="{{ route('admin.reports.custom.index') }}"
+        class="sb-link {{ request()->routeIs('admin.reports.custom*') ? 'active' : '' }}">
+            <span class="sb-icon"><i class="fas fa-wrench"></i></span>
+            Custom Builder
+            <span class="sb-lock-badge" style="background:rgba(201,168,76,.15);color:#c9a84c;">Premium</span>
+        </a>
+    @endplan
 
     <div class="sb-divider"></div>
     <span class="sb-section-label">System</span>
