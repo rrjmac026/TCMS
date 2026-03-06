@@ -205,35 +205,34 @@ class TesdaCertificatePdf
         $this->setColor('fill', self::NAVY);
         $this->pdf->Rect(9, 9, self::W - 18, 28, 'F');
 
+        // Republic of the Philippines
         $this->setColor('text', self::GOLD);
         $this->pdf->SetFont('Times', 'I', 7.5);
         $this->pdf->SetXY(0, 12);
         $this->pdf->Cell(self::W, 0, 'Republic of the Philippines', 0, 0, 'C');
 
+        // Org name
         $this->setColor('text', self::WHITE);
         $this->pdf->SetFont('Times', 'B', 11);
         $this->pdf->SetXY(0, 17);
         $this->pdf->Cell(self::W, 0, 'Technical Education and Skills Development Authority', 0, 0, 'C');
 
+        // Tagline
         $this->setColor('text', self::GOLD);
         $this->pdf->SetFont('Times', 'I', 7);
         $this->pdf->SetXY(0, 24);
         $this->pdf->Cell(self::W, 0, '"Empowering the Filipino Workforce"', 0, 0, 'C');
 
-        // Left seal circle
-        $this->setColor('draw', self::GOLD);
-        $this->setColor('fill', self::NAVY);
-        $this->pdf->SetLineWidth(0.8);
-        $this->pdf->Circle(25, 23, 9, 'D');
-        $this->setColor('text', self::GOLD);
-        $this->pdf->SetFont('Times', 'B', 5);
-        $this->pdf->SetXY(16, 21);
-        $this->pdf->Cell(18, 4, 'PH SEAL', 0, 0, 'C');
+        // Left logo
+        $logoPath = public_path('assets/app_logo.png');
+        if (file_exists($logoPath)) {
+            $this->pdf->Image($logoPath, 11, 11, 18, 18);
+        }
 
-        // Right TESDA circle
-        $this->pdf->Circle(self::W - 25, 23, 9, 'D');
-        $this->pdf->SetXY(self::W - 34, 21);
-        $this->pdf->Cell(18, 4, 'TESDA', 0, 0, 'C');
+        // Right logo
+        if (file_exists($logoPath)) {
+            $this->pdf->Image($logoPath, self::W - 29, 11, 18, 18);
+        }
     }
 
     protected function drawTesdaBadge(): void
@@ -351,14 +350,13 @@ class TesdaCertificatePdf
 
     protected function drawSignatures(): void
     {
-        $cert   = $this->certificate;
-        $course = $cert->enrollment->course->name;
+        $cert        = $this->certificate;
         $trainerName = $cert->trainer?->name ?? 'Trainer / Assessor';
 
         $sigs = [
             ['name' => 'Training Center Director', 'title' => 'Authorized Signatory'],
             ['name' => 'TESDA Regional Director',  'title' => 'TESDA Authority'],
-            ['name' => $trainerName,        'title' => 'Trainer / Assessor'],
+            ['name' => $trainerName,               'title' => 'Trainer / Assessor'],
         ];
 
         $lineW  = 60;

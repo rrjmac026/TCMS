@@ -78,7 +78,7 @@ class AdminCertificateController extends Controller
 
         Certificate::create($validated);
 
-        return redirect()->route('tenants.admin.certificates.index')
+        return redirect()->route('admin.certificates.index')
                          ->with('success', 'Certificate issued successfully.');
     }
 
@@ -122,7 +122,7 @@ class AdminCertificateController extends Controller
 
         $certificate->update($validated);
 
-        return redirect()->route('tenants.admin.certificates.index')
+        return redirect()->route('admin.certificates.index')
                         ->with('success', 'Certificate updated successfully.');
     }
 
@@ -130,7 +130,7 @@ class AdminCertificateController extends Controller
     {
         $certificate->delete();
 
-        return redirect()->route('tenants.admin.certificates.index')
+        return redirect()->route('admin.certificates.index')
                          ->with('success', 'Certificate deleted successfully.');
     }
 
