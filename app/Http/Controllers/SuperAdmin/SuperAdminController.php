@@ -57,7 +57,7 @@ class SuperAdminController extends Controller
             'name'         => ['required', 'string', 'max:255'],
             'admin_email'  => ['required', 'email', 'unique:tenants,admin_email'],
             'subdomain'    => ['required', 'string', 'alpha_dash', 'unique:tenants,subdomain'],
-            'subscription' => ['required', 'in:basic,standard,premium'],  // ✅ fixed
+            'subscription' => ['required', 'in:basic,standard,premium'],
         ]);
 
         try {

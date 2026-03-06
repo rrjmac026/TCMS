@@ -20,6 +20,7 @@ use App\Http\Controllers\Tenant\Admin\AdminTrainingScheduleController;
 use App\Http\Controllers\Tenant\Admin\AdminAttendanceController;
 use App\Http\Controllers\Tenant\Admin\AdminCertificateController;
 use App\Http\Controllers\Tenant\Admin\AdminUserController;
+use App\Http\Controllers\Tenant\Admin\AdminSubscriptionController;
 
 // Controllers — Trainer
 use App\Http\Controllers\Tenant\Trainer\TrainerController;
@@ -66,6 +67,10 @@ Route::middleware([
     Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->group(function () {
 
         Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
+
+        Route::get('/subscription',        [AdminSubscriptionController::class, 'index'])->name('subscription.index');
+        Route::post('/subscription/upgrade', [AdminSubscriptionController::class, 'upgrade'])->name('subscription.upgrade');
+
 
         // ── Basic plan ─────────────────────────────────────────────────────
         Route::middleware('subscription:trainees')->group(function () {
