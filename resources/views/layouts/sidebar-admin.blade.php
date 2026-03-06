@@ -242,6 +242,20 @@
         </span>
     @endplan
 
+    @plan('branding')
+        <a href="{{ route('admin.branding.index') }}"
+        class="sb-link {{ request()->routeIs('admin.branding*') ? 'active' : '' }}">
+            <span class="sb-icon"><i class="fas fa-palette"></i></span>
+            Custom Branding
+        </a>
+    @else
+        <span class="sb-link-locked">
+            <span class="sb-icon"><i class="fas fa-palette"></i></span>
+            Custom Branding
+            <span class="sb-lock-badge">Premium</span>
+        </span>
+    @endplan
+
     <div class="sb-divider"></div>
     <span class="sb-section-label">System</span>
 

@@ -24,7 +24,8 @@ class SubscriptionHelper
 
         // Premium only
         'certificates'       => 'premium',
-        'custom-reports' => 'premium'
+        'custom-reports' => 'premium',
+        'branding' => 'premium',
     ];
 
     public static function canAccess(string $currentPlan, string $feature): bool

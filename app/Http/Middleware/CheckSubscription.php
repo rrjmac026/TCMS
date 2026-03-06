@@ -34,6 +34,7 @@ class CheckSubscription
         // Premium only
         'certificates'       => 'premium',
         'custom-reports' => 'premium',
+        'branding' => 'premium',
     ];
 
     public function handle(Request $request, Closure $next, string $feature): Response

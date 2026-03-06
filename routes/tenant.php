@@ -22,6 +22,7 @@ use App\Http\Controllers\Tenant\Admin\AdminCertificateController;
 use App\Http\Controllers\Tenant\Admin\AdminUserController;
 use App\Http\Controllers\Tenant\Admin\AdminSubscriptionController;
 use App\Http\Controllers\Tenant\Admin\AdminReportController;
+use App\Http\Controllers\Tenant\Admin\AdminBrandingController;
 
 // Controllers — Trainer
 use App\Http\Controllers\Tenant\Trainer\TrainerController;
@@ -93,6 +94,12 @@ Route::middleware([
                 ->name('reports.custom.preview');
             Route::get('/reports/custom/export', [CustomReportController::class, 'export'])
                 ->name('reports.custom.export');
+        });
+
+        Route::middleware('subscription:branding')->group(function () {
+            Route::get('/branding',  [AdminBrandingController::class, 'index'])->name('branding.index');
+            Route::post('/branding', [AdminBrandingController::class, 'update'])->name('branding.update');
+            Route::delete('/branding/logo', [AdminBrandingController::class, 'resetLogo'])->name('branding.logo.reset');
         });
         
         // ── Basic plan ─────────────────────────────────────────────────────

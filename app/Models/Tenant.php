@@ -32,6 +32,11 @@ class Tenant extends BaseTenant implements TenantWithDatabase
         'subdomain',
         'subscription',
         'status',
+        'brand_name',           // ADD
+        'brand_logo',           // ADD
+        'brand_color_primary',  // ADD
+        'brand_color_accent',   // ADD
+        'brand_tagline',        // ADD
         'expires_at',
         'data',
     ];
@@ -51,6 +56,11 @@ class Tenant extends BaseTenant implements TenantWithDatabase
             'subdomain',
             'subscription',
             'status',
+            'brand_name',           // ADD
+            'brand_logo',           // ADD
+            'brand_color_primary',  // ADD
+            'brand_color_accent',   // ADD
+            'brand_tagline',        // ADD
             'expires_at',
         ];
     }
