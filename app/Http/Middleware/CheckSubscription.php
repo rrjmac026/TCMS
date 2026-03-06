@@ -33,6 +33,7 @@ class CheckSubscription
 
         // Premium only
         'certificates'       => 'premium',
+        'custom-reports' => 'premium',
     ];
 
     public function handle(Request $request, Closure $next, string $feature): Response

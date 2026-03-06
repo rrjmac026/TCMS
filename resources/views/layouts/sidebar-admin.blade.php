@@ -213,10 +213,10 @@
 
     <div class="sb-divider"></div>
     <span class="sb-section-label">Reports</span>
-    
+
     @plan('reports')
         <a href="{{ route('admin.reports.index') }}"
-        class="sb-link {{ request()->routeIs('admin.reports*') ? 'active' : '' }}">
+        class="sb-link {{ request()->routeIs('admin.reports.index') || (request()->routeIs('admin.reports*') && !request()->routeIs('admin.reports.custom*')) ? 'active' : '' }}">
             <span class="sb-icon"><i class="fas fa-chart-bar"></i></span>
             Analytics & Reports
         </a>
@@ -227,13 +227,19 @@
             <span class="sb-lock-badge">Standard</span>
         </span>
     @endplan
-    @plan('reports')
+
+    @plan('custom-reports')
         <a href="{{ route('admin.reports.custom.index') }}"
         class="sb-link {{ request()->routeIs('admin.reports.custom*') ? 'active' : '' }}">
             <span class="sb-icon"><i class="fas fa-wrench"></i></span>
             Custom Builder
-            <span class="sb-lock-badge" style="background:rgba(201,168,76,.15);color:#c9a84c;">Premium</span>
         </a>
+    @else
+        <span class="sb-link-locked">
+            <span class="sb-icon"><i class="fas fa-wrench"></i></span>
+            Custom Builder
+            <span class="sb-lock-badge">Premium</span>
+        </span>
     @endplan
 
     <div class="sb-divider"></div>

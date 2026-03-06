@@ -730,7 +730,7 @@
     </div>
 
     {{-- Hidden export form --}}
-    <form id="crb-export-form" method="GET" action="{{ route('admin.reports.custom.export') }}" style="display:none;">
+    <form id="crb-export-form" method="POST" action="{{ route('admin.reports.custom.export') }}" style="display:none;">
         @csrf
         <input type="hidden" name="format" id="crb-format-input">
         <input type="hidden" name="source" id="crb-source-input">

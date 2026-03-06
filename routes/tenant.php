@@ -22,7 +22,6 @@ use App\Http\Controllers\Tenant\Admin\AdminCertificateController;
 use App\Http\Controllers\Tenant\Admin\AdminUserController;
 use App\Http\Controllers\Tenant\Admin\AdminSubscriptionController;
 use App\Http\Controllers\Tenant\Admin\AdminReportController;
-use App\Http\Controllers\Tenant\Admin\CustomReportController;
 
 // Controllers — Trainer
 use App\Http\Controllers\Tenant\Trainer\TrainerController;
@@ -38,6 +37,8 @@ use App\Http\Controllers\Tenant\Trainee\TraineeEnrollmentController;
 use App\Http\Controllers\Tenant\Trainee\TraineeScheduleController;
 use App\Http\Controllers\Tenant\Trainee\TraineeAssessmentController;
 use App\Http\Controllers\Tenant\Trainee\TraineeCertificateController;
+use App\Http\Controllers\Tenant\Admin\CustomReportController;
+
 
 Route::middleware([
     'web',
@@ -82,11 +83,16 @@ Route::middleware([
             Route::get('/reports/export/attendances',  [AdminReportController::class, 'exportAttendances'])->name('reports.export.attendances');
             Route::get('/reports/export/assessments',  [AdminReportController::class, 'exportAssessments'])->name('reports.export.assessments');
             Route::get('/reports/export/certificates', [AdminReportController::class, 'exportCertificates'])->name('reports.export.certificates');
+            
+        });
 
-            // ── NEW: Custom Report Builder (Premium feature, gate enforced in controller) ──
-            Route::get( '/reports/custom',         [CustomReportController::class, 'index'])  ->name('reports.custom.index');
-            Route::post('/reports/custom/preview', [CustomReportController::class, 'preview'])->name('reports.custom.preview');
-            Route::get( '/reports/custom/export',  [CustomReportController::class, 'export']) ->name('reports.custom.export');
+        Route::middleware(['subscription:custom-reports'])->group(function () {
+            Route::get('/reports/custom', [CustomReportController::class, 'index'])
+                ->name('reports.custom.index');
+            Route::post('/reports/custom/preview', [CustomReportController::class, 'preview'])
+                ->name('reports.custom.preview');
+            Route::get('/reports/custom/export', [CustomReportController::class, 'export'])
+                ->name('reports.custom.export');
         });
         
         // ── Basic plan ─────────────────────────────────────────────────────

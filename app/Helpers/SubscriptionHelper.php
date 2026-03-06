@@ -20,9 +20,11 @@ class SubscriptionHelper
         'training-schedules' => 'standard',
         'users'              => 'standard',
         'reports'            => 'standard',
+        
 
         // Premium only
         'certificates'       => 'premium',
+        'custom-reports' => 'premium'
     ];
 
     public static function canAccess(string $currentPlan, string $feature): bool
