@@ -44,12 +44,22 @@ class AdminUserController extends Controller
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
-        $validated['password'] = Hash::make($validated['password']);
+        // ✅ Enforce total user cap (Standard = 5 users total)
+        $limits = $request->attributes->get('plan_limits');
+        if ($limits && $limits['users'] !== null) {
+            // Count all non-superadmin users
+            $count = User::whereIn('role', ['admin', 'trainer', 'trainee'])->count();
+            if ($count >= $limits['users']) {
+                return back()->withInput()
+                    ->withErrors(['limit' => "Your plan allows a maximum of {$limits['users']} total users. Please upgrade your plan to add more."]);
+            }
+        }
 
+        $validated['password'] = Hash::make($validated['password']);
         User::create($validated);
 
-        return redirect()->route('tenants.admin.users.index')
-                         ->with('success', 'User created successfully.');
+        return redirect()->route('admin.users.index')
+                        ->with('success', 'User created successfully.');
     }
 
     public function show(User $user)
@@ -80,7 +90,7 @@ class AdminUserController extends Controller
 
         $user->update($validated);
 
-        return redirect()->route('tenants.admin.users.index')
+        return redirect()->route('admin.users.index')
                          ->with('success', 'User updated successfully.');
     }
 

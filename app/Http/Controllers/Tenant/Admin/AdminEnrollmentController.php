@@ -68,7 +68,7 @@ class AdminEnrollmentController extends Controller
             'enrolled_at' => $validated['enrolled_at'] ?? now(),
         ]);
 
-        return redirect()->route('tenants.admin.enrollments.index')
+        return redirect()->route('admin.enrollments.index')
                          ->with('success', 'Enrollment created successfully.');
     }
 
@@ -109,7 +109,7 @@ class AdminEnrollmentController extends Controller
 
         $enrollment->update($validated);
 
-        return redirect()->route('tenants.admin.enrollments.index')
+        return redirect()->route('admin.enrollments.index')
                          ->with('success', 'Enrollment updated successfully.');
     }
 
@@ -117,7 +117,7 @@ class AdminEnrollmentController extends Controller
     {
         $enrollment->delete();
 
-        return redirect()->route('tenants.admin.enrollments.index')
+        return redirect()->route('admin.enrollments.index')
                          ->with('success', 'Enrollment deleted successfully.');
     }
 }

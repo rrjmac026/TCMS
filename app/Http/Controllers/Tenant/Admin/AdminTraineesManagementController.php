@@ -40,6 +40,16 @@ class AdminTraineesManagementController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
+        // ✅ Check BEFORE creating
+        $limits = $request->attributes->get('plan_limits');
+        if ($limits && $limits['trainees'] !== null) {
+            $count = User::where('role', 'trainee')->count();
+            if ($count >= $limits['trainees']) {
+                return back()->withInput()
+                    ->withErrors(['limit' => "Your plan allows a maximum of {$limits['trainees']} trainees. Please upgrade to add more."]);
+            }
+        }
+
         User::create([
             'name'     => $validated['name'],
             'email'    => $validated['email'],
@@ -47,16 +57,8 @@ class AdminTraineesManagementController extends Controller
             'role'     => 'trainee',
         ]);
 
-        $limit = request()->attributes->get('trainee_limit');
-        if ($limit) {
-            $count = User::where('role', 'trainee')->count();
-            if ($count >= $limit) {
-                return back()->withErrors(['limit' => "Your plan allows a maximum of {$limit} trainees."]);
-            }
-        }
-
-        return redirect()->route('tenants.admin.trainees.index')
-                         ->with('success', 'Trainee created successfully.');
+        return redirect()->route('admin.trainees.index')
+                        ->with('success', 'Trainee created successfully.');
     }
 
     public function show(User $trainee)

@@ -106,6 +106,58 @@
         @endforeach
     </div>
 
+    {{-- Plan Usage --}}
+    @php
+        $tenant = tenancy()->tenant;
+        $plan   = $tenant->subscription;
+        $usage  = [
+            ['label' => 'Trainees', 'icon' => 'fa-user-graduate', 'resource' => 'trainees',
+             'count' => \App\Models\User::where('role','trainee')->count()],
+            ['label' => 'Trainers', 'icon' => 'fa-chalkboard-teacher', 'resource' => 'trainers',
+             'count' => \App\Models\User::where('role','trainer')->count()],
+            ['label' => 'Users',    'icon' => 'fa-users', 'resource' => 'users',
+             'count' => \App\Models\User::whereIn('role',['admin','trainer','trainee'])->count()],
+            ['label' => 'Courses',  'icon' => 'fa-book-open', 'resource' => 'courses',
+             'count' => \App\Models\Course::count()],
+        ];
+    @endphp
+
+    <div style="background:var(--db-surface); border:1.5px solid var(--db-border); border-radius:16px; padding:24px; margin-bottom:24px;">
+        <div style="font-size:13px; font-weight:700; color:var(--db-muted); text-transform:uppercase; letter-spacing:.08em; margin-bottom:16px;">
+            Plan Usage — {{ ucfirst($plan) }}
+            <a href="{{ route('admin.subscription.index') }}" style="float:right; font-size:12px; color:var(--db-accent); font-weight:600; text-transform:none; letter-spacing:0;">
+                Manage Plan →
+            </a>
+        </div>
+
+        @foreach($usage as $item)
+            @php
+                $limit    = \App\Helpers\SubscriptionHelper::getLimit($plan, $item['resource']);
+                $pct      = $limit ? min(100, round(($item['count'] / $limit) * 100)) : 0;
+                $barColor = $pct >= 90 ? 'var(--db-red)' : ($pct >= 70 ? '#f97316' : 'var(--db-accent)');
+            @endphp
+
+            <div style="margin-bottom:14px;">
+                <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:4px;">
+                    <span style="color:var(--db-text-sec); font-weight:500;">
+                        <i class="fas {{ $item['icon'] }}" style="width:16px; color:var(--db-muted);"></i>
+                        {{ $item['label'] }}
+                    </span>
+                    <span style="color:var(--db-muted);">
+                        {{ $item['count'] }} / {{ $limit ?? '∞' }}
+                    </span>
+                </div>
+                @if($limit !== null)
+                    <div style="height:6px; background:var(--db-accent-bg); border-radius:999px; overflow:hidden;">
+                        <div style="height:100%; width:{{ $pct }}%; background:{{ $barColor }}; border-radius:999px; transition:width .4s ease;"></div>
+                    </div>
+                @else
+                    <div style="height:6px; background: linear-gradient(90deg,var(--db-accent),#5b9cf6); border-radius:999px; opacity:0.3;"></div>
+                @endif
+            </div>
+        @endforeach
+    </div>
+
     {{-- Second Row --}}
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
 

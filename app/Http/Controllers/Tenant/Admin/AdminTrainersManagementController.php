@@ -40,6 +40,19 @@ class AdminTrainersManagementController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
+        // ✅ Check BEFORE creating
+        $limits = $request->attributes->get('plan_limits');
+        if ($limits && $limits['trainers'] !== null) {
+            if ($limits['trainers'] === 0) {
+                return back()->withErrors(['limit' => 'Your plan does not support trainers.']);
+            }
+            $count = User::where('role', 'trainer')->count();
+            if ($count >= $limits['trainers']) {
+                return back()->withInput()
+                    ->withErrors(['limit' => "Your plan allows a maximum of {$limits['trainers']} trainers. Please upgrade."]);
+            }
+        }
+
         User::create([
             'name'     => $validated['name'],
             'email'    => $validated['email'],
@@ -48,7 +61,7 @@ class AdminTrainersManagementController extends Controller
         ]);
 
         return redirect()->route('admin.trainers.index')
-                         ->with('success', 'Trainer created successfully.');
+                        ->with('success', 'Trainer created successfully.');
     }
 
     public function show(User $trainer)
@@ -82,7 +95,7 @@ class AdminTrainersManagementController extends Controller
 
         $trainer->update($data);
 
-        return redirect()->route('tenants.admin.trainers.index')
+        return redirect()->route('admin.trainers.index')
                          ->with('success', 'Trainer updated successfully.');
     }
 
@@ -90,7 +103,7 @@ class AdminTrainersManagementController extends Controller
     {
         $trainer->delete();
 
-        return redirect()->route('tenants.admin.trainers.index')
+        return redirect()->route('admin.trainers.index')
                          ->with('success', 'Trainer deleted successfully.');
     }
 }

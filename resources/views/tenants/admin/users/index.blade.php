@@ -60,6 +60,32 @@
             <i class="fas fa-check-circle"></i> {{ session('success') }}
         </div>
     @endif
+    @php
+        $tenant  = tenancy()->tenant;
+        $plan    = $tenant->subscription;
+        $limit   = \App\Helpers\SubscriptionHelper::getLimit($plan, 'users');
+        $count   = \App\Models\User::whereIn('role', ['admin'])->count();
+        $atLimit = $limit !== null && $count >= $limit;
+    @endphp
+
+    @if($atLimit)
+        <div style="background:#fff7ed; border:1.5px solid #fed7aa; border-radius:12px; padding:14px 18px; margin-bottom:16px; display:flex; align-items:center; gap:12px;">
+            <i class="fas fa-exclamation-triangle" style="color:#f97316; font-size:18px;"></i>
+            <div>
+                <strong style="color:#9a3412;">Trainee limit reached</strong>
+                <span style="color:#c2410c; font-size:13px;"> — You have {{ $count }}/{{ $limit }} admins on your {{ ucfirst($plan) }} plan.</span>
+                <a href="{{ route('admin.subscription.index') }}" style="color:#0057B8; font-weight:600; font-size:13px; margin-left:8px;">
+                    Upgrade to add more →
+                </a>
+            </div>
+        </div>
+    @else
+        @if($limit !== null)
+            <div style="font-size:12px; color:#5a7aaa; margin-bottom:12px;">
+                <i class="fas fa-users"></i> {{ $count }} / {{ $limit }} trainees used on your {{ ucfirst($plan) }} plan.
+            </div>
+        @endif
+    @endif
 
     {{-- Filters --}}
     <div class="rounded-2xl border p-5 dark:bg-[#0d1f3c] dark:border-[#1e3a6b]"
@@ -101,6 +127,8 @@
             @endif
         </form>
     </div>
+
+    
 
     {{-- Table --}}
     <div class="rounded-2xl border overflow-hidden dark:bg-[#0d1f3c] dark:border-[#1e3a6b]"

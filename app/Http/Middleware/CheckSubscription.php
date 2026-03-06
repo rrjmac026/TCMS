@@ -37,15 +37,13 @@ class CheckSubscription
     {
         $tenant = tenancy()->tenant;
 
-        // No active tenant (shouldn't happen on tenant routes)
         if (! $tenant) {
             abort(403, 'No active tenant.');
         }
 
-        // Tenant must be approved and not expired
         if (! $tenant->isSubscribed()) {
             return redirect()->route('login')
-                ->withErrors(['subscription' => 'Your subscription has expired or is inactive. Please contact support.']);
+                ->withErrors(['subscription' => 'Your subscription has expired or is inactive.']);
         }
 
         $requiredPlan = $this->featurePlans[$feature] ?? 'basic';
@@ -55,18 +53,47 @@ class CheckSubscription
             abort(403, "Your current plan ({$currentPlan}) does not include access to this feature. Upgrade to {$requiredPlan} or higher.");
         }
 
-        // Basic plan: cap trainees at 100
-        if ($feature === 'trainees' && $currentPlan === 'basic') {
-            $request->attributes->set('trainee_limit', 100);
-        }
-
-        // Standard plan: cap trainees at 500
-        if ($feature === 'trainees' && $currentPlan === 'standard') {
-            $request->attributes->set('trainee_limit', 500);
-        }
+        // Pass plan limits via request attributes so controllers can read them
+        $limits = $this->getPlanLimits($currentPlan);
+        $request->attributes->set('plan_limits', $limits);
 
         return $next($request);
     }
+
+    /**
+     * Returns the quantity limits for each plan.
+     * null = unlimited
+     */
+    protected function getPlanLimits(string $plan): array
+    {
+        return match($plan) {
+            'basic' => [
+                'trainees' => 100,
+                'trainers' => 0,      // not accessible on basic anyway
+                'users'    => 1,      // only 1 admin
+                'courses'  => 20,     // optional soft limit
+            ],
+            'standard' => [
+                'trainees' => 500,
+                'trainers' => null,   // unlimited trainers
+                'users'    => 5,      // max 5 total users (admin + trainers)
+                'courses'  => null,
+            ],
+            'premium' => [
+                'trainees' => null,
+                'trainers' => null,
+                'users'    => null,
+                'courses'  => null,
+            ],
+            default => [
+                'trainees' => 100,
+                'trainers' => 0,
+                'users'    => 1,
+                'courses'  => 20,
+            ],
+        };
+    }
+
 
     protected function hasAccess(string $currentPlan, string $requiredPlan): bool
     {

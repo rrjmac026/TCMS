@@ -52,7 +52,7 @@ class AdminCourseController extends Controller
 
         Course::create($validated);
 
-        return redirect()->route('tenants.admin.courses.index')
+        return redirect()->route('admin.courses.index')
                          ->with('success', 'Course created successfully.');
     }
 
