@@ -1,12 +1,12 @@
 @php
     $tenant       = tenancy()->tenant;
-    $brandName    = $tenant->brand_name    ?? config('app.name', 'TCMS');
-    $brandTagline = $tenant->brand_tagline ?? 'Skills Development Authority';
-    $brandLogo = $tenant->brand_logo
-        ? Storage::disk('public')->url($tenant->brand_logo)
-        : asset('assets/app_logo.PNG');
-    $colorPrimary = $tenant->brand_color_primary ?? '#003087';
-    $colorAccent  = $tenant->brand_color_accent  ?? '#CE1126';
+    $brandLogo    = ($tenant?->brand_logo)
+                        ? Storage::disk('public')->url($tenant->brand_logo)
+                        : asset('assets/app_logo.PNG');
+    $brandName    = $tenant?->brand_name    ?? config('app.name', 'TCMS');
+    $brandTagline = $tenant?->brand_tagline ?? 'Skills Development Authority';
+    $colorPrimary = $tenant?->brand_color_primary ?? '#003087';
+    $colorAccent  = $tenant?->brand_color_accent  ?? '#CE1126';
 
     // Darken accent for hover (simple approach: use a fixed darker shade)
     $colorAccentDark = '#A50E1E'; // fallback; overridden by CSS filter if default
