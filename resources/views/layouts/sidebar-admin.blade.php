@@ -213,12 +213,20 @@
 
     <div class="sb-divider"></div>
     <span class="sb-section-label">Reports</span>
-
-    <a href="#"
-       class="sb-link {{ request()->routeIs('admin.reports*') ? 'active' : '' }}">
-        <span class="sb-icon"><i class="fas fa-chart-bar"></i></span>
-        Analytics & Reports
-    </a>
+    
+    @plan('reports')
+        <a href="{{ route('admin.reports.index') }}"
+        class="sb-link {{ request()->routeIs('admin.reports*') ? 'active' : '' }}">
+            <span class="sb-icon"><i class="fas fa-chart-bar"></i></span>
+            Analytics & Reports
+        </a>
+    @else
+        <span class="sb-link-locked">
+            <span class="sb-icon"><i class="fas fa-chart-bar"></i></span>
+            Analytics & Reports
+            <span class="sb-lock-badge">Standard</span>
+        </span>
+    @endplan
 
     <div class="sb-divider"></div>
     <span class="sb-section-label">System</span>
@@ -228,62 +236,63 @@
         <span class="sb-icon"><i class="fas fa-sliders-h"></i></span>
         Settings
     </a>
-        {{-- Upgrade Plan CTA --}}
-        @php
-            $tenant      = tenancy()->tenant;
-            $currentPlan = $tenant->subscription ?? 'basic';
-        @endphp
 
-        @if($currentPlan !== 'premium')
-        <div class="sb-divider"></div>
+    {{-- Upgrade Plan CTA --}}
+    @php
+        $tenant      = tenancy()->tenant;
+        $currentPlan = $tenant->subscription ?? 'basic';
+    @endphp
 
-        <a href="{{ route('admin.subscription.index') }}"
-        style="
-                display: flex; align-items: center; gap: 12px;
-                padding: 11px 16px; border-radius: 12px; text-decoration: none;
-                background: linear-gradient(135deg, #003087 0%, #CE1126 150%);
-                margin: 0 0 4px; position: relative; overflow: hidden;
-                transition: transform 0.2s ease, box-shadow 0.2s ease;
-                box-shadow: 0 4px 16px rgba(0,48,135,0.25);
-        "
-        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 24px rgba(0,48,135,0.35)'"
-        onmouseout="this.style.transform=''; this.style.boxShadow='0 4px 16px rgba(0,48,135,0.25)'">
+    @if($currentPlan !== 'premium')
+    <div class="sb-divider"></div>
 
-            <!-- Shimmer effect -->
-            <span style="
-                position: absolute; top: 0; left: -100%; width: 60%; height: 100%;
-                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
-                animation: shimmer 2.5s infinite;
-            "></span>
+    <a href="{{ route('admin.subscription.index') }}"
+    style="
+            display: flex; align-items: center; gap: 12px;
+            padding: 11px 16px; border-radius: 12px; text-decoration: none;
+            background: linear-gradient(135deg, #003087 0%, #CE1126 150%);
+            margin: 0 0 4px; position: relative; overflow: hidden;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 4px 16px rgba(0,48,135,0.25);
+    "
+    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 24px rgba(0,48,135,0.35)'"
+    onmouseout="this.style.transform=''; this.style.boxShadow='0 4px 16px rgba(0,48,135,0.25)'">
 
-            <span style="
-                width: 32px; height: 32px; border-radius: 8px;
-                background: rgba(255,255,255,0.18);
-                display: flex; align-items: center; justify-content: center;
-                font-size: 14px; flex-shrink: 0;
-            ">⚡</span>
+        <!-- Shimmer effect -->
+        <span style="
+            position: absolute; top: 0; left: -100%; width: 60%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+            animation: shimmer 2.5s infinite;
+        "></span>
 
-            <div style="flex: 1; min-width: 0;">
-                <div style="font-size: 12.5px; font-weight: 700; color: #fff; line-height: 1.2;">
-                    Upgrade Plan
-                </div>
-                <div style="font-size: 11px; color: rgba(255,255,255,0.72); margin-top: 1px; text-transform: capitalize;">
-                    Currently on {{ $currentPlan }}
-                </div>
+        <span style="
+            width: 32px; height: 32px; border-radius: 8px;
+            background: rgba(255,255,255,0.18);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; flex-shrink: 0;
+        ">⚡</span>
+
+        <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 12.5px; font-weight: 700; color: #fff; line-height: 1.2;">
+                Upgrade Plan
             </div>
+            <div style="font-size: 11px; color: rgba(255,255,255,0.72); margin-top: 1px; text-transform: capitalize;">
+                Currently on {{ $currentPlan }}
+            </div>
+        </div>
 
-            <span style="
-                font-size: 9px; font-weight: 800; letter-spacing: 0.6px;
-                text-transform: uppercase; padding: 3px 7px; border-radius: 6px;
-                background: #F5C518; color: #1a1a00;
-            ">PRO</span>
-        </a>
+        <span style="
+            font-size: 9px; font-weight: 800; letter-spacing: 0.6px;
+            text-transform: uppercase; padding: 3px 7px; border-radius: 6px;
+            background: #F5C518; color: #1a1a00;
+        ">PRO</span>
+    </a>
 
-        <style>
-            @keyframes shimmer {
-                0%   { left: -100%; }
-                100% { left: 200%; }
-            }
-        </style>
-        @endif
+    <style>
+        @keyframes shimmer {
+            0%   { left: -100%; }
+            100% { left: 200%; }
+        }
+    </style>
+    @endif
 </nav>

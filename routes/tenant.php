@@ -21,6 +21,7 @@ use App\Http\Controllers\Tenant\Admin\AdminAttendanceController;
 use App\Http\Controllers\Tenant\Admin\AdminCertificateController;
 use App\Http\Controllers\Tenant\Admin\AdminUserController;
 use App\Http\Controllers\Tenant\Admin\AdminSubscriptionController;
+use App\Http\Controllers\Tenant\Admin\AdminReportController;
 
 // Controllers — Trainer
 use App\Http\Controllers\Tenant\Trainer\TrainerController;
@@ -68,10 +69,20 @@ Route::middleware([
 
         Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
 
-        Route::get('/subscription',        [AdminSubscriptionController::class, 'index'])->name('subscription.index');
+        Route::get('/subscription',          [AdminSubscriptionController::class, 'index'])->name('subscription.index');
         Route::post('/subscription/upgrade', [AdminSubscriptionController::class, 'upgrade'])->name('subscription.upgrade');
 
-
+        // ── Analytics & Reports ────────────────────────────────────────────
+        Route::middleware('subscription:reports')->group(function () {
+            Route::get('/reports', [AdminReportController::class, 'index'])->name('reports.index');
+            Route::get('/reports/export/trainees',     [AdminReportController::class, 'exportTrainees'])->name('reports.export.trainees');
+            Route::get('/reports/export/trainers',     [AdminReportController::class, 'exportTrainers'])->name('reports.export.trainers');
+            Route::get('/reports/export/enrollments',  [AdminReportController::class, 'exportEnrollments'])->name('reports.export.enrollments');
+            Route::get('/reports/export/attendances',  [AdminReportController::class, 'exportAttendances'])->name('reports.export.attendances');
+            Route::get('/reports/export/assessments',  [AdminReportController::class, 'exportAssessments'])->name('reports.export.assessments');
+            Route::get('/reports/export/certificates', [AdminReportController::class, 'exportCertificates'])->name('reports.export.certificates');
+        });
+        
         // ── Basic plan ─────────────────────────────────────────────────────
         Route::middleware('subscription:trainees')->group(function () {
             Route::resource('trainees', AdminTraineesManagementController::class);

@@ -18,19 +18,21 @@ class CheckSubscription
      */
     protected array $featurePlans = [
         // Basic (all plans)
-        'trainees'          => 'basic',
-        'courses'           => 'basic',
-        'enrollments'       => 'basic',
-        'attendances'       => 'basic',
+        'trainees'           => 'basic',
+        'courses'            => 'basic',
+        'enrollments'        => 'basic',
+        'attendances'        => 'basic',
+        
 
         // Standard+
-        'trainers'          => 'standard',
-        'assessments'       => 'standard',
-        'training-schedules'=> 'standard',
-        'users'             => 'standard',
+        'trainers'           => 'standard',
+        'assessments'        => 'standard',
+        'training-schedules' => 'standard',
+        'users'              => 'standard',
+        'reports'            => 'standard',
 
         // Premium only
-        'certificates'      => 'premium',
+        'certificates'       => 'premium',
     ];
 
     public function handle(Request $request, Closure $next, string $feature): Response
@@ -62,38 +64,41 @@ class CheckSubscription
 
     /**
      * Returns the quantity limits for each plan.
-     * null = unlimited
+     * null = unlimited | 0 = not available on this plan
      */
     protected function getPlanLimits(string $plan): array
     {
         return match($plan) {
             'basic' => [
-                'trainees' => 100,
-                'trainers' => 0,      // not accessible on basic anyway
-                'users'    => 1,      // only 1 admin
-                'courses'  => 20,     // optional soft limit
+                'trainees'        => 100,
+                'trainers'        => 0,
+                'users'           => 1,
+                'courses'         => 20,
+                'exports_monthly' => 0,      // no exports on basic
             ],
             'standard' => [
-                'trainees' => 500,
-                'trainers' => null,   // unlimited trainers
-                'users'    => 5,      // max 5 total users (admin + trainers)
-                'courses'  => null,
+                'trainees'        => 500,
+                'trainers'        => null,
+                'users'           => 5,
+                'courses'         => null,
+                'exports_monthly' => 3000,   // CSV only, 3,000 records/month
             ],
             'premium' => [
-                'trainees' => null,
-                'trainers' => null,
-                'users'    => null,
-                'courses'  => null,
+                'trainees'        => null,
+                'trainers'        => null,
+                'users'           => null,
+                'courses'         => null,
+                'exports_monthly' => null,   // unlimited (CSV, Excel, PDF)
             ],
             default => [
-                'trainees' => 100,
-                'trainers' => 0,
-                'users'    => 1,
-                'courses'  => 20,
+                'trainees'        => 100,
+                'trainers'        => 0,
+                'users'           => 1,
+                'courses'         => 20,
+                'exports_monthly' => 0,
             ],
         };
     }
-
 
     protected function hasAccess(string $currentPlan, string $requiredPlan): bool
     {
