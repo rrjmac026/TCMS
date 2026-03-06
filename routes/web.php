@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\SuperAdminLoginController;
 use App\Http\Controllers\Auth\SuperAdminRegisterController;
 use App\Http\Controllers\SuperAdmin\SuperAdminController;
+use App\Http\Controllers\ProfileController;
 
 foreach (config('tenancy.central_domains') as $domain) {
     Route::domain($domain)
@@ -26,6 +27,11 @@ foreach (config('tenancy.central_domains') as $domain) {
         // ── Authenticated routes ───────────────────────────────────────────
         Route::middleware('auth')->group(function () {
             Route::post('/logout', [SuperAdminLoginController::class, 'logout'])->name('superadmin.logout');
+
+            Route::get('/profile',          [ProfileController::class, 'edit'])->name('superadmin.profile.edit');
+            Route::patch('/profile',        [ProfileController::class, 'update'])->name('superadmin.profile.update');
+            Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('superadmin.profile.password.update');
+            Route::delete('/profile',       [ProfileController::class, 'destroy'])->name('superadmin.profile.destroy');
         });
 
         // ── SuperAdmin protected routes ────────────────────────────────────

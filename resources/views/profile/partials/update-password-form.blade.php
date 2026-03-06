@@ -8,7 +8,7 @@
         </p>
     </header>
 
-    <form method="post" action="{{ route('password.update') }}" class="space-y-6">
+    <form method="post" action="{{ route('profile.password.update') }}" class="space-y-6">
         @csrf
         @method('put')
 
@@ -17,7 +17,7 @@
             <label class="block text-xs font-700 uppercase tracking-wide mb-1.5" style="color:var(--prf-text-sec);">
                 {{ __('Current Password') }} <span style="color:var(--prf-red);">*</span>
             </label>
-            <input type="password" id="update_password_current_password" name="current_password" 
+            <input type="password" id="update_password_current_password" name="current_password"
                    placeholder="Enter your current password"
                    autocomplete="current-password"
                    class="w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition
@@ -35,7 +35,7 @@
             <label class="block text-xs font-700 uppercase tracking-wide mb-1.5" style="color:var(--prf-text-sec);">
                 {{ __('New Password') }} <span style="color:var(--prf-red);">*</span>
             </label>
-            <input type="password" id="update_password_password" name="password" 
+            <input type="password" id="update_password_password" name="password"
                    placeholder="Enter a new password"
                    autocomplete="new-password"
                    class="w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition
@@ -53,7 +53,7 @@
             <label class="block text-xs font-700 uppercase tracking-wide mb-1.5" style="color:var(--prf-text-sec);">
                 {{ __('Confirm Password') }} <span style="color:var(--prf-red);">*</span>
             </label>
-            <input type="password" id="update_password_password_confirmation" name="password_confirmation" 
+            <input type="password" id="update_password_password_confirmation" name="password_confirmation"
                    placeholder="Confirm your new password"
                    autocomplete="new-password"
                    class="w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition

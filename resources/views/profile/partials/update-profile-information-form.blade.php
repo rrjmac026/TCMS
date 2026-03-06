@@ -8,10 +8,6 @@
         </p>
     </header>
 
-    <form id="send-verification" method="post" action="{{ route('verification.send') }}">
-        @csrf
-    </form>
-
     <form method="post" action="{{ route('profile.update') }}" class="space-y-6">
         @csrf
         @method('patch')
@@ -21,7 +17,7 @@
             <label class="block text-xs font-700 uppercase tracking-wide mb-1.5" style="color:var(--prf-text-sec);">
                 {{ __('Name') }} <span style="color:var(--prf-red);">*</span>
             </label>
-            <input type="text" id="name" name="name" 
+            <input type="text" id="name" name="name"
                    value="{{ old('name', $user->name) }}"
                    placeholder="Enter your full name"
                    required autofocus autocomplete="name"
@@ -40,7 +36,7 @@
             <label class="block text-xs font-700 uppercase tracking-wide mb-1.5" style="color:var(--prf-text-sec);">
                 {{ __('Email Address') }} <span style="color:var(--prf-red);">*</span>
             </label>
-            <input type="email" id="email" name="email" 
+            <input type="email" id="email" name="email"
                    value="{{ old('email', $user->email) }}"
                    placeholder="Enter your email address"
                    required autocomplete="username"
@@ -52,23 +48,6 @@
             @error('email')
                 <p class="text-xs mt-1" style="color:var(--prf-red);">{{ $message }}</p>
             @enderror
-
-            @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
-                <div class="mt-3 rounded-lg p-3" style="background:var(--prf-warning-bg); border:1px solid var(--prf-gold);">
-                    <p class="text-sm" style="color:var(--prf-warning);">
-                        {{ __('Your email address is unverified.') }}
-                        <button form="send-verification" class="font-semibold ml-1" style="color:var(--prf-blue-primary);">
-                            {{ __('Click here to re-send the verification email.') }}
-                        </button>
-                    </p>
-
-                    @if (session('status') === 'verification-link-sent')
-                        <p class="mt-2 font-medium text-sm" style="color:var(--prf-success);">
-                            {{ __('A new verification link has been sent to your email address.') }}
-                        </p>
-                    @endif
-                </div>
-            @endif
         </div>
 
         {{-- Action Buttons --}}

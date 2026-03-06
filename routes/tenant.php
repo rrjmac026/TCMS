@@ -42,9 +42,8 @@ Route::middleware([
     PreventAccessFromCentralDomains::class,
 ])->group(function () {
 
-    // ── Root redirect ──────────────────────────────────────────────────────
     Route::get('/', function () {
-        return redirect()->route('login');
+        return view('welcome');
     });
 
     // ── Guest routes ───────────────────────────────────────────────────────
@@ -59,6 +58,7 @@ Route::middleware([
 
         Route::get('/profile',    [ProfileController::class, 'edit'])->name('profile.edit');
         Route::patch('/profile',  [ProfileController::class, 'update'])->name('profile.update');
+        Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update'); // ADD THIS
         Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     });
 
