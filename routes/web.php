@@ -40,7 +40,7 @@ foreach (config('tenancy.central_domains') as $domain) {
         });
 
         // SuperAdmin protected routes
-        Route::middleware(['auth', 'role:superadmin'])
+        Route::middleware(['auth', 'superadmin'])
             ->prefix('superadmin')
             ->name('superadmin.')
             ->group(function () {
