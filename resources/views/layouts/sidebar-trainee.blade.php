@@ -1,8 +1,5 @@
 {{-- sidebar-trainee.blade.php --}}
 <style>
-    /* ══════════════════════════════════════════
-       SIDEBAR DESIGN TOKENS — TESDA Theme
-    ══════════════════════════════════════════ */
     :root {
         --sb-surface:      #ffffff;
         --sb-surface2:     #f0f5ff;
@@ -29,101 +26,57 @@
         --sb-accent-hover: rgba(0,87,184,0.10);
         --sb-red-bg:       rgba(206,17,38,0.12);
     }
-
-    /* ── Section label ── */
     .sb-section-label {
-        font-size: 10px;
-        font-weight: 700;
-        letter-spacing: .1em;
-        text-transform: uppercase;
-        color: var(--sb-muted);
-        padding: 0 16px;
-        margin-bottom: 6px;
-        margin-top: 16px;
-        display: block;
+        font-size: 10px; font-weight: 700; letter-spacing: .1em;
+        text-transform: uppercase; color: var(--sb-muted);
+        padding: 0 16px; margin-bottom: 6px; margin-top: 16px; display: block;
     }
-
-    /* ── Nav link base ── */
     .sb-link {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 10px 16px;
-        border-radius: 10px;
-        font-size: 13.5px;
-        font-weight: 500;
-        color: var(--sb-muted);
+        display: flex; align-items: center; gap: 12px;
+        padding: 10px 16px; border-radius: 10px;
+        font-size: 13.5px; font-weight: 500; color: var(--sb-muted);
         text-decoration: none;
         transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
-        position: relative;
-        overflow: hidden;
+        position: relative; overflow: hidden;
     }
-
-    /* icon wrapper */
     .sb-link .sb-icon {
-        width: 32px;
-        height: 32px;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 13px;
-        flex-shrink: 0;
-        background: transparent;
+        width: 32px; height: 32px; border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 13px; flex-shrink: 0; background: transparent;
         transition: background 0.18s ease, color 0.18s ease;
     }
-
-    /* hover */
-    .sb-link:hover {
-        background: var(--sb-surface2);
-        color: var(--sb-text-sec);
-        box-shadow: var(--sb-shadow);
-    }
-    .sb-link:hover .sb-icon {
-        background: var(--sb-border);
-        color: var(--sb-text);
-    }
-
-    /* active — TESDA blue accent */
-    .sb-link.active {
-        background: var(--sb-accent-bg);
-        color: var(--sb-accent);
-        font-weight: 600;
-        box-shadow: 0 1px 4px rgba(0,87,184,0.12);
-    }
-    .dark .sb-link.active {
-        color: var(--sb-accent-dark);
-        background: var(--sb-accent-bg);
-        box-shadow: 0 1px 6px rgba(0,87,184,0.20);
-    }
-    .sb-link.active .sb-icon {
-        background: rgba(0,87,184,0.12);
-        color: var(--sb-accent);
-    }
-    .dark .sb-link.active .sb-icon {
-        background: rgba(0,87,184,0.22);
-        color: var(--sb-accent-dark);
-    }
-
-    /* active left bar — TESDA blue */
+    .sb-link:hover { background: var(--sb-surface2); color: var(--sb-text-sec); box-shadow: var(--sb-shadow); }
+    .sb-link:hover .sb-icon { background: var(--sb-border); color: var(--sb-text); }
+    .sb-link.active { background: var(--sb-accent-bg); color: var(--sb-accent); font-weight: 600; box-shadow: 0 1px 4px rgba(0,87,184,0.12); }
+    .dark .sb-link.active { color: var(--sb-accent-dark); background: var(--sb-accent-bg); box-shadow: 0 1px 6px rgba(0,87,184,0.20); }
+    .sb-link.active .sb-icon { background: rgba(0,87,184,0.12); color: var(--sb-accent); }
+    .dark .sb-link.active .sb-icon { background: rgba(0,87,184,0.22); color: var(--sb-accent-dark); }
     .sb-link.active::before {
-        content: '';
-        position: absolute;
-        left: 0; top: 20%; bottom: 20%;
-        width: 3px;
-        border-radius: 0 3px 3px 0;
-        background: var(--sb-accent);
+        content: ''; position: absolute; left: 0; top: 20%; bottom: 20%;
+        width: 3px; border-radius: 0 3px 3px 0; background: var(--sb-accent);
     }
-    .dark .sb-link.active::before {
-        background: var(--sb-accent-dark);
+    .dark .sb-link.active::before { background: var(--sb-accent-dark); }
+    .sb-divider { height: 1px; background: var(--sb-border); margin: 12px 16px; }
+    .sb-link-locked {
+        display: flex; align-items: center; gap: 12px;
+        padding: 10px 16px; border-radius: 10px;
+        font-size: 13.5px; font-weight: 500;
+        color: var(--sb-border); cursor: not-allowed;
+        position: relative; overflow: hidden; opacity: 0.5;
     }
-
-    /* ── Divider ── */
-    .sb-divider {
-        height: 1px;
-        background: var(--sb-border);
-        margin: 12px 16px;
+    .sb-link-locked .sb-icon {
+        width: 32px; height: 32px; border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 13px; flex-shrink: 0;
     }
+    .sb-lock-badge {
+        margin-left: auto; font-size: 9px; font-weight: 700;
+        letter-spacing: 0.8px; text-transform: uppercase;
+        padding: 2px 6px; border-radius: 6px;
+        background: rgba(245,197,24,0.15); color: #d4a800;
+        border: 1px solid rgba(245,197,24,0.30);
+    }
+    .dark .sb-lock-badge { background: rgba(245,197,24,0.10); color: #F5C518; }
 </style>
 
 <nav class="space-y-1 p-3">
@@ -139,38 +92,70 @@
     <div class="sb-divider"></div>
     <span class="sb-section-label">Courses</span>
 
-    <a href="{{ route('trainee.courses.index') }}"
-       class="sb-link {{ request()->routeIs('trainee.courses*') ? 'active' : '' }}">
-        <span class="sb-icon"><i class="fas fa-book-open"></i></span>
-        Browse Courses
-    </a>
+    {{-- Basic+ --}}
+    @plan('courses')
+        <a href="{{ route('trainee.courses.index') }}"
+           class="sb-link {{ request()->routeIs('trainee.courses*') ? 'active' : '' }}">
+            <span class="sb-icon"><i class="fas fa-book-open"></i></span>
+            Browse Courses
+        </a>
+    @endplan
 
-    <a href="{{ route('trainee.enrollments.index') }}"
-       class="sb-link {{ request()->routeIs('trainee.enrollments*') ? 'active' : '' }}">
-        <span class="sb-icon"><i class="fas fa-file-signature"></i></span>
-        My Enrollments
-    </a>
+    @plan('enrollments')
+        <a href="{{ route('trainee.enrollments.index') }}"
+           class="sb-link {{ request()->routeIs('trainee.enrollments*') ? 'active' : '' }}">
+            <span class="sb-icon"><i class="fas fa-file-signature"></i></span>
+            My Enrollments
+        </a>
+    @endplan
 
-    <a href="{{ route('trainee.schedules.index') }}"
-       class="sb-link {{ request()->routeIs('trainee.schedules*') ? 'active' : '' }}">
-        <span class="sb-icon"><i class="fas fa-calendar-alt"></i></span>
-        My Schedules
-    </a>
+    {{-- Standard+ --}}
+    @plan('training-schedules')
+        <a href="{{ route('trainee.schedules.index') }}"
+           class="sb-link {{ request()->routeIs('trainee.schedules*') ? 'active' : '' }}">
+            <span class="sb-icon"><i class="fas fa-calendar-alt"></i></span>
+            My Schedules
+        </a>
+    @else
+        <span class="sb-link-locked">
+            <span class="sb-icon"><i class="fas fa-calendar-alt"></i></span>
+            My Schedules
+            <span class="sb-lock-badge">Standard</span>
+        </span>
+    @endplan
 
     <div class="sb-divider"></div>
     <span class="sb-section-label">Progress</span>
 
-    <a href="{{ route('trainee.assessments.index') }}"
-       class="sb-link {{ request()->routeIs('trainee.assessments*') ? 'active' : '' }}">
-        <span class="sb-icon"><i class="fas fa-clipboard-check"></i></span>
-        Assessments
-    </a>
+    {{-- Standard+ --}}
+    @plan('assessments')
+        <a href="{{ route('trainee.assessments.index') }}"
+           class="sb-link {{ request()->routeIs('trainee.assessments*') ? 'active' : '' }}">
+            <span class="sb-icon"><i class="fas fa-clipboard-check"></i></span>
+            Assessments
+        </a>
+    @else
+        <span class="sb-link-locked">
+            <span class="sb-icon"><i class="fas fa-clipboard-check"></i></span>
+            Assessments
+            <span class="sb-lock-badge">Standard</span>
+        </span>
+    @endplan
 
-    <a href="{{ route('trainee.certificates.index') }}"
-       class="sb-link {{ request()->routeIs('trainee.certificates*') ? 'active' : '' }}">
-        <span class="sb-icon"><i class="fas fa-certificate"></i></span>
-        Certificates
-    </a>
+    {{-- Premium only --}}
+    @plan('certificates')
+        <a href="{{ route('trainee.certificates.index') }}"
+           class="sb-link {{ request()->routeIs('trainee.certificates*') ? 'active' : '' }}">
+            <span class="sb-icon"><i class="fas fa-certificate"></i></span>
+            Certificates
+        </a>
+    @else
+        <span class="sb-link-locked">
+            <span class="sb-icon"><i class="fas fa-certificate"></i></span>
+            Certificates
+            <span class="sb-lock-badge">Premium</span>
+        </span>
+    @endplan
 
     <div class="sb-divider"></div>
     <span class="sb-section-label">Account</span>

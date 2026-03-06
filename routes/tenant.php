@@ -56,58 +56,109 @@ Route::middleware([
     Route::middleware('auth')->group(function () {
         Route::post('/logout', [TenantLoginController::class, 'logout'])->name('logout');
 
-        Route::get('/profile',    [ProfileController::class, 'edit'])->name('profile.edit');
-        Route::patch('/profile',  [ProfileController::class, 'update'])->name('profile.update');
-        Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update'); // ADD THIS
-        Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+        Route::get('/profile',          [ProfileController::class, 'edit'])->name('profile.edit');
+        Route::patch('/profile',        [ProfileController::class, 'update'])->name('profile.update');
+        Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
+        Route::delete('/profile',       [ProfileController::class, 'destroy'])->name('profile.destroy');
     });
 
     // ── Admin ──────────────────────────────────────────────────────────────
     Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->group(function () {
-        Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
-        Route::resource('trainers',          AdminTrainersManagementController::class);
-        Route::resource('trainees',          AdminTraineesManagementController::class);
-        Route::resource('courses',           AdminCourseController::class);
-        Route::resource('enrollments',       AdminEnrollmentController::class);
-        Route::resource('training-schedules', AdminTrainingScheduleController::class);
-        Route::resource('attendances',       AdminAttendanceController::class);
 
-        // Custom certificate routes BEFORE resource to avoid {certificate} conflict
-        Route::get('certificates/{certificate}/preview',  [AdminCertificateController::class, 'preview'])->name('certificates.preview');
-        Route::get('certificates/{certificate}/download', [AdminCertificateController::class, 'download'])->name('certificates.download');
-        Route::resource('certificates', AdminCertificateController::class);
-        Route::resource('users', AdminUserController::class);
+        Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
+
+        // ── Basic plan ─────────────────────────────────────────────────────
+        Route::middleware('subscription:trainees')->group(function () {
+            Route::resource('trainees', AdminTraineesManagementController::class);
+        });
+
+        Route::middleware('subscription:courses')->group(function () {
+            Route::resource('courses', AdminCourseController::class);
+        });
+
+        Route::middleware('subscription:enrollments')->group(function () {
+            Route::resource('enrollments', AdminEnrollmentController::class);
+        });
+
+        Route::middleware('subscription:attendances')->group(function () {
+            Route::resource('attendances', AdminAttendanceController::class);
+        });
+
+        // ── Standard plan ──────────────────────────────────────────────────
+        Route::middleware('subscription:trainers')->group(function () {
+            Route::resource('trainers', AdminTrainersManagementController::class);
+        });
+
+        Route::middleware('subscription:training-schedules')->group(function () {
+            Route::resource('training-schedules', AdminTrainingScheduleController::class);
+        });
+
+        Route::middleware('subscription:users')->group(function () {
+            Route::resource('users', AdminUserController::class);
+        });
+
+        // ── Premium plan ───────────────────────────────────────────────────
+        Route::middleware('subscription:certificates')->group(function () {
+            Route::get('certificates/{certificate}/preview',  [AdminCertificateController::class, 'preview'])->name('certificates.preview');
+            Route::get('certificates/{certificate}/download', [AdminCertificateController::class, 'download'])->name('certificates.download');
+            Route::resource('certificates', AdminCertificateController::class);
+        });
     });
 
     // ── Trainer ────────────────────────────────────────────────────────────
     Route::prefix('trainer')->name('trainer.')->middleware(['auth', 'role:trainer'])->group(function () {
         Route::get('/dashboard', [TrainerController::class, 'dashboard'])->name('dashboard');
-        Route::get('/schedules',                    [TrainerScheduleController::class, 'index'])->name('schedules.index');
-        Route::get('/schedules/{trainingSchedule}', [TrainerScheduleController::class, 'show'])->name('schedules.show');
-        Route::resource('attendances', TrainerAttendanceController::class);
-        Route::resource('assessments', TrainerAssessmentController::class);
-        Route::get('/trainees',           [TrainerTraineeController::class, 'index'])->name('trainees.index');
-        Route::get('/trainees/{trainee}', [TrainerTraineeController::class, 'show'])->name('trainees.show');
+
+        Route::middleware('subscription:training-schedules')->group(function () {
+            Route::get('/schedules',                    [TrainerScheduleController::class, 'index'])->name('schedules.index');
+            Route::get('/schedules/{trainingSchedule}', [TrainerScheduleController::class, 'show'])->name('schedules.show');
+        });
+
+        Route::middleware('subscription:attendances')->group(function () {
+            Route::resource('attendances', TrainerAttendanceController::class);
+        });
+
+        Route::middleware('subscription:assessments')->group(function () {
+            Route::resource('assessments', TrainerAssessmentController::class);
+        });
+
+        Route::middleware('subscription:trainers')->group(function () {
+            Route::get('/trainees',           [TrainerTraineeController::class, 'index'])->name('trainees.index');
+            Route::get('/trainees/{trainee}', [TrainerTraineeController::class, 'show'])->name('trainees.show');
+        });
     });
 
     // ── Trainee ────────────────────────────────────────────────────────────
     Route::prefix('trainee')->name('trainee.')->middleware(['auth', 'role:trainee'])->group(function () {
         Route::get('/dashboard', [TraineeController::class, 'dashboard'])->name('dashboard');
-        Route::get('/courses',                      [TraineeCourseController::class, 'index'])->name('courses.index');
-        Route::get('/courses/{course}',             [TraineeCourseController::class, 'show'])->name('courses.show');
-        Route::post('/courses/{course}/enroll',     [TraineeCourseController::class, 'enroll'])->name('courses.enroll');
-        Route::get('/enrollments',                  [TraineeEnrollmentController::class, 'index'])->name('enrollments.index');
-        Route::get('/enrollments/{enrollment}',     [TraineeEnrollmentController::class, 'show'])->name('enrollments.show');
-        Route::get('/schedules',                    [TraineeScheduleController::class, 'index'])->name('schedules.index');
-        Route::get('/schedules/{trainingSchedule}', [TraineeScheduleController::class, 'show'])->name('schedules.show');
-        Route::get('/assessments',                  [TraineeAssessmentController::class, 'index'])->name('assessments.index');
-        Route::get('/assessments/{assessment}',     [TraineeAssessmentController::class, 'show'])->name('assessments.show');
 
-        // Custom certificate routes BEFORE resource
-        Route::get('/certificates/{certificate}/download', [TraineeCertificateController::class, 'download'])->name('certificates.download');
-        Route::get('/certificates/{certificate}/preview',  [TraineeCertificateController::class, 'preview'])->name('certificates.preview');
-        Route::get('/certificates',             [TraineeCertificateController::class, 'index'])->name('certificates.index');
-        Route::get('/certificates/{certificate}', [TraineeCertificateController::class, 'show'])->name('certificates.show');
+        Route::middleware('subscription:courses')->group(function () {
+            Route::get('/courses',                  [TraineeCourseController::class, 'index'])->name('courses.index');
+            Route::get('/courses/{course}',         [TraineeCourseController::class, 'show'])->name('courses.show');
+            Route::post('/courses/{course}/enroll', [TraineeCourseController::class, 'enroll'])->name('courses.enroll');
+        });
+
+        Route::middleware('subscription:enrollments')->group(function () {
+            Route::get('/enrollments',              [TraineeEnrollmentController::class, 'index'])->name('enrollments.index');
+            Route::get('/enrollments/{enrollment}', [TraineeEnrollmentController::class, 'show'])->name('enrollments.show');
+        });
+
+        Route::middleware('subscription:training-schedules')->group(function () {
+            Route::get('/schedules',                    [TraineeScheduleController::class, 'index'])->name('schedules.index');
+            Route::get('/schedules/{trainingSchedule}', [TraineeScheduleController::class, 'show'])->name('schedules.show');
+        });
+
+        Route::middleware('subscription:assessments')->group(function () {
+            Route::get('/assessments',              [TraineeAssessmentController::class, 'index'])->name('assessments.index');
+            Route::get('/assessments/{assessment}', [TraineeAssessmentController::class, 'show'])->name('assessments.show');
+        });
+
+        Route::middleware('subscription:certificates')->group(function () {
+            Route::get('/certificates/{certificate}/download', [TraineeCertificateController::class, 'download'])->name('certificates.download');
+            Route::get('/certificates/{certificate}/preview',  [TraineeCertificateController::class, 'preview'])->name('certificates.preview');
+            Route::get('/certificates',               [TraineeCertificateController::class, 'index'])->name('certificates.index');
+            Route::get('/certificates/{certificate}', [TraineeCertificateController::class, 'show'])->name('certificates.show');
+        });
     });
 
 });

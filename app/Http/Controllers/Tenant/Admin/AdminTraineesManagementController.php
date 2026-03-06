@@ -47,6 +47,14 @@ class AdminTraineesManagementController extends Controller
             'role'     => 'trainee',
         ]);
 
+        $limit = request()->attributes->get('trainee_limit');
+        if ($limit) {
+            $count = User::where('role', 'trainee')->count();
+            if ($count >= $limit) {
+                return back()->withErrors(['limit' => "Your plan allows a maximum of {$limit} trainees."]);
+            }
+        }
+
         return redirect()->route('tenants.admin.trainees.index')
                          ->with('success', 'Trainee created successfully.');
     }
