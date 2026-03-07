@@ -23,6 +23,7 @@ use App\Http\Controllers\Tenant\Admin\AdminUserController;
 use App\Http\Controllers\Tenant\Admin\AdminSubscriptionController;
 use App\Http\Controllers\Tenant\Admin\AdminReportController;
 use App\Http\Controllers\Tenant\Admin\AdminBrandingController;
+use App\Http\Controllers\Tenant\Admin\AdminAssessmentController;
 
 // Controllers — Trainer
 use App\Http\Controllers\Tenant\Trainer\TrainerController;
@@ -131,7 +132,7 @@ Route::middleware([
         Route::middleware('subscription:users')->group(function () {
             Route::resource('users', AdminUserController::class);
         });
-
+        Route::middleware('subscription:assessments')->resource('assessments', AdminAssessmentController::class);
         // ── Premium plan ───────────────────────────────────────────────────
         Route::middleware('subscription:certificates')->group(function () {
             Route::get('certificates/{certificate}/preview',  [AdminCertificateController::class, 'preview'])->name('certificates.preview');

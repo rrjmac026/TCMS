@@ -183,7 +183,7 @@
 
     {{-- Standard+ --}}
     @plan('assessments')
-        <a href="#"
+        <a href="{{ route('admin.assessments.index') }}"
            class="sb-link {{ request()->routeIs('admin.assessments*') ? 'active' : '' }}">
             <span class="sb-icon"><i class="fas fa-clipboard-check"></i></span>
             Assessments
@@ -216,7 +216,7 @@
 
     @plan('reports')
         <a href="{{ route('admin.reports.index') }}"
-        class="sb-link {{ request()->routeIs('admin.reports.index') || (request()->routeIs('admin.reports*') && !request()->routeIs('admin.reports.custom*')) ? 'active' : '' }}">
+           class="sb-link {{ request()->routeIs('admin.reports.index') || (request()->routeIs('admin.reports*') && !request()->routeIs('admin.reports.custom*')) ? 'active' : '' }}">
             <span class="sb-icon"><i class="fas fa-chart-bar"></i></span>
             Analytics & Reports
         </a>
@@ -230,7 +230,7 @@
 
     @plan('custom-reports')
         <a href="{{ route('admin.reports.custom.index') }}"
-        class="sb-link {{ request()->routeIs('admin.reports.custom*') ? 'active' : '' }}">
+           class="sb-link {{ request()->routeIs('admin.reports.custom*') ? 'active' : '' }}">
             <span class="sb-icon"><i class="fas fa-wrench"></i></span>
             Custom Builder
         </a>
@@ -244,7 +244,7 @@
 
     @plan('branding')
         <a href="{{ route('admin.branding.index') }}"
-        class="sb-link {{ request()->routeIs('admin.branding*') ? 'active' : '' }}">
+           class="sb-link {{ request()->routeIs('admin.branding*') ? 'active' : '' }}">
             <span class="sb-icon"><i class="fas fa-palette"></i></span>
             Custom Branding
         </a>
@@ -275,16 +275,16 @@
     <div class="sb-divider"></div>
 
     <a href="{{ route('admin.subscription.index') }}"
-    style="
+       style="
             display: flex; align-items: center; gap: 12px;
             padding: 11px 16px; border-radius: 12px; text-decoration: none;
             background: linear-gradient(135deg, #003087 0%, #CE1126 150%);
             margin: 0 0 4px; position: relative; overflow: hidden;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
             box-shadow: 0 4px 16px rgba(0,48,135,0.25);
-    "
-    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 24px rgba(0,48,135,0.35)'"
-    onmouseout="this.style.transform=''; this.style.boxShadow='0 4px 16px rgba(0,48,135,0.25)'">
+       "
+       onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 24px rgba(0,48,135,0.35)'"
+       onmouseout="this.style.transform=''; this.style.boxShadow='0 4px 16px rgba(0,48,135,0.25)'">
 
         <!-- Shimmer effect -->
         <span style="
