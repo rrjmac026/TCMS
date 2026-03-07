@@ -12,9 +12,8 @@ class AdminBrandingController extends Controller
     {
         $tenant = tenancy()->tenant;
 
-        // Generate the URL in central context before the view renders
         $brandLogo = $tenant->brand_logo
-            ? Storage::disk('public')->url($tenant->brand_logo)
+            ? asset("storage/{$tenant->brand_logo}")
             : null;
 
         return view('tenants.admin.branding.index', compact('tenant', 'brandLogo'));
@@ -33,15 +32,28 @@ class AdminBrandingController extends Controller
         ]);
 
         if ($request->hasFile('brand_logo')) {
-            // Delete old logo
+            $file      = $request->file('brand_logo');
+            $filename  = $file->hashName();
+            $directory = "branding/{$tenant->id}";
+
+            // Delete old logo from central storage
             if ($tenant->brand_logo) {
-                Storage::disk('public')->delete($tenant->brand_logo);
+                $oldPath = base_path("storage/app/public/{$tenant->brand_logo}");
+                if (file_exists($oldPath)) {
+                    unlink($oldPath);
+                }
             }
-            $path = $request->file('brand_logo')->store("branding/{$tenant->id}", 'public');
-            $validated['brand_logo'] = $path;
+
+            // Save directly to central public storage, bypassing tenant disk
+            $centralPath = base_path("storage/app/public/{$directory}");
+            if (!file_exists($centralPath)) {
+                mkdir($centralPath, 0755, true);
+            }
+
+            $file->move($centralPath, $filename);
+            $validated['brand_logo'] = "{$directory}/{$filename}";
         }
 
-        // Update on the central DB (tenancy runs on central context here)
         $tenant->update($validated);
 
         return back()->with('success', 'Branding updated successfully.');
@@ -50,10 +62,15 @@ class AdminBrandingController extends Controller
     public function resetLogo()
     {
         $tenant = tenancy()->tenant;
+
         if ($tenant->brand_logo) {
-            Storage::disk('public')->delete($tenant->brand_logo);
+            $path = base_path("storage/app/public/{$tenant->brand_logo}");
+            if (file_exists($path)) {
+                unlink($path);
+            }
             $tenant->update(['brand_logo' => null]);
         }
+
         return back()->with('success', 'Logo reset to default.');
     }
 }

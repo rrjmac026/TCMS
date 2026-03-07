@@ -197,7 +197,7 @@
     $colorAccent  = $tenant->brand_color_accent  ?? '#CE1126';
     $brandName    = $tenant->brand_name    ?? config('app.name', 'TCMS');
     $brandTagline = $tenant->brand_tagline ?? 'Skills Development Authority';
-    $brandLogo    = $tenant->brand_logo ? Storage::url($tenant->brand_logo) : asset('assets/app_logo.PNG');
+    $brandLogo    = $brandLogo ?? asset('assets/app_logo.PNG');
 @endphp
 
 {{--
