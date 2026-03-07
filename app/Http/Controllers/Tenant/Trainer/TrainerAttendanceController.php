@@ -92,7 +92,7 @@ class TrainerAttendanceController extends Controller
 
         Attendance::create($validated);
 
-        return redirect()->route('tenants.trainer.attendances.index')
+        return redirect()->route('trainer.attendances.index')
             ->with('success', 'Attendance recorded successfully.');
     }
 
@@ -153,7 +153,7 @@ class TrainerAttendanceController extends Controller
 
         $attendance->update($validated);
 
-        return redirect()->route('tenants.trainer.attendances.index')
+        return redirect()->route('trainer.attendances.index')
             ->with('success', 'Attendance updated successfully.');
     }
 
@@ -165,7 +165,7 @@ class TrainerAttendanceController extends Controller
 
         $attendance->delete();
 
-        return redirect()->route('tenants.trainer.attendances.index')
+        return redirect()->route('trainer.attendances.index')
             ->with('success', 'Attendance deleted successfully.');
     }
 }

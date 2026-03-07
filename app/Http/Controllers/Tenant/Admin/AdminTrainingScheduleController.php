@@ -69,7 +69,7 @@ class AdminTrainingScheduleController extends Controller
             'time_start', 'time_end', 'location', 'status',
         ]));
 
-        return redirect()->route('tenants.admin.training-schedules.index')
+        return redirect()->route('admin.training-schedules.index')
                         ->with('success', 'Training schedule created successfully.');
     }
 
@@ -112,7 +112,7 @@ class AdminTrainingScheduleController extends Controller
             'time_start', 'time_end', 'location', 'status',
         ]));
 
-        return redirect()->route('tenants.admin.training-schedules.index')
+        return redirect()->route('admin.training-schedules.index')
                         ->with('success', 'Training schedule updated successfully.');
     }
 
@@ -120,7 +120,7 @@ class AdminTrainingScheduleController extends Controller
     {
         $trainingSchedule->delete();
 
-        return redirect()->route('tenants.admin.training-schedules.index')
+        return redirect()->route('admin.training-schedules.index')
                          ->with('success', 'Training schedule deleted successfully.');
     }
 }

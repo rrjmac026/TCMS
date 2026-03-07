@@ -103,7 +103,7 @@ class AdminUserController extends Controller
 
         $user->delete();
 
-        return redirect()->route('tenants.admin.users.index')
+        return redirect()->route('admin.users.index')
                          ->with('success', 'User deleted successfully.');
     }
 }

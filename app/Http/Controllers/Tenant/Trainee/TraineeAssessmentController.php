@@ -64,6 +64,6 @@ class TraineeAssessmentController extends Controller
 
         $assessment->load(['enrollment.course', 'trainer']);
 
-        return view('trainee.assessments.show', compact('assessment'));
+        return view('tenants.trainee.assessments.show', compact('assessment'));
     }
 }

@@ -67,7 +67,7 @@ class AdminAttendanceController extends Controller
 
         Attendance::create($validated);
 
-        return redirect()->route('tenants.admin.attendances.index')
+        return redirect()->route('admin.attendances.index')
                          ->with('success', 'Attendance recorded successfully.');
     }
 
@@ -109,7 +109,7 @@ class AdminAttendanceController extends Controller
 
         $attendance->update($validated);
 
-        return redirect()->route('tenants.admin.attendances.index')
+        return redirect()->route('admin.attendances.index')
                          ->with('success', 'Attendance updated successfully.');
     }
 

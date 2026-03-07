@@ -89,7 +89,7 @@ class TraineeCourseController extends Controller
             'enrolled_at' => now(),
         ]);
 
-        return redirect()->route('tenants.trainee.enrollments.index')
+        return redirect()->route('trainee.enrollments.index')
             ->with('success', 'Enrollment request submitted. Please wait for admin approval.');
     }
 }

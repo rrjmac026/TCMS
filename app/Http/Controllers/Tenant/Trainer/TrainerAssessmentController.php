@@ -91,7 +91,7 @@ class TrainerAssessmentController extends Controller
 
         Assessment::create(array_merge($validated, ['trainer_id' => $trainerId]));
 
-        return redirect()->route('tenants.trainer.assessments.index')
+        return redirect()->route('trainer.assessments.index')
             ->with('success', 'Assessment recorded successfully.');
     }
 
@@ -151,7 +151,7 @@ class TrainerAssessmentController extends Controller
 
         $assessment->update($validated);
 
-        return redirect()->route('tenants.trainer.assessments.index')
+        return redirect()->route('trainer.assessments.index')
             ->with('success', 'Assessment updated successfully.');
     }
 
@@ -161,7 +161,7 @@ class TrainerAssessmentController extends Controller
 
         $assessment->delete();
 
-        return redirect()->route('tenants.trainer.assessments.index')
+        return redirect()->route('trainer.assessments.index')
             ->with('success', 'Assessment deleted successfully.');
     }
 }

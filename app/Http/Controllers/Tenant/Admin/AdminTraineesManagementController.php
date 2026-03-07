@@ -92,7 +92,7 @@ class AdminTraineesManagementController extends Controller
 
         $trainee->update($data);
 
-        return redirect()->route('tenants.admin.trainees.index')
+        return redirect()->route('admin.trainees.index')
                          ->with('success', 'Trainee updated successfully.');
     }
 
@@ -100,7 +100,7 @@ class AdminTraineesManagementController extends Controller
     {
         $trainee->delete();
 
-        return redirect()->route('tenants.admin.trainees.index')
+        return redirect()->route('admin.trainees.index')
                          ->with('success', 'Trainee deleted successfully.');
     }
 }
