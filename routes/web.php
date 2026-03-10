@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\SuperAdminLoginController;
 use App\Http\Controllers\Auth\SuperAdminRegisterController;
 use App\Http\Controllers\SuperAdmin\SuperAdminController;
 use App\Http\Controllers\SuperAdmin\SuperAdminAnalyticsController;
+use App\Http\Controllers\SuperAdmin\SuperAdminReportController;
 use App\Http\Controllers\ProfileController;
 
 foreach (config('tenancy.central_domains') as $domain) {
@@ -40,8 +41,11 @@ foreach (config('tenancy.central_domains') as $domain) {
             ->prefix('superadmin')
             ->name('superadmin.')
             ->group(function () {
+
+                // Dashboard
                 Route::get('/dashboard', [SuperAdminController::class, 'dashboard'])->name('dashboard');
 
+                // ── Tenant routes ──────────────────────────────────────────
                 // Static routes BEFORE wildcard {tenant}
                 Route::get('/tenants',        [SuperAdminController::class, 'index'])->name('tenants.index');
                 Route::get('/tenants/create', [SuperAdminController::class, 'create'])->name('tenants.create');
@@ -53,8 +57,18 @@ foreach (config('tenancy.central_domains') as $domain) {
                 Route::post('/tenants/{tenant}/approve',  [SuperAdminController::class, 'approve'])->name('tenants.approve');
                 Route::post('/tenants/{tenant}/reject',   [SuperAdminController::class, 'reject'])->name('tenants.reject');
                 Route::patch('/tenants/{tenant}/upgrade', [SuperAdminController::class, 'upgrade'])->name('tenants.upgrade');
-                Route::get('/analytics', [SuperAdminAnalyticsController::class, 'index'])
-                    ->name('analytics');
+
+                // ── Analytics ─────────────────────────────────────────────
+                Route::get('/analytics', [SuperAdminAnalyticsController::class, 'index'])->name('analytics');
+
+                // ── Reports ───────────────────────────────────────────────
+                Route::prefix('reports')->name('reports.')->group(function () {
+                    Route::get('/',              [SuperAdminReportController::class, 'index'])               ->name('index');
+                    Route::get('/tenants',       [SuperAdminReportController::class, 'exportTenants'])       ->name('tenants');
+                    Route::get('/subscriptions', [SuperAdminReportController::class, 'exportSubscriptions']) ->name('subscriptions');
+                    Route::get('/activity',      [SuperAdminReportController::class, 'exportActivity'])      ->name('activity');
+                    Route::get('/registrations', [SuperAdminReportController::class, 'exportRegistrations']) ->name('registrations');
+                });
             });
     });
 }

@@ -103,7 +103,7 @@
                style="background: var(--sa-bg); border-color: var(--sa-accent); color: var(--sa-accent);">
                 <i class="fas fa-list mr-2"></i> Manage All Tenants
             </a>
-            <a href="{{ route('superadmin.analytics') }}"
+            <a href="{{ route('superadmin.analytics.index') }}"
             class="px-4 py-3 rounded-lg font-medium text-center transition border-2"
             style="background: var(--sa-bg); border-color: var(--sa-accent); color: var(--sa-accent);">
                 <i class="fas fa-chart-line mr-2"></i> Platform Analytics

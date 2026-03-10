@@ -140,27 +140,27 @@
     <span class="sb-section-label">Tenant Management</span>
 
     <a href="{{ route('superadmin.tenants.index') }}"
-       class="sb-link {{ request()->routeIs('superadmin.tenants*') ? 'active' : '' }}">
+       class="sb-link {{ request()->routeIs('superadmin.tenants.index') || (request()->routeIs('superadmin.tenants*') && !request('filter')) ? 'active' : '' }}">
         <span class="sb-icon"><i class="fas fa-layer-group"></i></span>
         All Tenants
     </a>
 
     <a href="{{ route('superadmin.tenants.index') }}?filter=approved"
-       class="sb-link {{ request()->routeIs('superadmin.tenants*') && request('filter') === 'approved' ? 'active' : '' }}">
+       class="sb-link {{ request()->routeIs('superadmin.tenants.index') && request('filter') === 'approved' ? 'active' : '' }}">
         <span class="sb-icon"><i class="fas fa-check-circle"></i></span>
-        Approved Tenants
+        Approved
     </a>
 
     <a href="{{ route('superadmin.tenants.index') }}?filter=pending"
-       class="sb-link {{ request()->routeIs('superadmin.tenants*') && request('filter') === 'pending' ? 'active' : '' }}">
+       class="sb-link {{ request()->routeIs('superadmin.tenants.index') && request('filter') === 'pending' ? 'active' : '' }}">
         <span class="sb-icon"><i class="fas fa-hourglass-half"></i></span>
-        Pending Requests
+        Pending
     </a>
 
     <a href="{{ route('superadmin.tenants.index') }}?filter=rejected"
-       class="sb-link {{ request()->routeIs('superadmin.tenants*') && request('filter') === 'rejected' ? 'active' : '' }}">
+       class="sb-link {{ request()->routeIs('superadmin.tenants.index') && request('filter') === 'rejected' ? 'active' : '' }}">
         <span class="sb-icon"><i class="fas fa-times-circle"></i></span>
-        Rejected Tenants
+        Rejected
     </a>
 
     <a href="{{ route('superadmin.tenants.create') }}"
@@ -170,26 +170,20 @@
     </a>
 
     <div class="sb-divider"></div>
-    <span class="sb-section-label">Analytics & Monitoring</span>
+    <span class="sb-section-label">Analytics & Reports</span>
 
-    <a href="#"
-       class="sb-link">
-        <span class="sb-icon"><i class="fas fa-chart-bar"></i></span>
-        System Reports
+    <a href="{{ route('superadmin.analytics') }}"
+       class="sb-link {{ request()->routeIs('superadmin.analytics') ? 'active' : '' }}">
+        <span class="sb-icon"><i class="fas fa-chart-line"></i></span>
+        Platform Analytics
     </a>
 
-    <a href="#"
-       class="sb-link">
-        <span class="sb-icon"><i class="fas fa-server"></i></span>
-        System Health
+    <a href="{{ route('superadmin.reports.index') }}"
+       class="sb-link {{ request()->routeIs('superadmin.reports*') ? 'active' : '' }}">
+        <span class="sb-icon"><i class="fas fa-file-export"></i></span>
+        Export Reports
     </a>
-
-    <a href="#"
-       class="sb-link">
-        <span class="sb-icon"><i class="fas fa-database"></i></span>
-        Database Status
-    </a>
-
+<!-- 
     <div class="sb-divider"></div>
     <span class="sb-section-label">Configuration</span>
 
@@ -224,6 +218,6 @@
        class="sb-link">
         <span class="sb-icon"><i class="fas fa-envelope"></i></span>
         Email Templates
-    </a>
+    </a> -->
 
 </nav>
