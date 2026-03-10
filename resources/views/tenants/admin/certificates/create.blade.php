@@ -4,9 +4,6 @@
 
 @section('content')
 <style>
-    /* ══════════════════════════════════════════
-       CERTIFICATE FORM DESIGN TOKENS — TESDA Theme
-    ══════════════════════════════════════════ */
     :root {
         --certf-surface:      #ffffff;
         --certf-surface2:     #f0f5ff;
@@ -20,6 +17,7 @@
         --certf-red:          #CE1126;
         --certf-red-bg:       #fff0f2;
         --certf-error:        #CE1126;
+        --certf-input-bg:     #ffffff;
     }
     .dark {
         --certf-surface:      #0a1628;
@@ -29,6 +27,7 @@
         --certf-text-sec:     #adc4f0;
         --certf-muted:        #6b8abf;
         --certf-primary:      #5b9cf6;
+        --certf-input-bg:     #0d1f3c;
     }
 </style>
 <div class="max-w-2xl mx-auto space-y-6">
@@ -64,7 +63,7 @@
                 </label>
                 <select name="enrollment_id"
                         class="w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition"
-                        style="border-color:{{ $errors->has('enrollment_id') ? 'var(--certf-red)' : 'var(--certf-border)' }}; color:var(--certf-text);"
+                        style="background:var(--certf-input-bg); border-color:{{ $errors->has('enrollment_id') ? 'var(--certf-red)' : 'var(--certf-border)' }}; color:var(--certf-text);"
                         onfocus="this.style.borderColor='#0057B8'; this.style.boxShadow='0 0 0 3px rgba(0,87,184,0.10)'"
                         onblur="this.style.borderColor='{{ $errors->has('enrollment_id') ? 'var(--certf-red)' : 'var(--certf-border)' }}'; this.style.boxShadow='none'">
                     <option value="">Select a Completed Enrollment</option>
@@ -86,7 +85,7 @@
                 </label>
                 <select name="trainer_id"
                         class="w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition"
-                        style="border-color:{{ $errors->has('trainer_id') ? 'var(--certf-red)' : 'var(--certf-border)' }}; color:var(--certf-text);"
+                        style="background:var(--certf-input-bg); border-color:{{ $errors->has('trainer_id') ? 'var(--certf-red)' : 'var(--certf-border)' }}; color:var(--certf-text);"
                         onfocus="this.style.borderColor='#0057B8'; this.style.boxShadow='0 0 0 3px rgba(0,87,184,0.10)'"
                         onblur="this.style.borderColor='{{ $errors->has('trainer_id') ? 'var(--certf-red)' : 'var(--certf-border)' }}'; this.style.boxShadow='none'">
                     <option value="">— Select Trainer —</option>
@@ -109,7 +108,7 @@
                 <input type="text" name="certificate_number" value="{{ old('certificate_number') }}"
                        placeholder="e.g. CERT-2026-0001"
                        class="w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition"
-                       style="border-color:{{ $errors->has('certificate_number') ? 'var(--certf-red)' : 'var(--certf-border)' }}; color:var(--certf-text);"
+                       style="background:var(--certf-input-bg); border-color:{{ $errors->has('certificate_number') ? 'var(--certf-red)' : 'var(--certf-border)' }}; color:var(--certf-text);"
                        onfocus="this.style.borderColor='#0057B8'; this.style.boxShadow='0 0 0 3px rgba(0,87,184,0.10)'"
                        onblur="this.style.borderColor='{{ $errors->has('certificate_number') ? 'var(--certf-red)' : 'var(--certf-border)' }}'; this.style.boxShadow='none'">
                 @error('certificate_number')
@@ -124,7 +123,7 @@
                 </label>
                 <input type="date" name="issued_at" value="{{ old('issued_at') }}"
                        class="w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition"
-                       style="border-color:{{ $errors->has('issued_at') ? 'var(--certf-red)' : 'var(--certf-border)' }}; color:var(--certf-text);"
+                       style="background:var(--certf-input-bg); border-color:{{ $errors->has('issued_at') ? 'var(--certf-red)' : 'var(--certf-border)' }}; color:var(--certf-text);"
                        onfocus="this.style.borderColor='#0057B8'; this.style.boxShadow='0 0 0 3px rgba(0,87,184,0.10)'"
                        onblur="this.style.borderColor='{{ $errors->has('issued_at') ? 'var(--certf-red)' : 'var(--certf-border)' }}'; this.style.boxShadow='none'">
                 @error('issued_at')
@@ -139,7 +138,7 @@
                 </label>
                 <input type="date" name="expires_at" value="{{ old('expires_at') }}"
                        class="w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition"
-                       style="border-color:{{ $errors->has('expires_at') ? 'var(--certf-red)' : 'var(--certf-border)' }}; color:var(--certf-text);"
+                       style="background:var(--certf-input-bg); border-color:{{ $errors->has('expires_at') ? 'var(--certf-red)' : 'var(--certf-border)' }}; color:var(--certf-text);"
                        onfocus="this.style.borderColor='#0057B8'; this.style.boxShadow='0 0 0 3px rgba(0,87,184,0.10)'"
                        onblur="this.style.borderColor='{{ $errors->has('expires_at') ? 'var(--certf-red)' : 'var(--certf-border)' }}'; this.style.boxShadow='none'">
                 <p class="text-xs mt-1" style="color:var(--certf-muted);">Leave blank if certificate does not expire</p>

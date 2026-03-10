@@ -4,9 +4,6 @@
 
 @section('content')
 <style>
-    /* ══════════════════════════════════════════
-       TRAINEE FORM DESIGN TOKENS — TESDA Theme
-    ══════════════════════════════════════════ */
     :root {
         --tnf-surface:      #ffffff;
         --tnf-surface2:     #f0f5ff;
@@ -20,6 +17,7 @@
         --tnf-red:          #CE1126;
         --tnf-red-bg:       #fff0f2;
         --tnf-error:        #CE1126;
+        --tnf-input-bg:     #ffffff;
     }
     .dark {
         --tnf-surface:      #0a1628;
@@ -29,6 +27,7 @@
         --tnf-text-sec:     #adc4f0;
         --tnf-muted:        #6b8abf;
         --tnf-primary:      #5b9cf6;
+        --tnf-input-bg:     #0d1f3c;
     }
 </style>
 <div class="max-w-2xl mx-auto space-y-6">
@@ -62,7 +61,7 @@
                 </label>
                 <input type="text" name="name" value="{{ old('name', $trainee->name) }}"
                        class="w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition"
-                       style="border-color:{{ $errors->has('name') ? 'var(--tnf-red)' : 'var(--tnf-border)' }}; color:var(--tnf-text);"
+                       style="background:var(--tnf-input-bg); border-color:{{ $errors->has('name') ? 'var(--tnf-red)' : 'var(--tnf-border)' }}; color:var(--tnf-text);"
                        onfocus="this.style.borderColor='#0057B8'; this.style.boxShadow='0 0 0 3px rgba(0,87,184,0.10)'"
                        onblur="this.style.borderColor='{{ $errors->has('name') ? 'var(--tnf-red)' : 'var(--tnf-border)' }}'; this.style.boxShadow='none'">
                 @error('name')
@@ -76,7 +75,7 @@
                 </label>
                 <input type="email" name="email" value="{{ old('email', $trainee->email) }}"
                        class="w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition"
-                       style="border-color:{{ $errors->has('email') ? 'var(--tnf-red)' : 'var(--tnf-border)' }}; color:var(--tnf-text);"
+                       style="background:var(--tnf-input-bg); border-color:{{ $errors->has('email') ? 'var(--tnf-red)' : 'var(--tnf-border)' }}; color:var(--tnf-text);"
                        onfocus="this.style.borderColor='#0057B8'; this.style.boxShadow='0 0 0 3px rgba(0,87,184,0.10)'"
                        onblur="this.style.borderColor='{{ $errors->has('email') ? 'var(--tnf-red)' : 'var(--tnf-border)' }}'; this.style.boxShadow='none'">
                 @error('email')
@@ -92,7 +91,7 @@
                 <input type="password" name="password"
                        placeholder="Minimum 8 characters"
                        class="w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition"
-                       style="border-color:{{ $errors->has('password') ? 'var(--tnf-red)' : 'var(--tnf-border)' }}; color:var(--tnf-text);"
+                       style="background:var(--tnf-input-bg); border-color:{{ $errors->has('password') ? 'var(--tnf-red)' : 'var(--tnf-border)' }}; color:var(--tnf-text);"
                        onfocus="this.style.borderColor='#0057B8'; this.style.boxShadow='0 0 0 3px rgba(0,87,184,0.10)'"
                        onblur="this.style.borderColor='{{ $errors->has('password') ? 'var(--tnf-red)' : 'var(--tnf-border)' }}'; this.style.boxShadow='none'">
                 @error('password')
@@ -107,7 +106,7 @@
                 <input type="password" name="password_confirmation"
                        placeholder="Repeat new password"
                        class="w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition"
-                       style="border-color:var(--tnf-border); color:var(--tnf-text);"
+                       style="background:var(--tnf-input-bg); border-color:var(--tnf-border); color:var(--tnf-text);"
                        onfocus="this.style.borderColor='#0057B8'; this.style.boxShadow='0 0 0 3px rgba(0,87,184,0.10)'"
                        onblur="this.style.borderColor='var(--tnf-border)'; this.style.boxShadow='none'">
             </div>

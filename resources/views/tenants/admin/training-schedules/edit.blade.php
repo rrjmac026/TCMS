@@ -4,9 +4,6 @@
 
 @section('content')
 <style>
-    /* ══════════════════════════════════════════
-       TRAINING SCHEDULES FORM DESIGN TOKENS — TESDA Theme
-    ══════════════════════════════════════════ */
     :root {
         --tsf-surface:      #ffffff;
         --tsf-surface2:     #f0f5ff;
@@ -20,6 +17,7 @@
         --tsf-red:          #CE1126;
         --tsf-red-bg:       #fff0f2;
         --tsf-error:        #CE1126;
+        --tsf-input-bg:     #ffffff;
     }
     .dark {
         --tsf-surface:      #0a1628;
@@ -29,6 +27,7 @@
         --tsf-text-sec:     #adc4f0;
         --tsf-muted:        #6b8abf;
         --tsf-primary:      #5b9cf6;
+        --tsf-input-bg:     #0d1f3c;
     }
 </style>
 <div class="max-w-2xl mx-auto space-y-6">
@@ -65,7 +64,7 @@
                 </label>
                 <select name="course_id"
                         class="w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition"
-                        style="border-color:{{ $errors->has('course_id') ? 'var(--tsf-red)' : 'var(--tsf-border)' }}; color:var(--tsf-text);"
+                        style="background:var(--tsf-input-bg); border-color:{{ $errors->has('course_id') ? 'var(--tsf-red)' : 'var(--tsf-border)' }}; color:var(--tsf-text);"
                         onfocus="this.style.borderColor='#0057B8'; this.style.boxShadow='0 0 0 3px rgba(0,87,184,0.10)'"
                         onblur="this.style.borderColor='{{ $errors->has('course_id') ? 'var(--tsf-red)' : 'var(--tsf-border)' }}'; this.style.boxShadow='none'">
                     <option value="">Select a Course</option>
@@ -87,7 +86,7 @@
                 </label>
                 <select name="trainer_id"
                         class="w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition"
-                        style="border-color:{{ $errors->has('trainer_id') ? 'var(--tsf-red)' : 'var(--tsf-border)' }}; color:var(--tsf-text);"
+                        style="background:var(--tsf-input-bg); border-color:{{ $errors->has('trainer_id') ? 'var(--tsf-red)' : 'var(--tsf-border)' }}; color:var(--tsf-text);"
                         onfocus="this.style.borderColor='#0057B8'; this.style.boxShadow='0 0 0 3px rgba(0,87,184,0.10)'"
                         onblur="this.style.borderColor='{{ $errors->has('trainer_id') ? 'var(--tsf-red)' : 'var(--tsf-border)' }}'; this.style.boxShadow='none'">
                     <option value="">Select a Trainer</option>
@@ -109,7 +108,7 @@
                 </label>
                 <input type="date" name="start_date" value="{{ old('start_date', $trainingSchedule->start_date) }}"
                        class="w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition"
-                       style="border-color:{{ $errors->has('start_date') ? 'var(--tsf-red)' : 'var(--tsf-border)' }}; color:var(--tsf-text);"
+                       style="background:var(--tsf-input-bg); border-color:{{ $errors->has('start_date') ? 'var(--tsf-red)' : 'var(--tsf-border)' }}; color:var(--tsf-text);"
                        onfocus="this.style.borderColor='#0057B8'; this.style.boxShadow='0 0 0 3px rgba(0,87,184,0.10)'"
                        onblur="this.style.borderColor='{{ $errors->has('start_date') ? 'var(--tsf-red)' : 'var(--tsf-border)' }}'; this.style.boxShadow='none'">
                 @error('start_date')
@@ -124,7 +123,7 @@
                 </label>
                 <input type="date" name="end_date" value="{{ old('end_date', $trainingSchedule->end_date) }}"
                        class="w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition"
-                       style="border-color:{{ $errors->has('end_date') ? 'var(--tsf-red)' : 'var(--tsf-border)' }}; color:var(--tsf-text);"
+                       style="background:var(--tsf-input-bg); border-color:{{ $errors->has('end_date') ? 'var(--tsf-red)' : 'var(--tsf-border)' }}; color:var(--tsf-text);"
                        onfocus="this.style.borderColor='#0057B8'; this.style.boxShadow='0 0 0 3px rgba(0,87,184,0.10)'"
                        onblur="this.style.borderColor='{{ $errors->has('end_date') ? 'var(--tsf-red)' : 'var(--tsf-border)' }}'; this.style.boxShadow='none'">
                 @error('end_date')
@@ -139,7 +138,7 @@
                 </label>
                 <input type="time" name="time_start" value="{{ old('time_start', $trainingSchedule->time_start) }}"
                        class="w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition"
-                       style="border-color:{{ $errors->has('time_start') ? 'var(--tsf-red)' : 'var(--tsf-border)' }}; color:var(--tsf-text);"
+                       style="background:var(--tsf-input-bg); border-color:{{ $errors->has('time_start') ? 'var(--tsf-red)' : 'var(--tsf-border)' }}; color:var(--tsf-text);"
                        onfocus="this.style.borderColor='#0057B8'; this.style.boxShadow='0 0 0 3px rgba(0,87,184,0.10)'"
                        onblur="this.style.borderColor='{{ $errors->has('time_start') ? 'var(--tsf-red)' : 'var(--tsf-border)' }}'; this.style.boxShadow='none'">
                 @error('time_start')
@@ -154,7 +153,7 @@
                 </label>
                 <input type="time" name="time_end" value="{{ old('time_end', $trainingSchedule->time_end) }}"
                        class="w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition"
-                       style="border-color:{{ $errors->has('time_end') ? 'var(--tsf-red)' : 'var(--tsf-border)' }}; color:var(--tsf-text);"
+                       style="background:var(--tsf-input-bg); border-color:{{ $errors->has('time_end') ? 'var(--tsf-red)' : 'var(--tsf-border)' }}; color:var(--tsf-text);"
                        onfocus="this.style.borderColor='#0057B8'; this.style.boxShadow='0 0 0 3px rgba(0,87,184,0.10)'"
                        onblur="this.style.borderColor='{{ $errors->has('time_end') ? 'var(--tsf-red)' : 'var(--tsf-border)' }}'; this.style.boxShadow='none'">
                 @error('time_end')
@@ -170,7 +169,7 @@
                 <input type="text" name="location" value="{{ old('location', $trainingSchedule->location) }}"
                        placeholder="e.g. Room A-101, Building B"
                        class="w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition"
-                       style="border-color:{{ $errors->has('location') ? 'var(--tsf-red)' : 'var(--tsf-border)' }}; color:var(--tsf-text);"
+                       style="background:var(--tsf-input-bg); border-color:{{ $errors->has('location') ? 'var(--tsf-red)' : 'var(--tsf-border)' }}; color:var(--tsf-text);"
                        onfocus="this.style.borderColor='#0057B8'; this.style.boxShadow='0 0 0 3px rgba(0,87,184,0.10)'"
                        onblur="this.style.borderColor='{{ $errors->has('location') ? 'var(--tsf-red)' : 'var(--tsf-border)' }}'; this.style.boxShadow='none'">
                 @error('location')
@@ -185,7 +184,7 @@
                 </label>
                 <select name="status"
                         class="w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition"
-                        style="border-color:{{ $errors->has('status') ? 'var(--tsf-red)' : 'var(--tsf-border)' }}; color:var(--tsf-text);"
+                        style="background:var(--tsf-input-bg); border-color:{{ $errors->has('status') ? 'var(--tsf-red)' : 'var(--tsf-border)' }}; color:var(--tsf-text);"
                         onfocus="this.style.borderColor='#0057B8'; this.style.boxShadow='0 0 0 3px rgba(0,87,184,0.10)'"
                         onblur="this.style.borderColor='{{ $errors->has('status') ? 'var(--tsf-red)' : 'var(--tsf-border)' }}'; this.style.boxShadow='none'">
                     <option value="">Select Status</option>
@@ -209,54 +208,6 @@
                 <a href="{{ route('admin.training-schedules.show', $trainingSchedule) }}"
                    class="px-5 py-2.5 rounded-xl text-sm font-600 border transition"
                    style="border-color:var(--tsf-border); color:var(--tsf-muted);">
-                    Cancel
-                </a>
-            </div>
-        </form>
-    </div>
-
-</div>
-@endsection
-                       style="border-color:{{ $errors->has('location') ? '#CE1126' : '#c5d8f5' }}; color:#001a4d;"
-                       onfocus="this.style.borderColor='#0057B8'; this.style.boxShadow='0 0 0 3px rgba(0,87,184,0.10)'"
-                       onblur="this.style.borderColor='{{ $errors->has('location') ? '#CE1126' : '#c5d8f5' }}'; this.style.boxShadow='none'">
-                @error('location')
-                    <p class="text-xs mt-1" style="color:#CE1126;">{{ $message }}</p>
-                @enderror
-            </div>
-
-            {{-- Status --}}
-            <div>
-                <label class="block text-xs font-700 uppercase tracking-wide mb-1.5" style="color:#5a7aaa;">
-                    Status <span style="color:#CE1126;">*</span>
-                </label>
-                <select name="status"
-                        class="w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition
-                               dark:bg-[#0a1628] dark:border-[#1e3a6b] dark:text-white"
-                        style="border-color:{{ $errors->has('status') ? '#CE1126' : '#c5d8f5' }}; color:#001a4d;"
-                        onfocus="this.style.borderColor='#0057B8'; this.style.boxShadow='0 0 0 3px rgba(0,87,184,0.10)'"
-                        onblur="this.style.borderColor='{{ $errors->has('status') ? '#CE1126' : '#c5d8f5' }}'; this.style.boxShadow='none'">
-                    <option value="">Select Status</option>
-                    <option value="upcoming" {{ old('status', $trainingSchedule->status) === 'upcoming' ? 'selected' : '' }}>Upcoming</option>
-                    <option value="ongoing" {{ old('status', $trainingSchedule->status) === 'ongoing' ? 'selected' : '' }}>Ongoing</option>
-                    <option value="completed" {{ old('status', $trainingSchedule->status) === 'completed' ? 'selected' : '' }}>Completed</option>
-                    <option value="cancelled" {{ old('status', $trainingSchedule->status) === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
-                </select>
-                @error('status')
-                    <p class="text-xs mt-1" style="color:#CE1126;">{{ $message }}</p>
-                @enderror
-            </div>
-
-            {{-- Actions --}}
-            <div class="flex items-center gap-3 pt-2">
-                <button type="submit"
-                        class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-white text-sm font-700 transition hover:-translate-y-0.5"
-                        style="background:linear-gradient(135deg,#0057B8,#003087); box-shadow:0 3px 12px rgba(0,87,184,0.25);">
-                    <i class="fas fa-save"></i> Update Schedule
-                </button>
-                <a href="{{ route('admin.training-schedules.show', $trainingSchedule) }}"
-                   class="px-5 py-2.5 rounded-xl text-sm font-600 border transition hover:bg-[#e8f0fb]"
-                   style="border-color:#c5d8f5; color:#5a7aaa;">
                     Cancel
                 </a>
             </div>
