@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\SuperAdminLoginController;
 use App\Http\Controllers\Auth\SuperAdminRegisterController;
 use App\Http\Controllers\SuperAdmin\SuperAdminController;
+use App\Http\Controllers\SuperAdmin\SuperAdminAnalyticsController;
 use App\Http\Controllers\ProfileController;
 
 foreach (config('tenancy.central_domains') as $domain) {
@@ -52,6 +53,8 @@ foreach (config('tenancy.central_domains') as $domain) {
                 Route::post('/tenants/{tenant}/approve',  [SuperAdminController::class, 'approve'])->name('tenants.approve');
                 Route::post('/tenants/{tenant}/reject',   [SuperAdminController::class, 'reject'])->name('tenants.reject');
                 Route::patch('/tenants/{tenant}/upgrade', [SuperAdminController::class, 'upgrade'])->name('tenants.upgrade');
+                Route::get('/analytics', [SuperAdminAnalyticsController::class, 'index'])
+                    ->name('analytics');
             });
     });
 }
