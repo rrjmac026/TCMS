@@ -24,6 +24,7 @@ use App\Http\Controllers\Tenant\Admin\AdminSubscriptionController;
 use App\Http\Controllers\Tenant\Admin\AdminReportController;
 use App\Http\Controllers\Tenant\Admin\AdminBrandingController;
 use App\Http\Controllers\Tenant\Admin\AdminAssessmentController;
+use App\Http\Controllers\Auth\TraineeRegisterController;
 
 // Controllers — Trainer
 use App\Http\Controllers\Tenant\Trainer\TrainerController;
@@ -53,9 +54,12 @@ Route::middleware([
     });
 
     // ── Guest routes ───────────────────────────────────────────────────────
+    // Tenant guest routes
     Route::middleware('guest')->group(function () {
-        Route::get('/login',  [TenantLoginController::class, 'showLoginForm'])->name('login');
-        Route::post('/login', [TenantLoginController::class, 'login']);
+        Route::get('/login',     [TenantLoginController::class, 'showLoginForm'])->name('login');
+        Route::post('/login',    [TenantLoginController::class, 'login']);
+        Route::get('/register',  [TraineeRegisterController::class, 'showRegistrationForm'])->name('register');
+        Route::post('/register', [TraineeRegisterController::class, 'register']);
     });
 
     // ── Authenticated routes ───────────────────────────────────────────────
