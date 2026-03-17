@@ -172,11 +172,24 @@
                                     @endif
                                 </td>
                                 <td class="px-6 py-4">
-                                    <a href="{{ route('superadmin.tenants.show', $tenant) }}"
-                                       class="text-sm px-3 py-1 rounded transition"
-                                       style="background: rgba(0, 87, 184, 0.1); color: var(--sa-accent);">
-                                        View
-                                    </a>
+                                    <div class="flex items-center gap-2">
+                                        <a href="{{ route('superadmin.tenants.show', $tenant) }}"
+                                        class="text-sm px-3 py-1 rounded transition"
+                                        style="background: rgba(0, 87, 184, 0.1); color: var(--sa-accent);">
+                                            <i class="fas fa-eye mr-1"></i> View
+                                        </a>
+
+                                        <form action="{{ route('superadmin.tenants.destroy', $tenant) }}" method="POST"
+                                            onsubmit="return confirm('Delete {{ addslashes($tenant->name) }}?\n\nThis will permanently delete the tenant and ALL their data including their database. This cannot be undone.');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit"
+                                                    class="text-sm px-3 py-1 rounded transition"
+                                                    style="background: rgba(206, 17, 38, 0.1); color: var(--sa-danger);">
+                                                <i class="fas fa-trash mr-1"></i> Delete
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         @endforeach
