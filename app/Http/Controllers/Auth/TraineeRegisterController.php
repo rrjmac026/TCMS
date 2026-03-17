@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Notification;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -31,6 +32,17 @@ class TraineeRegisterController extends Controller
             'password' => Hash::make($request->password),
             'role'     => 'trainee',
         ]);
+
+        // Notify admin
+        $admin = User::where('role', 'admin')->first();
+        if ($admin) {
+            Notification::create([
+                'user_id' => $admin->id,
+                'title'   => 'New Trainee Registration',
+                'message' => "A new trainee '{$request->name}' has registered with email {$request->email}.",
+                'link'    => route('admin.trainees.index'),
+            ]);
+        }
 
         event(new Registered($user));
 

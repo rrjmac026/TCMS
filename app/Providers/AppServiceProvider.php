@@ -4,6 +4,9 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Auth;
+use App\Models\Notification;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -26,6 +29,15 @@ class AppServiceProvider extends ServiceProvider
 
         Blade::directive('endplan', function () {
             return "<?php endif; ?>";
+        });
+
+        // Share notifications with navigation layout
+        View::composer('layouts.navigation', function ($view) {
+            $notifications = collect();
+            if (Auth::check()) {
+                $notifications = Auth::user()->notifications()->latest()->get();
+            }
+            $view->with('notifications', $notifications);
         });
     }
 }

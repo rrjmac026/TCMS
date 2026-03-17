@@ -299,6 +299,14 @@ function navigationComponent() {
                 notif.is_read = true;
                 this.updateUnreadCount();
                 this.updateAllReadStatus();
+                // Mark as read on server
+                fetch(`{{ url('/notifications') }}/${notif.id}/mark-read`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': this.csrfToken
+                    }
+                }).catch(err => console.error('Failed to mark notification as read', err));
             }
             this.notificationOpen = false;
         },

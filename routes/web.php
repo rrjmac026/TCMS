@@ -7,6 +7,7 @@ use App\Http\Controllers\SuperAdmin\SuperAdminController;
 use App\Http\Controllers\SuperAdmin\SuperAdminAnalyticsController;
 use App\Http\Controllers\SuperAdmin\SuperAdminReportController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\NotificationController;
 
 foreach (config('tenancy.central_domains') as $domain) {
     Route::domain($domain)
@@ -29,7 +30,7 @@ foreach (config('tenancy.central_domains') as $domain) {
         // ── Authenticated routes ───────────────────────────────────────────
         Route::middleware('auth')->group(function () {
             Route::post('/logout', [SuperAdminLoginController::class, 'logout'])->name('superadmin.logout');
-
+            Route::post('/notifications/{id}/mark-read', [NotificationController::class, 'markRead'])->name('notifications.markRead');
             Route::get('/profile',          [ProfileController::class, 'edit'])->name('superadmin.profile.edit');
             Route::patch('/profile',        [ProfileController::class, 'update'])->name('superadmin.profile.update');
             Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('superadmin.profile.password.update');

@@ -41,6 +41,7 @@ use App\Http\Controllers\Tenant\Trainee\TraineeScheduleController;
 use App\Http\Controllers\Tenant\Trainee\TraineeAssessmentController;
 use App\Http\Controllers\Tenant\Trainee\TraineeCertificateController;
 use App\Http\Controllers\Tenant\Admin\CustomReportController;
+use App\Http\Controllers\NotificationController;
 
 
 Route::middleware([
@@ -65,6 +66,8 @@ Route::middleware([
     // ── Authenticated routes ───────────────────────────────────────────────
     Route::middleware('auth')->group(function () {
         Route::post('/logout', [TenantLoginController::class, 'logout'])->name('logout');
+
+        Route::post('/notifications/{id}/mark-read', [NotificationController::class, 'markRead'])->name('notifications.markRead');
 
         Route::get('/profile',          [ProfileController::class, 'edit'])->name('profile.edit');
         Route::patch('/profile',        [ProfileController::class, 'update'])->name('profile.update');
