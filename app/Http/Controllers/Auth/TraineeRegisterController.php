@@ -36,6 +36,6 @@ class TraineeRegisterController extends Controller
 
         Auth::login($user);
 
-        return redirect()->route('trainee.dashboard');
+        return redirect('/trainee/dashboard');
     }
 }
