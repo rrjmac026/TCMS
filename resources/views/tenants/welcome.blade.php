@@ -103,6 +103,17 @@
         }
         .btn-nav-solid:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(206,17,38,0.35); }
 
+        .btn-nav-dashboard {
+            display: inline-flex; align-items: center; gap: 7px;
+            padding: 8px 18px; border-radius: 8px; border: none;
+            font-family: inherit; font-size: 13px; font-weight: 700; color: #fff;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dk) 100%);
+            cursor: pointer; text-decoration: none;
+            box-shadow: 0 2px 10px rgba(245,197,24,0.25);
+            transition: all 0.18s;
+        }
+        .btn-nav-dashboard:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(245,197,24,0.35); }
+
         /* ── HERO ── */
         .hero {
             position: relative; z-index: 1;
@@ -178,6 +189,17 @@
             transition: all 0.2s;
         }
         .btn-hero-secondary:hover { border-color: var(--blue); color: var(--blue); background: rgba(255,255,255,1); transform: translateY(-2px); }
+
+        .btn-hero-dashboard {
+            display: inline-flex; align-items: center; gap: 10px;
+            padding: 15px 32px; border-radius: 12px; border: none;
+            font-family: inherit; font-size: 15px; font-weight: 800; color: var(--navy);
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dk) 100%);
+            box-shadow: 0 4px 20px rgba(245,197,24,0.30);
+            cursor: pointer; text-decoration: none;
+            transition: all 0.2s;
+        }
+        .btn-hero-dashboard:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(245,197,24,0.42); }
 
         /* Stats strip */
         .hero-stats {
@@ -418,13 +440,26 @@
     </a>
     <div class="nav-links">
         @auth
-            <a href="{{ url('/') }}" class="btn-nav-ghost">Dashboard</a>
-        @else
-            <a href="{{ route('login') }}" class="btn-nav-ghost">Log In</a>
-            <a href="{{ route('login') }}" class="btn-nav-solid">
-                <i class="fas fa-sign-in-alt" style="font-size:11px;"></i>
-                Get Started
+            @php
+                $role = Auth::user()->role ?? null;
+                $dashRoute = match($role) {
+                    'admin'   => 'admin.dashboard',
+                    'trainer' => 'trainer.dashboard',
+                    'trainee' => 'trainee.dashboard',
+                    default   => 'dashboard',
+                };
+            @endphp
+            <a href="{{ route($dashRoute) }}" class="btn-nav-dashboard">
+                <i class="fas fa-tachometer-alt" style="font-size:11px;"></i> Dashboard
             </a>
+        @else
+            @if (Route::has('login'))
+                <a href="{{ route('login') }}" class="btn-nav-ghost">Log In</a>
+                <a href="{{ route('login') }}" class="btn-nav-solid">
+                    <i class="fas fa-sign-in-alt" style="font-size:11px;"></i>
+                    Get Started
+                </a>
+            @endif
         @endauth
     </div>
 </nav>
@@ -447,15 +482,26 @@
 
     <div class="hero-actions">
         @auth
-            <a href="{{ url('/') }}" class="btn-hero-primary">
+            @php
+                $role = Auth::user()->role ?? null;
+                $dashRoute = match($role) {
+                    'admin'   => 'admin.dashboard',
+                    'trainer' => 'trainer.dashboard',
+                    'trainee' => 'trainee.dashboard',
+                    default   => 'dashboard',
+                };
+            @endphp
+            <a href="{{ route($dashRoute) }}" class="btn-hero-dashboard">
                 <i class="fas fa-tachometer-alt"></i>
                 Go to Dashboard
             </a>
         @else
-            <a href="{{ route('login') }}" class="btn-hero-primary">
-                <i class="fas fa-sign-in-alt"></i>
-                Sign In to Portal
-            </a>
+            @if (Route::has('login'))
+                <a href="{{ route('login') }}" class="btn-hero-primary">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Sign In to Portal
+                </a>
+            @endif
             <a href="#features" class="btn-hero-secondary">
                 <i class="fas fa-info-circle"></i>
                 Learn More
@@ -575,15 +621,26 @@
     <p class="cta-sub">Log in to your training center portal and manage everything from one place.</p>
     <div class="cta-actions">
         @auth
-            <a href="{{ url('/') }}" class="btn-cta-gold">
+            @php
+                $role = Auth::user()->role ?? null;
+                $dashRoute = match($role) {
+                    'admin'   => 'admin.dashboard',
+                    'trainer' => 'trainer.dashboard',
+                    'trainee' => 'trainee.dashboard',
+                    default   => 'dashboard',
+                };
+            @endphp
+            <a href="{{ route($dashRoute) }}" class="btn-cta-gold">
                 <i class="fas fa-tachometer-alt"></i>
                 Go to Dashboard
             </a>
         @else
-            <a href="{{ route('login') }}" class="btn-cta-gold">
-                <i class="fas fa-sign-in-alt"></i>
-                Sign In Now
-            </a>
+            @if (Route::has('login'))
+                <a href="{{ route('login') }}" class="btn-cta-gold">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Sign In Now
+                </a>
+            @endif
             <a href="#features" class="btn-cta-outline">
                 <i class="fas fa-arrow-up"></i>
                 Back to Top
@@ -605,7 +662,9 @@
     </div>
     <div class="footer-copy">&copy; {{ date('Y') }} All rights reserved.</div>
     <div class="footer-links">
-        <a href="{{ route('login') }}">Log In</a>
+        @if (Route::has('login'))
+            <a href="{{ route('login') }}">Log In</a>
+        @endif
     </div>
 </footer>
 

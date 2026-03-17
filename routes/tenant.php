@@ -49,7 +49,7 @@ Route::middleware([
 ])->group(function () {
 
     Route::get('/', function () {
-        return view('welcome');
+        return view('tenants.welcome');
     });
 
     // ── Guest routes ───────────────────────────────────────────────────────

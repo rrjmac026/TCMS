@@ -22,7 +22,7 @@ foreach (config('tenancy.central_domains') as $domain) {
         Route::middleware('guest')->group(function () {
             Route::get('/login',     [SuperAdminLoginController::class, 'showLoginForm'])->name('superadmin.login');
             Route::post('/login',    [SuperAdminLoginController::class, 'login']);
-            Route::get('/register',  [SuperAdminRegisterController::class, 'showRegistrationForm'])->name('superadmin.register');
+            Route::get('/register', [SuperAdminRegisterController::class, 'showRegistrationForm'])->name('register');
             Route::post('/register', [SuperAdminRegisterController::class, 'register']);
         });
 

@@ -148,6 +148,18 @@
             }
             .btn-ghost:hover { border-color: var(--tesda-blue); color: var(--tesda-blue); background: var(--tesda-light); }
 
+            /* Header tenant register button */
+            .btn-tenant-header {
+                display: inline-flex; align-items: center; gap: 7px;
+                padding: 8px 20px; border-radius: 8px;
+                font-size: 13px; font-weight: 700; text-decoration: none;
+                border: 1.5px solid var(--tesda-red); color: #fff;
+                background: linear-gradient(135deg, var(--tesda-red) 0%, var(--tesda-red-dk) 100%);
+                transition: all 0.18s; font-family: inherit;
+                box-shadow: 0 2px 10px rgba(206,17,38,0.22);
+            }
+            .btn-tenant-header:hover { transform: translateY(-1px); box-shadow: 0 5px 16px rgba(206,17,38,0.35); }
+
             /* Main card */
             .main-card {
                 width: 100%; max-width: 900px;
@@ -268,6 +280,37 @@
             }
             .btn-cta-secondary:hover { background: #dde8f8; border-color: var(--tesda-blue); color: var(--tesda-blue); transform: translateY(-1px); }
 
+            /* Tenant CTA block */
+            .tenant-cta-block {
+                margin-top: 18px;
+                padding: 16px 18px;
+                border-radius: 12px;
+                border: 1.5px dashed var(--tesda-border);
+                background: rgba(0,48,135,0.025);
+                display: flex; align-items: center; justify-content: space-between;
+                gap: 16px; flex-wrap: wrap;
+            }
+
+            .tenant-cta-text { flex: 1; min-width: 180px; }
+            .tenant-cta-text strong {
+                display: block; font-size: 13px; font-weight: 800;
+                color: var(--tesda-navy); margin-bottom: 3px;
+            }
+            .tenant-cta-text span {
+                font-size: 11.5px; color: #7a9abf; line-height: 1.5;
+            }
+
+            .btn-cta-tenant {
+                display: inline-flex; align-items: center; gap: 8px;
+                padding: 11px 22px; border-radius: 10px;
+                font-size: 13.5px; font-weight: 700; text-decoration: none;
+                color: #fff; flex-shrink: 0;
+                background: linear-gradient(135deg, var(--tesda-navy) 0%, #001a5c 100%);
+                border: 1.5px solid var(--tesda-navy);
+                box-shadow: 0 2px 10px rgba(0,48,135,0.25); transition: all 0.18s;
+            }
+            .btn-cta-tenant:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,48,135,0.38); }
+
             /* Footer */
             footer { margin-top: 24px; font-size: 11px; color: #8aa4cc; text-align: center; position: relative; z-index: 1; }
 
@@ -291,9 +334,14 @@
                 .feature-text span   { color: #4a6a9f; }
                 .btn-cta-secondary { background: #122550; border-color: #1e3a6b; color: #adc4f0; }
                 .btn-cta-secondary:hover { background: #1e3a6b; border-color: #5b9cf6; color: #5b9cf6; }
+                .tenant-cta-block { background: rgba(0,48,135,0.08); border-color: #1e3a6b; }
+                .tenant-cta-text strong { color: #adc4f0; }
+                .tenant-cta-text span   { color: #4a6a9f; }
+                .btn-cta-tenant { border-color: #1e3a6b; background: linear-gradient(135deg, #0d2a60 0%, #050f2e 100%); }
                 .btn-dashboard { border-color: #b38a00; box-shadow: 0 2px 10px rgba(245,197,24,0.15); }
                 .btn-ghost { border-color: #1e3a6b; color: #adc4f0; }
                 .btn-ghost:hover { border-color: #5b9cf6; color: #5b9cf6; background: #122550; }
+                .btn-tenant-header { box-shadow: 0 2px 10px rgba(206,17,38,0.15); }
                 footer { color: #3a5a8a; }
             }
         </style>
@@ -315,25 +363,25 @@
             </a>
 
             @if (Route::has('login'))
-                <nav class="nav-links">
+                <nav class="header-nav">
                     @auth
                         @php
                             $role = Auth::user()->role ?? null;
                             $dashboardRoute = match($role) {
-                                'admin' => 'admin.dashboard',
-                                'trainer'  => 'trainer.dashboard',
-                                'trainee'  => 'trainee.dashboard',
-                                default => 'dashboard'
+                                'admin'   => 'admin.dashboard',
+                                'trainer' => 'trainer.dashboard',
+                                'trainee' => 'trainee.dashboard',
+                                default   => 'dashboard'
                             };
                         @endphp
                         <a href="{{ route($dashboardRoute) }}" class="btn-dashboard">
-                            <i class="fas fa-tachometer-alt" style="margin-right:7px;"></i>Dashboard
+                            <i class="fas fa-tachometer-alt"></i>Dashboard
                         </a>
                     @else
                         <a href="{{ route('login') }}" class="btn-ghost">Log in</a>
-                        @if (Route::has('register'))
-                            <a href="{{ route('register') }}" class="btn-primary">Register</a>
-                        @endif
+                        <a href="{{ route('superadmin.register') }}" class="btn-tenant-header">
+                            <i class="fas fa-building" style="font-size:11px;"></i> Register Center
+                        </a>
                     @endauth
                 </nav>
             @endif
@@ -398,6 +446,7 @@
                     </li>
                 </ul>
 
+                <!-- Primary CTAs -->
                 <div class="cta-row">
                     @if (Route::has('register'))
                         <a href="{{ route('register') }}" class="btn-cta-primary">
@@ -410,6 +459,18 @@
                         </a>
                     @endif
                 </div>
+
+                <!-- Training Center CTA block -->
+                <div class="tenant-cta-block">
+                    <div class="tenant-cta-text">
+                        <strong><i class="fas fa-building-columns" style="font-size:11px;margin-right:5px;color:var(--tesda-blue);"></i>Are you a training center?</strong>
+                        <span>Apply to get your own tenant portal with trainee records, assessments, and certifications.</span>
+                    </div>
+                    <a href="{{ route('superadmin.register') }}" class="btn-cta-tenant">
+                        <i class="fas fa-building" style="font-size:11px;"></i> Register Your Center
+                    </a>
+                </div>
+
             </div>
         </div>
 
