@@ -59,7 +59,7 @@ foreach (config('tenancy.central_domains') as $domain) {
                 Route::patch('/tenants/{tenant}/upgrade', [SuperAdminController::class, 'upgrade'])->name('tenants.upgrade');
 
                 // ── Analytics ─────────────────────────────────────────────
-                Route::get('/analytics', [SuperAdminAnalyticsController::class, 'index'])->name('analytics');
+                Route::get('/analytics', [SuperAdminAnalyticsController::class, 'index'])->name('analytics.index');
 
                 // ── Reports ───────────────────────────────────────────────
                 Route::prefix('reports')->name('reports.')->group(function () {

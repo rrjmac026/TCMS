@@ -144,7 +144,7 @@
             </p>
         </div>
         <div class="flex gap-2">
-            <a href="{{ route('superadmin.analytics') }}"
+            <a href="{{ route('superadmin.analytics.index') }}"
                class="text-sm px-4 py-2 rounded-lg font-semibold"
                style="background:rgba(0,48,135,.08);color:var(--sa-accent);">
                 <i class="fas fa-chart-line mr-1"></i> Analytics

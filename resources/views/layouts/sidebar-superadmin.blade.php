@@ -172,7 +172,7 @@
     <div class="sb-divider"></div>
     <span class="sb-section-label">Analytics & Reports</span>
 
-    <a href="{{ route('superadmin.analytics') }}"
+    <a href="{{ route('superadmin.analytics.index') }}"
        class="sb-link {{ request()->routeIs('superadmin.analytics') ? 'active' : '' }}">
         <span class="sb-icon"><i class="fas fa-chart-line"></i></span>
         Platform Analytics
