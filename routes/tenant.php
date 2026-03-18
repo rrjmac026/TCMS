@@ -9,6 +9,7 @@ use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 // Controllers — Auth
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Auth\TenantLoginController;
+use App\Http\Controllers\Auth\SocialAuthController;
 
 // Controllers — Admin
 use App\Http\Controllers\Tenant\Admin\AdminController;
@@ -61,6 +62,8 @@ Route::middleware([
         Route::post('/login',    [TenantLoginController::class, 'login']);
         Route::get('/register',  [TraineeRegisterController::class, 'showRegistrationForm'])->name('register');
         Route::post('/register', [TraineeRegisterController::class, 'register']);
+        Route::get('/auth/google',          [SocialAuthController::class, 'redirectToGoogle'])->name('auth.google');
+        Route::get('/auth/google/callback', [SocialAuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
     });
 
     // ── Authenticated routes ───────────────────────────────────────────────

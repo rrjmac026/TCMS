@@ -16,6 +16,8 @@ class User extends Authenticatable
         'email',
         'password',
         'role', // super_admin, admin, trainer, trainee
+        'google_id',
+        'email_verified_at',
     ];
 
     protected $hidden = [
