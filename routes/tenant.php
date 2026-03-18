@@ -161,6 +161,8 @@ Route::middleware([
         });
 
         Route::middleware('subscription:attendances')->group(function () {
+            Route::get('/attendances-bulk',  [TrainerAttendanceController::class, 'bulk'])->name('attendances.bulk');
+            Route::post('/attendances-bulk', [TrainerAttendanceController::class, 'bulkStore'])->name('attendances.bulk.store');
             Route::resource('attendances', TrainerAttendanceController::class);
         });
 

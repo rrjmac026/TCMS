@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\Enrollment;
 use Illuminate\Http\Request;
+use App\Models\Course;
 
 class TrainerAttendanceController extends Controller
 {
@@ -155,6 +156,95 @@ class TrainerAttendanceController extends Controller
 
         return redirect()->route('trainer.attendances.index')
             ->with('success', 'Attendance updated successfully.');
+    }
+
+    public function bulk(Request $request)
+    {
+        $trainerId = auth()->id();
+    
+        // Courses this trainer is assigned to
+        $courses = \App\Models\Course::whereHas('schedules', function ($q) use ($trainerId) {
+            $q->where('trainer_id', $trainerId);
+        })->orderBy('name')->get();
+    
+        $enrollments = collect();
+        $selectedCourse = null;
+        $selectedDate = $request->input('date', today()->format('Y-m-d'));
+        $existingAttendance = collect();
+    
+        if ($request->filled('course_id')) {
+            $selectedCourse = \App\Models\Course::find($request->course_id);
+    
+            $enrollmentIds = $this->trainerEnrollmentIds();
+    
+            $enrollments = Enrollment::with('trainee')
+                ->whereIn('id', $enrollmentIds)
+                ->where('course_id', $request->course_id)
+                ->where('status', 'approved')
+                ->orderBy('created_at')
+                ->get();
+    
+            // Load existing attendance for this date so we can pre-fill
+            $existingAttendance = Attendance::whereIn('enrollment_id', $enrollments->pluck('id'))
+                ->whereDate('date', $selectedDate)
+                ->get()
+                ->keyBy('enrollment_id');
+        }
+    
+        return view('tenants.trainer.attendances.bulk', compact(
+            'courses',
+            'enrollments',
+            'selectedCourse',
+            'selectedDate',
+            'existingAttendance'
+        ));
+    }
+    
+    public function bulkStore(Request $request)
+    {
+        $request->validate([
+            'course_id'      => ['required', 'exists:courses,id'],
+            'date'           => ['required', 'date'],
+            'attendance'     => ['required', 'array'],
+            'attendance.*'   => ['required', 'in:present,absent,late'],
+        ]);
+    
+        $enrollmentIds = $this->trainerEnrollmentIds();
+        $date          = $request->date;
+        $saved         = 0;
+        $skipped       = 0;
+    
+        foreach ($request->attendance as $enrollmentId => $status) {
+            // Ensure enrollment belongs to this trainer
+            if (! $enrollmentIds->contains((int) $enrollmentId)) {
+                continue;
+            }
+    
+            // Upsert — update if exists, create if not
+            $existing = Attendance::where('enrollment_id', $enrollmentId)
+                ->whereDate('date', $date)
+                ->first();
+    
+            if ($existing) {
+                $existing->update(['status' => $status]);
+                $skipped++; // updated
+            } else {
+                Attendance::create([
+                    'enrollment_id' => $enrollmentId,
+                    'date'          => $date,
+                    'status'        => $status,
+                ]);
+                $saved++;
+            }
+        }
+    
+        $message = "Attendance saved for {$saved} trainee(s).";
+        if ($skipped > 0) {
+            $message .= " {$skipped} existing record(s) updated.";
+        }
+    
+        return redirect()->route('trainer.attendances.index')
+            ->with('success', $message);
     }
 
     public function destroy(Attendance $attendance)

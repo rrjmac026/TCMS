@@ -46,11 +46,18 @@
                 Record and manage trainee attendance
             </p>
         </div>
-        <a href="{{ route('trainer.attendances.create') }}"
-           class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-bold shadow transition hover:-translate-y-0.5"
-           style="background: linear-gradient(135deg,var(--att-red),#A50E1E); box-shadow:0 3px 12px rgba(206,17,38,0.28);">
-            <i class="fas fa-plus"></i> Record Attendance
-        </a>
+        <div class="flex items-center gap-2">
+            <a href="{{ route('trainer.attendances.create') }}"
+            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-bold shadow transition hover:-translate-y-0.5"
+            style="background: linear-gradient(135deg,var(--att-red),#A50E1E); box-shadow:0 3px 12px rgba(206,17,38,0.28);">
+                <i class="fas fa-plus"></i> Record
+            </a>
+            <a href="{{ route('trainer.attendances.bulk') }}"
+            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-bold shadow transition hover:-translate-y-0.5"
+            style="background: linear-gradient(135deg,var(--att-accent),#003087); box-shadow:0 3px 12px rgba(0,87,184,0.28);">
+                <i class="fas fa-users"></i> Bulk
+            </a>
+        </div>
     </div>
 
     {{-- Flash Messages --}}
