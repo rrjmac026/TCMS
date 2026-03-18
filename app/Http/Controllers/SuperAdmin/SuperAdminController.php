@@ -127,7 +127,7 @@ class SuperAdminController extends Controller
                 ]);
             });
 
-            // Send credentials to tenant admin
+            // Send credentials to tenant admin gamit email
             Mail::to($tenant->admin_email)->send(new TenantApprovalMail($tenant, $password));
 
             return redirect()->route('superadmin.tenants.index')
@@ -213,7 +213,7 @@ class SuperAdminController extends Controller
     public function destroy(Tenant $tenant)
     {
         try {
-            // This also deletes the tenant DB and domains via Stancl's event system
+            // ma delete apil ang Database ug Files sa tenant
             $tenant->delete();
 
             return redirect()->route('superadmin.tenants.index')

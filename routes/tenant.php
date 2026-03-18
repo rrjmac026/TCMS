@@ -10,6 +10,7 @@ use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Auth\TenantLoginController;
 use App\Http\Controllers\Auth\SocialAuthController;
+use App\Http\Controllers\Auth\TraineeRegisterController;
 
 // Controllers — Admin
 use App\Http\Controllers\Tenant\Admin\AdminController;
@@ -25,7 +26,7 @@ use App\Http\Controllers\Tenant\Admin\AdminSubscriptionController;
 use App\Http\Controllers\Tenant\Admin\AdminReportController;
 use App\Http\Controllers\Tenant\Admin\AdminBrandingController;
 use App\Http\Controllers\Tenant\Admin\AdminAssessmentController;
-use App\Http\Controllers\Auth\TraineeRegisterController;
+
 
 // Controllers — Trainer
 use App\Http\Controllers\Tenant\Trainer\TrainerController;
