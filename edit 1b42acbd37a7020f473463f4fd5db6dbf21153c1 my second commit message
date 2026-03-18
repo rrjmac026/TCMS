@@ -1,0 +1,287 @@
+[33mcommit 0d8a8ca87969589be71b64b3ee68b6032a12e1c2[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Wed Mar 18 14:08:58 2026 +0800
+
+    remove secrets
+
+[33mcommit e532142dd6464555e99e4115c1cd3c4b352207ec[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Wed Mar 18 14:08:18 2026 +0800
+
+    added google oauth
+
+[33mcommit 1b42acbd37a7020f473463f4fd5db6dbf21153c1[m[33m ([m[1;31morigin/main[m[33m)[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Tue Mar 17 17:06:19 2026 +0800
+
+    added notifications for superadmin and admin when a user registers
+
+[33mcommit 61b5fd0ee1da945792cab0658fa46ba117160c6f[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Tue Mar 17 16:02:56 2026 +0800
+
+    added delete functions
+
+[33mcommit 8776386ca816966291d747de17397e2eaf8c649c[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Tue Mar 17 15:51:47 2026 +0800
+
+    added fix
+
+[33mcommit 415ad62ce023ca8f45136ebdd878edfc5dc8ed54[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Tue Mar 17 15:38:24 2026 +0800
+
+    separated Auth for superadmin and tenants
+
+[33mcommit 7514560abaa7f1a95b046acd2820bb4288338b2e[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Tue Mar 17 14:42:24 2026 +0800
+
+    added fixes
+
+[33mcommit 47205a624e342c8ab6ebdf3e57bdff2ddd47716b[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Tue Mar 17 13:54:20 2026 +0800
+
+    added dashboard css
+
+[33mcommit c6dbf6b7a3365f9b540805c77c3626c808987875[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Tue Mar 17 13:40:48 2026 +0800
+
+    added fix
+
+[33mcommit 784b6d33152225b8746edb1b1274a25a39a8ad58[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Tue Mar 10 09:29:37 2026 +0800
+
+    added export and analytics
+
+[33mcommit f76c29cf0d0b791fd7a49b4d71162db7d3d53e2f[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Tue Mar 10 09:07:08 2026 +0800
+
+    added Analytics
+
+[33mcommit 86aee43b89afff92162a8f2d6a96987c50ac0cdc[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Tue Mar 10 08:40:02 2026 +0800
+
+    fixed designs
+
+[33mcommit ff3e665f64c7e7cc16ccb80a13d76efc1993a808[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Sat Mar 7 09:30:50 2026 +0800
+
+    added assessments in the admin-side
+
+[33mcommit fb749d58e9f15fd5414d2bed6e80f5c5c7d765cb[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Sat Mar 7 09:19:43 2026 +0800
+
+    fixed routing
+
+[33mcommit 641dc6ad9b2ef23fce1ec5b5ca386c0e801f4f3d[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Sat Mar 7 08:42:51 2026 +0800
+
+    fixed Logo uploading
+
+[33mcommit 0e2bb01abcdde5033eed7ca1f495e168014ef68d[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Fri Mar 6 22:08:33 2026 +0800
+
+    fixed Navbar for Superadmin
+
+[33mcommit 2542b91da88ca6c5c0a8a151c87c2bd7c9f126fe[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Fri Mar 6 17:05:34 2026 +0800
+
+    added branding
+
+[33mcommit f0de31768047b9b2d27dbfdf8a4c12c2da458d05[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Fri Mar 6 16:27:54 2026 +0800
+
+    Custom Report now works
+
+[33mcommit 9b50912c2fdf5822f783901b077eabea2910d8ec[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Fri Mar 6 16:06:20 2026 +0800
+
+    added Custom Report
+
+[33mcommit a956d65f41638e54d1f42849d02dcb1c3c160bc4[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Fri Mar 6 15:56:14 2026 +0800
+
+    fixed reports and certificates logo
+
+[33mcommit e9f8ec7b81b03cc92a3ac6d412f0b83314a45b25[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Fri Mar 6 15:32:59 2026 +0800
+
+    added Reports and fully restricted
+
+[33mcommit 7655d5d407e16b8fd42ccdce9e8f62637cdae819[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Fri Mar 6 14:48:39 2026 +0800
+
+    fixed routes and blades
+
+[33mcommit 1b6d53d15f6a627155fef22e72533c588dd562de[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Fri Mar 6 13:55:13 2026 +0800
+
+    added subscription functions
+
+[33mcommit c272741eecccd8abf99781085a9f88c45d5994a4[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Fri Mar 6 13:30:42 2026 +0800
+
+    added Middleware for subscription
+
+[33mcommit ed7f9ff0c0a4954d63ef362fadd85d159de81303[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Fri Mar 6 11:43:37 2026 +0800
+
+    fixed profile for tenants and superadmin
+
+[33mcommit 27f817c7525e03746c36809bc6a6b9a581ad1154[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Fri Mar 6 10:21:40 2026 +0800
+
+    fixed tenant folders and remove breeze
+
+[33mcommit a97db385d2573e5ef2fbd94cf73a7284e414a80a[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Fri Mar 6 09:15:58 2026 +0800
+
+    added SuperAdmin Middleware
+
+[33mcommit dfc8932a698ee0b25e75fdfcac4ed695978c1c07[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Fri Mar 6 07:59:02 2026 +0800
+
+    fixed mails
+
+[33mcommit 5f2cd595f2b04bcefe98c9a451935f84d5eb0442[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Thu Mar 5 16:59:06 2026 +0800
+
+    fixed welcome blade of superadmin
+
+[33mcommit 7b513c9037d93780544db9f176a39112b76b992d[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Thu Mar 5 16:29:59 2026 +0800
+
+    added mails and everything
+
+[33mcommit 958b3340f4e8a02f49fc0ea35e27ff398ec64d65[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Thu Mar 5 16:13:59 2026 +0800
+
+    added sidebar for SuperAdmin
+
+[33mcommit 0328fa3a162cc99000fd05836afc8440d96aa479[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Thu Mar 5 16:05:40 2026 +0800
+
+    fixed migrations
+
+[33mcommit 8b89c2a4ba0c4d3ab6b57cfb742e0e125b6a8615[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Thu Mar 5 16:00:05 2026 +0800
+
+    transfered the tables of tenants to tenant folder
+
+[33mcommit ede4a5660c1b96198da08bcf90bcaf0fef6a96a5[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Thu Mar 5 15:57:19 2026 +0800
+
+    created Superadmin Controller
+
+[33mcommit ad7588009be7ebf648011492d60905afb474214d[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Thu Mar 5 15:32:58 2026 +0800
+
+    added tenancy
+
+[33mcommit cc650a695f96c2dd49e4924595b506f9f3e141a4[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Sun Feb 22 20:58:31 2026 +0800
+
+    Done all Trainee Pages, designs left
+
+[33mcommit e1df86b1ab90e2a628d47444c3ca3a5b5cfc264d[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Sun Feb 22 20:20:52 2026 +0800
+
+    Added Trainee Controllers
+
+[33mcommit 079bbce2d825322ce4f559199f34498e802ad14c[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Sun Feb 22 16:29:17 2026 +0800
+
+    added Trainer side
+
+[33mcommit 04b10875018c26100b08f2218f6d695de11b1d45[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Sun Feb 22 01:41:56 2026 +0800
+
+    fix other blades for light and dark mode
+
+[33mcommit fcd8b254ac9c6b1ae1fd29ff860941aef9ac5c23[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Sun Feb 22 00:46:54 2026 +0800
+
+    updated designs of other blades for light and dark mode
+
+[33mcommit 616b17353b436ba67ed7acc7948406b893e56c09[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Sun Feb 22 00:14:44 2026 +0800
+
+    fixed certificate again
+
+[33mcommit 974c1ab8a57a9a0b72ccd39c2ae75e87f531963a[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Sun Feb 22 00:10:55 2026 +0800
+
+    fixed certificates and added other blades
+
+[33mcommit 6f30de403ba8b137621d3a289bfacf2f5039932b[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Sat Feb 21 23:29:34 2026 +0800
+
+    added certificate
+
+[33mcommit 7e56719eb58dded3e6be05bbf31355f468e06f10[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Sat Feb 21 22:41:29 2026 +0800
+
+    created most of the blades
+
+[33mcommit 51fbeb2eac99f0a7f05f7ef7348574b8bcc4b23a[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Sat Feb 21 21:48:40 2026 +0800
+
+    added blades and designs
+
+[33mcommit 7092374ce5cdb8f325c2bad2990f7c1d69c8db1b[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Sat Feb 21 20:18:22 2026 +0800
+
+    added extra models and blades
+
+[33mcommit 4f235041a6817e6919c2f818c38ec537bec4eac9[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Sat Feb 21 19:06:35 2026 +0800
+
+    created Middleware and temporary blades for roles
+
+[33mcommit 7c53907744745e822ea602a750e86e3be2f52a39[m
+Author: rrjmac026 <macalutasreyramesesjudeiii@gmail.com>
+Date:   Sat Feb 21 18:30:31 2026 +0800
+
+    first commit
