@@ -4,7 +4,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <title>{{ config('app.name', 'TCMS') }} — TESDA Training Center Management</title>
+        <title>{{ $brandName }} — TESDA Training Center Management</title>
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
@@ -15,21 +15,34 @@
             @vite(['resources/css/app.css', 'resources/css/tenants/welcome.css', 'resources/js/app.js'])
         @endif
 
-
+        {{-- Tenant brand overrides — must come AFTER Vite CSS to win the cascade --}}
+        <style>
+            :root {
+                --tesda-navy:   {{ $colorPrimary }};
+                --tesda-blue:   color-mix(in srgb, {{ $colorPrimary }} 60%, #0057B8 40%);
+                --tesda-red:    {{ $colorAccent }};
+                --tesda-red-dk: color-mix(in srgb, {{ $colorAccent }} 70%, #000 30%);
+            }
+        </style>
     </head>
     <body>
 
-        <div class="top-stripe"></div>
+        {{-- Top stripe uses accent + primary --}}
+        <div class="top-stripe" style="background: linear-gradient(90deg,
+            {{ $colorAccent }} 0%, {{ $colorAccent }} 33%,
+            {{ $colorPrimary }} 33%, {{ $colorPrimary }} 66%,
+            #F5C518 66%, #F5C518 100%
+        );"></div>
 
         <!-- Header -->
         <header>
             <a href="#" class="header-brand">
                 <div class="header-logo">
-                    <img src="{{ asset('assets/app_logo.PNG') }}" alt="TCMS Logo">
+                    <img src="{{ $brandLogo }}" alt="{{ $brandName }} Logo">
                 </div>
                 <div class="header-brand-text">
-                    <div class="header-brand-name">{{ config('app.name', 'TCMS') }}</div>
-                    <div class="header-brand-sub">TESDA Training Management</div>
+                    <div class="header-brand-name">{{ $brandName }}</div>
+                    <div class="header-brand-sub">{{ $brandTagline }}</div>
                 </div>
             </a>
 
@@ -61,13 +74,13 @@
         <!-- Main card -->
         <div class="main-card">
 
-            <!-- Left hero panel -->
-            <div class="hero-panel">
+            <!-- Left hero panel — gradient driven by tenant primary color -->
+            <div class="hero-panel" style="background: linear-gradient(155deg, {{ $colorPrimary }} 0%, color-mix(in srgb, {{ $colorPrimary }} 60%, #0057B8 40%) 100%);">
                 <div class="hero-seal">
-                    <img src="{{ asset('assets/app_logo.PNG') }}" alt="TESDA Logo">
+                    <img src="{{ $brandLogo }}" alt="{{ $brandName }}">
                 </div>
                 <div class="hero-title">
-                    TESDA<br><span>Competency</span><br>Management
+                    {{ $brandName }}<br><span>Competency</span><br>Management
                 </div>
                 <p class="hero-desc">
                     A cloud-based multi-tenant SaaS system for TESDA-accredited training centers — digitizing operations from enrollment to certification.
@@ -80,7 +93,7 @@
 
             <!-- Right content panel -->
             <div class="content-panel">
-                <div class="content-label">What is TCMS?</div>
+                <div class="content-label">What is {{ $brandName }}?</div>
                 <div class="content-title">Training Center Management System</div>
                 <p class="content-sub">
                     Each training center operates as its own secure tenant — with isolated records for trainees, courses, and assessments — while super admins maintain centralized oversight across all institutions.
@@ -146,7 +159,7 @@
         </div>
 
         <footer>
-            &copy; {{ date('Y') }} {{ config('app.name', 'TCMS') }} &nbsp;·&nbsp; Powered by TESDA &nbsp;·&nbsp; All rights reserved.
+            &copy; {{ date('Y') }} {{ $brandName }} &nbsp;·&nbsp; Powered by TESDA &nbsp;·&nbsp; All rights reserved.
         </footer>
 
     </body>

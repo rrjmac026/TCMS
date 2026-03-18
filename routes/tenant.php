@@ -44,6 +44,7 @@ use App\Http\Controllers\Tenant\Trainee\TraineeAssessmentController;
 use App\Http\Controllers\Tenant\Trainee\TraineeCertificateController;
 use App\Http\Controllers\Tenant\Admin\CustomReportController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\Tenant\WelcomeController;
 
 
 Route::middleware([
@@ -52,9 +53,7 @@ Route::middleware([
     PreventAccessFromCentralDomains::class,
 ])->group(function () {
 
-    Route::get('/', function () {
-        return view('tenants.welcome');
-    });
+    Route::get('/', WelcomeController::class);
 
     // ── Guest routes ───────────────────────────────────────────────────────
     // Tenant guest routes

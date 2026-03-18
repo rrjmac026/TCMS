@@ -15,7 +15,19 @@
     @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
         @vite(['resources/css/app.css', 'resources/css/tenants/auth/login.css', 'resources/js/app.js'])
     @endif
-
+    @php
+        $tenant       = tenancy()->tenant ?? null;
+        $colorPrimary = $tenant?->brand_color_primary ?? '#003087';
+        $colorAccent  = $tenant?->brand_color_accent  ?? '#CE1126';
+    @endphp
+    <style>
+        :root {
+            --navy:   {{ $colorPrimary }};
+            --blue:   color-mix(in srgb, {{ $colorPrimary }} 60%, #0057B8 40%);
+            --red:    {{ $colorAccent }};
+            --red-dk: color-mix(in srgb, {{ $colorAccent }} 70%, #000 30%);
+        }
+    </style>
 
 </head>
 <body>

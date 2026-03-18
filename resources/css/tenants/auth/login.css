@@ -40,8 +40,10 @@
         }
 
         /* Stripe */
-        .stripe { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 200;
-            background: linear-gradient(90deg, #CE1126 0%, #CE1126 33%, #0057B8 33%, #0057B8 66%, #F5C518 66%, #F5C518 100%); }
+        .stripe {
+            background: linear-gradient(90deg, var(--red) 0%, var(--red) 33%, var(--navy) 33%, var(--navy) 66%, var(--gold) 66%, var(--gold) 100%);
+        }
+
 
         /* Card */
         .login-card {
@@ -73,7 +75,7 @@
 
         .hero-brand { display: flex; align-items: center; gap: 11px; text-decoration: none; margin-bottom: 44px; }
         .hero-brand-logo { width: 44px; height: 44px; border-radius: 11px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.18); display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; }
-        .hero-brand-logo img { width: 28px; height: 28px; object-fit: contain; filter: brightness(0) invert(1); }
+        .hero-brand-logo img { width: 28px; height: 28px; object-fit: contain; }
         .hero-brand-name { font-size: 14px; font-weight: 800; color: #fff; line-height: 1.1; }
         .hero-brand-sub  { font-size: 9px; font-weight: 600; color: rgba(255,255,255,0.5); letter-spacing: 1.4px; text-transform: uppercase; }
 

@@ -47,9 +47,9 @@
                 top: 0; left: 0; right: 0;
                 height: 4px;
                 background: linear-gradient(90deg,
-                    #CE1126 0%, #CE1126 33%,
-                    #0057B8 33%, #0057B8 66%,
-                    #F5C518 66%, #F5C518 100%
+                    var(--tesda-red) 0%, var(--tesda-red) 33%,
+                    var(--tesda-navy) 33%, var(--tesda-navy) 66%,
+                    var(--tesda-gold) 66%, var(--tesda-gold) 100%
                 );
                 z-index: 100;
             }
@@ -156,7 +156,6 @@
 
             /* Left hero panel */
             .hero-panel {
-                background: linear-gradient(155deg, var(--tesda-navy) 0%, var(--tesda-blue) 100%);
                 padding: 48px 40px;
                 display: flex; flex-direction: column;
                 justify-content: center; align-items: flex-start;
@@ -182,7 +181,7 @@
                 margin-bottom: 22px; border: 1px solid rgba(255,255,255,0.18);
                 position: relative; z-index: 1;
             }
-            .hero-seal img { width: 48px; height: 48px; object-fit: contain; filter: brightness(0) invert(1); }
+            .hero-seal img { width: 48px; height: 48px; object-fit: contain; }
 
             .hero-title {
                 font-size: 26px; font-weight: 800; color: #fff;
