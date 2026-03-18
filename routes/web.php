@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\SuperAdminRegisterController;
 use App\Http\Controllers\SuperAdmin\SuperAdminController;
 use App\Http\Controllers\SuperAdmin\SuperAdminAnalyticsController;
 use App\Http\Controllers\SuperAdmin\SuperAdminReportController;
+use App\Http\Controllers\SuperAdmin\SuperAdminActivityLogController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\NotificationController;
 
@@ -70,6 +71,9 @@ foreach (config('tenancy.central_domains') as $domain) {
                     Route::get('/activity',      [SuperAdminReportController::class, 'exportActivity'])      ->name('activity');
                     Route::get('/registrations', [SuperAdminReportController::class, 'exportRegistrations']) ->name('registrations');
                 });
+
+                Route::get('/activity-logs', [SuperAdminActivityLogController::class, 'index'])
+                    ->name('activity-logs.index');
             });
     });
 }

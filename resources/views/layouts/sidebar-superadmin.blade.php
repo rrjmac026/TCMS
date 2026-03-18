@@ -183,6 +183,11 @@
         <span class="sb-icon"><i class="fas fa-file-export"></i></span>
         Export Reports
     </a>
+    <a href="{{ route('superadmin.activity-logs.index') }}"
+        class="sb-link {{ request()->routeIs('superadmin.activity-logs*') ? 'active' : '' }}">
+            <span class="sb-icon"><i class="fas fa-shield-alt"></i></span>
+            Activity Logs
+    </a>
 <!-- 
     <div class="sb-divider"></div>
     <span class="sb-section-label">Configuration</span>
