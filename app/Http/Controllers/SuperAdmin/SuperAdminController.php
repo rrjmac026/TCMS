@@ -1,4 +1,5 @@
 <?php
+// app/Http/Controllers/SuperAdmin/SuperAdminController.php
 
 namespace App\Http\Controllers\SuperAdmin;
 
@@ -67,6 +68,7 @@ class SuperAdminController extends Controller
                 'subdomain'    => strtolower($request->subdomain),
                 'subscription' => $request->subscription,
                 'status'       => 'pending',
+                'is_active'    => true,
                 'expires_at'   => null,
             ]);
 
@@ -102,15 +104,13 @@ class SuperAdminController extends Controller
             $password = 'TCM' . str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
             $domain   = $tenant->subdomain . '.tcm.com';
 
-            // Central DB — create domain record
             $tenant->domains()->create(['domain' => $domain]);
 
-            // Central DB — update tenant status
             $tenant->status     = 'approved';
+            $tenant->is_active  = true;
             $tenant->expires_at = now()->addDays(30);
             $tenant->save();
 
-            // Tenant DB — run migrations and seed admin user
             $tenant->run(function () use ($tenant, $password) {
                 Artisan::call('migrate', [
                     '--path'  => 'database/migrations/tenant',
@@ -127,14 +127,12 @@ class SuperAdminController extends Controller
                 ]);
             });
 
-            // Send credentials to tenant admin gamit email
             Mail::to($tenant->admin_email)->send(new TenantApprovalMail($tenant, $password));
 
             return redirect()->route('superadmin.tenants.index')
                 ->with('success', "Tenant approved. Credentials sent to {$tenant->admin_email}.");
 
         } catch (\Exception $e) {
-            // Manually rollback central DB changes
             $tenant->domains()->where('domain', $tenant->subdomain . '.tcm.com')->delete();
             $tenant->status     = 'pending';
             $tenant->expires_at = null;
@@ -169,6 +167,38 @@ class SuperAdminController extends Controller
     }
 
     // -------------------------------------------------------------------------
+    // Enable
+    // -------------------------------------------------------------------------
+
+    public function enable(Tenant $tenant)
+    {
+        if ($tenant->is_active) {
+            return back()->with('error', 'Tenant is already enabled.');
+        }
+
+        $tenant->is_active = true;
+        $tenant->save();
+
+        return back()->with('success', "Tenant \"{$tenant->name}\" has been enabled.");
+    }
+
+    // -------------------------------------------------------------------------
+    // Disable
+    // -------------------------------------------------------------------------
+
+    public function disable(Tenant $tenant)
+    {
+        if (! $tenant->is_active) {
+            return back()->with('error', 'Tenant is already disabled.');
+        }
+
+        $tenant->is_active = false;
+        $tenant->save();
+
+        return back()->with('success', "Tenant \"{$tenant->name}\" has been disabled. They can no longer access the system.");
+    }
+
+    // -------------------------------------------------------------------------
     // Upgrade
     // -------------------------------------------------------------------------
 
@@ -178,11 +208,10 @@ class SuperAdminController extends Controller
             'subscription' => ['required', 'in:basic,standard,premium'],
         ]);
 
-        $plans = ['basic', 'standard', 'premium'];
+        $plans        = ['basic', 'standard', 'premium'];
         $currentIndex = array_search($tenant->subscription, $plans);
-        $newIndex = array_search($request->subscription, $plans);
+        $newIndex     = array_search($request->subscription, $plans);
 
-        // Prevent downgrading
         if ($newIndex <= $currentIndex) {
             return back()->with('error', 'You can only upgrade to a higher plan.');
         }
@@ -213,7 +242,6 @@ class SuperAdminController extends Controller
     public function destroy(Tenant $tenant)
     {
         try {
-            // ma delete apil ang Database ug Files sa tenant
             $tenant->delete();
 
             return redirect()->route('superadmin.tenants.index')

@@ -75,6 +75,41 @@
         @endif
     </div>
 
+    {{-- Enable / Disable access --}}
+    @if($tenant->is_active)
+        <form action="{{ route('superadmin.tenants.disable', $tenant) }}" method="POST"
+            onsubmit="return confirm('Disable access for {{ addslashes($tenant->name) }}? They will be immediately blocked from the system.')">
+            @csrf @method('PATCH')
+            <button type="submit"
+                    class="w-full px-4 py-3 rounded-lg font-medium text-white transition"
+                    style="background: var(--sa-warning);">
+                <i class="fas fa-toggle-off mr-2"></i> Disable Tenant Access
+            </button>
+        </form>
+    @else
+        <form action="{{ route('superadmin.tenants.enable', $tenant) }}" method="POST">
+            @csrf @method('PATCH')
+            <button type="submit"
+                    class="w-full px-4 py-3 rounded-lg font-medium text-white transition"
+                    style="background: var(--sa-success);">
+                <i class="fas fa-toggle-on mr-2"></i> Enable Tenant Access
+            </button>
+        </form>
+    @endif
+
+    {{-- Access state --}}
+    @if($tenant->is_active)
+        <div class="px-4 py-3 rounded-lg" style="background: rgba(22,163,74,0.08); border-left: 4px solid var(--sa-success);">
+            <p style="color: var(--sa-success);" class="font-semibold text-sm"><i class="fas fa-toggle-on mr-1"></i> Access Enabled</p>
+            <p style="color: var(--sa-text-muted);" class="text-xs mt-1">Tenant users can log in and use the system.</p>
+        </div>
+    @else
+        <div class="px-4 py-3 rounded-lg" style="background: rgba(90,122,170,0.08); border-left: 4px solid var(--sa-text-muted);">
+            <p style="color: var(--sa-text-muted);" class="font-semibold text-sm"><i class="fas fa-toggle-off mr-1"></i> Access Disabled</p>
+            <p style="color: var(--sa-text-muted);" class="text-xs mt-1">All users in this tenant are blocked from logging in.</p>
+        </div>
+    @endif
+
     {{-- ─── Alerts ──────────────────────────────────────────────────────── --}}
     @if($errors->any())
         <div class="rounded-xl border-2 p-4" style="background: rgba(206, 17, 38, 0.05); border-color: var(--sa-danger);">

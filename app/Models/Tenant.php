@@ -1,4 +1,5 @@
 <?php
+// app/Models/Tenant.php
 
 namespace App\Models;
 
@@ -32,11 +33,12 @@ class Tenant extends BaseTenant implements TenantWithDatabase
         'subdomain',
         'subscription',
         'status',
-        'brand_name',           // ADD
-        'brand_logo',           // ADD
-        'brand_color_primary',  // ADD
-        'brand_color_accent',   // ADD
-        'brand_tagline',        // ADD
+        'is_active',            
+        'brand_name',
+        'brand_logo',
+        'brand_color_primary',
+        'brand_color_accent',
+        'brand_tagline',
         'expires_at',
         'data',
     ];
@@ -44,9 +46,9 @@ class Tenant extends BaseTenant implements TenantWithDatabase
     protected $casts = [
         'data'       => 'array',
         'expires_at' => 'datetime',
+        'is_active'  => 'boolean', 
     ];
 
-    // Required by Stancl Tenancy — tells it which are real DB columns
     public static function getCustomColumns(): array
     {
         return [
@@ -56,11 +58,12 @@ class Tenant extends BaseTenant implements TenantWithDatabase
             'subdomain',
             'subscription',
             'status',
-            'brand_name',           // ADD
-            'brand_logo',           // ADD
-            'brand_color_primary',  // ADD
-            'brand_color_accent',   // ADD
-            'brand_tagline',        // ADD
+            'is_active',            
+            'brand_name',
+            'brand_logo',
+            'brand_color_primary',
+            'brand_color_accent',
+            'brand_tagline',
             'expires_at',
         ];
     }

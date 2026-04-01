@@ -51,6 +51,7 @@ Route::middleware([
     'web',
     InitializeTenancyByDomain::class,
     PreventAccessFromCentralDomains::class,
+    'tenant.active',
 ])->group(function () {
 
     Route::get('/', WelcomeController::class);

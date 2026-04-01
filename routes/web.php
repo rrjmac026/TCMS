@@ -53,6 +53,10 @@ foreach (config('tenancy.central_domains') as $domain) {
                 Route::get('/tenants/create', [SuperAdminController::class, 'create'])->name('tenants.create');
                 Route::post('/tenants',       [SuperAdminController::class, 'store'])->name('tenants.store');
 
+                // In your routes/web.php, inside your superadmin route group, add these two lines:
+                Route::patch('tenants/{tenant}/enable',  [SuperAdminController::class, 'enable'])->name('tenants.enable');
+                Route::patch('tenants/{tenant}/disable', [SuperAdminController::class, 'disable'])->name('tenants.disable');
+
                 // Wildcard {tenant} routes AFTER static routes
                 Route::get('/tenants/{tenant}',           [SuperAdminController::class, 'show'])->name('tenants.show');
                 Route::delete('/tenants/{tenant}',        [SuperAdminController::class, 'destroy'])->name('tenants.destroy');

@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => RoleMiddleware::class,
             'superadmin' => SuperAdminMiddleware::class,
             'subscription' => CheckSubscription::class,
+            'tenant.active' => \App\Http\Middleware\EnsureTenantIsActive::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

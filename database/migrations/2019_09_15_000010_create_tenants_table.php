@@ -19,6 +19,7 @@ class CreateTenantsTable extends Migration
             $table->string('subdomain')->unique();
             $table->enum('subscription', ['basic', 'standard', 'premium'])->default('basic');
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
+            $table->boolean('is_active')->default(true);
             $table->string('brand_name')->nullable();         // Custom app name
             $table->string('brand_logo')->nullable();         // Path to uploaded logo
             $table->string('brand_color_primary')->nullable(); // e.g. #003087
