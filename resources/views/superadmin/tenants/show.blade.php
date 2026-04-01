@@ -262,19 +262,6 @@
                         </form>
                     @endif
 
-                    {{-- APPROVED: show Reject only --}}
-                    @if($tenant->status === 'approved')
-                        <form action="{{ route('superadmin.tenants.reject', $tenant) }}" method="POST">
-                            @csrf
-                            <button type="submit"
-                                    class="w-full px-4 py-3 rounded-lg font-medium text-white transition"
-                                    style="background: var(--sa-danger);"
-                                    onclick="return confirm('Are you sure you want to reject this tenant?');">
-                                <i class="fas fa-times-circle mr-2"></i> Reject Tenant
-                            </button>
-                        </form>
-                    @endif
-
                     {{-- REJECTED: show Re-approve only --}}
                     @if($tenant->status === 'rejected')
                         <form action="{{ route('superadmin.tenants.approve', $tenant) }}" method="POST">
