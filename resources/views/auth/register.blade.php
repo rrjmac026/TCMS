@@ -304,6 +304,48 @@
             });
         });
     </script>
+    @if (session('status'))
+    <div id="successModal" style="position:fixed;inset:0;z-index:9999;background:rgba(0,20,60,0.55);display:flex;align-items:center;justify-content:center;padding:24px;">
+        <div style="background:#fff;border-radius:20px;width:100%;max-width:420px;overflow:hidden;animation:modalIn 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards;">
+            <div style="height:4px;background:linear-gradient(90deg,#CE1126 0%,#CE1126 33%,#0057B8 33%,#0057B8 66%,#F5C518 66%,#F5C518 100%);"></div>
+            <div style="padding:32px 28px 28px;text-align:center;">
+                <div style="width:64px;height:64px;border-radius:50%;background:#e9f8ef;border:2px solid #6ee7a0;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
+                    <i class="fas fa-check" style="font-size:22px;color:#16a34a;"></i>
+                </div>
+                <h2 style="font-size:18px;font-weight:700;color:#001a4d;margin:0 0 8px;">Application submitted!</h2>
+                <p style="font-size:13.5px;color:#5a7aaa;line-height:1.6;margin:0 0 20px;">
+                    Your training center registration has been received. A super admin will review your application shortly.
+                </p>
+                <div style="background:#f0f5ff;border:1px solid #c5d8f5;border-radius:10px;padding:12px 14px;text-align:left;margin-bottom:22px;">
+                    <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:#1a3a6b;margin-bottom:6px;">
+                        <i class="fas fa-envelope" style="color:#0057B8;width:14px;"></i>
+                        Credentials will be sent to your admin email
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:#1a3a6b;margin-bottom:6px;">
+                        <i class="fas fa-clock" style="color:#0057B8;width:14px;"></i>
+                        Review typically takes 1–2 business days
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:#1a3a6b;">
+                        <i class="fas fa-layer-group" style="color:#0057B8;width:14px;"></i>
+                        Your tenant URL will be confirmed upon approval
+                    </div>
+                </div>
+                <a href="{{ url('/') }}" style="display:block;width:100%;padding:12px;border-radius:10px;border:none;font-size:14px;font-weight:700;color:#fff;background:linear-gradient(135deg,#003087 0%,#0057B8 100%);text-decoration:none;margin-bottom:10px;">
+                    Back to home page
+                </a>
+                <a href="{{ route('login') }}" style="display:block;width:100%;padding:11px;border-radius:10px;border:1.5px solid #c5d8f5;font-size:13.5px;font-weight:600;color:#5a7aaa;text-decoration:none;">
+                    Go to login
+                </a>
+            </div>
+        </div>
+    </div>
+        <style>
+            @keyframes modalIn {
+                from { opacity:0; transform:scale(0.88) translateY(12px); }
+                to   { opacity:1; transform:scale(1) translateY(0); }
+            }
+        </style>
+    @endif
 
 </body>
 </html>

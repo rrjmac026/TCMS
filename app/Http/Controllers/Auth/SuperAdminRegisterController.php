@@ -47,8 +47,8 @@ class SuperAdminRegisterController extends Controller
                 ]);
             }
 
-            return redirect()->route('superadmin.login')
-                ->with('status', 'Registration submitted. Please wait for approval.');
+            return redirect()->route('register')
+                ->with('status', 'submitted');
 
         } catch (\Exception $e) {
             return back()->withInput()
