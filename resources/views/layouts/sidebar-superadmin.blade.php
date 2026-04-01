@@ -170,6 +170,15 @@
     </a>
 
     <div class="sb-divider"></div>
+    <span class="sb-section-label">Subscription Management</span>
+
+    <a href="{{ route('superadmin.plans.index') }}"
+       class="sb-link {{ request()->routeIs('superadmin.plans*') ? 'active' : '' }}">
+        <span class="sb-icon"><i class="fas fa-tags"></i></span>
+        Plans & Discounts
+    </a>
+
+    <div class="sb-divider"></div>
     <span class="sb-section-label">Analytics & Reports</span>
 
     <a href="{{ route('superadmin.analytics.index') }}"

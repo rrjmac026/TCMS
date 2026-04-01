@@ -7,6 +7,7 @@ use App\Http\Controllers\SuperAdmin\SuperAdminController;
 use App\Http\Controllers\SuperAdmin\SuperAdminAnalyticsController;
 use App\Http\Controllers\SuperAdmin\SuperAdminReportController;
 use App\Http\Controllers\SuperAdmin\SuperAdminActivityLogController;
+use App\Http\Controllers\SuperAdmin\SuperAdminPlanController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\NotificationController;
 
@@ -74,6 +75,18 @@ foreach (config('tenancy.central_domains') as $domain) {
                     Route::get('/subscriptions', [SuperAdminReportController::class, 'exportSubscriptions']) ->name('subscriptions');
                     Route::get('/activity',      [SuperAdminReportController::class, 'exportActivity'])      ->name('activity');
                     Route::get('/registrations', [SuperAdminReportController::class, 'exportRegistrations']) ->name('registrations');
+                });
+
+                Route::prefix('plans')->name('plans.')->group(function () {
+                    Route::get('/',                                  [SuperAdminPlanController::class, 'index'])           ->name('index');
+                    Route::patch('/{plan}',                          [SuperAdminPlanController::class, 'updatePlan'])      ->name('update');
+                
+                    // Discounts
+                    Route::post('/discounts',                        [SuperAdminPlanController::class, 'storeDiscount'])   ->name('discounts.store');
+                    Route::patch('/discounts/{discount}',            [SuperAdminPlanController::class, 'updateDiscount'])  ->name('discounts.update');
+                    Route::delete('/discounts/{discount}',           [SuperAdminPlanController::class, 'destroyDiscount']) ->name('discounts.destroy');
+                    Route::post('/discounts/apply',                  [SuperAdminPlanController::class, 'applyDiscount'])   ->name('discounts.apply');
+                    Route::post('/discounts/validate-code',          [SuperAdminPlanController::class, 'validateCode'])    ->name('discounts.validate');
                 });
 
                 Route::get('/activity-logs', [SuperAdminActivityLogController::class, 'index'])
