@@ -6,6 +6,7 @@ namespace App\Http\Controllers\SuperAdmin;
 use App\Http\Controllers\Controller;
 use App\Mail\TenantApprovalMail;
 use App\Mail\TenantRejectionMail;
+use App\Models\SubscriptionPlan;
 use App\Models\Tenant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -27,6 +28,39 @@ class SuperAdminController extends Controller
             'pendingTenants'   => Tenant::where('status', 'pending')->get(),
             'rejectedTenants'  => Tenant::where('status', 'rejected')->get(),
         ];
+    }
+
+    /**
+     * Resolve a SubscriptionPlan from a slug, falling back gracefully
+     * if the plans table doesn't exist yet (e.g. before first migrate).
+     */
+    private function resolvePlan(string $slug): ?SubscriptionPlan
+    {
+        try {
+            return SubscriptionPlan::where('slug', $slug)->first();
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /**
+     * Calculate expiry date — reads from SubscriptionPlan if available,
+     * otherwise falls back to the original hardcoded durations.
+     */
+    private function expiresAt(string $slug): \Carbon\Carbon
+    {
+        $plan = $this->resolvePlan($slug);
+
+        if ($plan) {
+            return now()->addDays($plan->duration_days);
+        }
+
+        // Fallback (keeps working even if migration hasn't run yet)
+        return match($slug) {
+            'standard' => now()->addMonths(6),
+            'premium'  => now()->addYear(),
+            default    => now()->addDays(30),
+        };
     }
 
     // -------------------------------------------------------------------------
@@ -87,11 +121,19 @@ class SuperAdminController extends Controller
 
     public function show(Tenant $tenant)
     {
-        return view('superadmin.tenants.show', compact('tenant'));
+        // Pass plans so the upgrade form can show plan prices from the DB
+        $plans = collect();
+        try {
+            $plans = SubscriptionPlan::orderBy('sort_order')->get();
+        } catch (\Throwable) {
+            // Plans table not yet migrated — silently ignore
+        }
+
+        return view('superadmin.tenants.show', compact('tenant', 'plans'));
     }
 
     // -------------------------------------------------------------------------
-    // Approve
+    // Approve — now reads duration from SubscriptionPlan
     // -------------------------------------------------------------------------
 
     public function approve(Tenant $tenant)
@@ -108,7 +150,7 @@ class SuperAdminController extends Controller
 
             $tenant->status     = 'approved';
             $tenant->is_active  = true;
-            $tenant->expires_at = now()->addDays(30);
+            $tenant->expires_at = $this->expiresAt($tenant->subscription); // ← reads from plan
             $tenant->save();
 
             $tenant->run(function () use ($tenant, $password) {
@@ -167,7 +209,7 @@ class SuperAdminController extends Controller
     }
 
     // -------------------------------------------------------------------------
-    // Enable
+    // Enable / Disable
     // -------------------------------------------------------------------------
 
     public function enable(Tenant $tenant)
@@ -182,10 +224,6 @@ class SuperAdminController extends Controller
         return back()->with('success', "Tenant \"{$tenant->name}\" has been enabled.");
     }
 
-    // -------------------------------------------------------------------------
-    // Disable
-    // -------------------------------------------------------------------------
-
     public function disable(Tenant $tenant)
     {
         if (! $tenant->is_active) {
@@ -199,7 +237,7 @@ class SuperAdminController extends Controller
     }
 
     // -------------------------------------------------------------------------
-    // Upgrade
+    // Upgrade — now reads duration from SubscriptionPlan
     // -------------------------------------------------------------------------
 
     public function upgrade(Request $request, Tenant $tenant)
@@ -217,14 +255,8 @@ class SuperAdminController extends Controller
         }
 
         try {
-            $expiresAt = match($request->subscription) {
-                'basic'    => now()->addDays(30),
-                'standard' => now()->addMonths(6),
-                'premium'  => now()->addYear(),
-            };
-
             $tenant->subscription = $request->subscription;
-            $tenant->expires_at   = $expiresAt;
+            $tenant->expires_at   = $this->expiresAt($request->subscription); // ← reads from plan
             $tenant->save();
 
             return redirect()->back()
