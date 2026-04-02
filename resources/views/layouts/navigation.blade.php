@@ -29,6 +29,7 @@
         'admin'   => route('admin.dashboard'),
         'trainer' => route('trainer.dashboard'),
         'trainee' => route('trainee.dashboard'),
+        'superadmin' => route('superadmin.dashboard'),
         default   => '/',
     };
 @endphp
