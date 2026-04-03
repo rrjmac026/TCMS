@@ -91,8 +91,47 @@
     .fi input:focus, .fi select:focus, .fi textarea:focus { border-color: var(--sa-accent); }
     .fi textarea { resize: vertical; min-height: 64px; }
 
-    .check-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
-    .check-item  { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--sa-text); cursor: pointer; }
+    .check-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 4px;
+    }
+    .check-item {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--sa-muted);
+        cursor: pointer;
+        padding: 6px 12px;
+        border-radius: 8px;
+        border: 1.5px solid var(--sa-border);
+        background: var(--sa-surface);
+        transition: all .15s;
+        user-select: none;
+    }
+
+    .check-item:hover {
+        border-color: var(--sa-accent);
+        color: var(--sa-accent);
+        background: rgba(0,87,184,.06);
+    }
+
+    .check-item input[type="checkbox"] {
+        accent-color: var(--sa-accent);
+        width: 14px;
+        height: 14px;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+    .check-item:has(input:checked) {
+        background: rgba(0,87,184,.10);
+        border-color: var(--sa-accent);
+        color: var(--sa-accent);
+    }
     .check-item input { accent-color: var(--sa-accent); width: 15px; height: 15px; cursor: pointer; }
 
     /* ── Discount table ── */

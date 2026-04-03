@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Helpers;
+use App\Models\SubscriptionPlan;
 
 class SubscriptionHelper
 {
