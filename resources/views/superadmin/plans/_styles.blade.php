@@ -11,6 +11,15 @@
         --sa-muted:    #5a7aaa;
         --sa-bg:       #ffffff;
         --sa-surface:  #f4f8ff;
+
+        --sa-cb-bg:        #ffffff;
+        --sa-cb-border:    #c5d8f5;
+        --sa-cb-checked-bg:     rgba(0,87,184,.12);
+        --sa-cb-checked-border: #0057B8;
+        --sa-cb-checked-text:   #003087;
+        --sa-cb-hover-bg:       rgba(0,87,184,.06);
+        --sa-cb-hover-border:   #0057B8;
+        --sa-cb-hover-text:     #0057B8;
     }
     .dark {
         --sa-bg:      #0a1628;
@@ -18,6 +27,15 @@
         --sa-border:  #1e3a6b;
         --sa-text:    #dde8ff;
         --sa-muted:   #6b8abf;
+
+        --sa-cb-bg:        #0d1f3c;
+        --sa-cb-border:    #2a4a7f;
+        --sa-cb-checked-bg:     rgba(0,120,255,.18);
+        --sa-cb-checked-border: #4d9fff;
+        --sa-cb-checked-text:   #a8d0ff;
+        --sa-cb-hover-bg:       rgba(0,120,255,.10);
+        --sa-cb-hover-border:   #4d9fff;
+        --sa-cb-hover-text:     #7ab8ff;
     }
 
     /* ── Tabs ── */
@@ -91,48 +109,80 @@
     .fi input:focus, .fi select:focus, .fi textarea:focus { border-color: var(--sa-accent); }
     .fi textarea { resize: vertical; min-height: 64px; }
 
+    /* ── Checkboxes — pill toggle style ── */
     .check-group {
         display: flex;
         flex-wrap: wrap;
         gap: 8px;
         margin-top: 4px;
     }
+
+    /* Hide the real checkbox — we roll our own indicator */
+    .check-item input[type="checkbox"] {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+        pointer-events: none;
+    }
+
     .check-item {
-        display: flex;
+        display: inline-flex;
         align-items: center;
-        gap: 7px;
+        gap: 6px;
         font-size: 12px;
         font-weight: 600;
         color: var(--sa-muted);
         cursor: pointer;
         padding: 6px 12px;
         border-radius: 8px;
-        border: 1.5px solid var(--sa-border);
-        background: var(--sa-surface);
-        transition: all .15s;
+        border: 1.5px solid var(--sa-cb-border);
+        background: var(--sa-cb-bg);
+        transition: background .15s, border-color .15s, color .15s;
         user-select: none;
+        position: relative;
     }
 
-    .check-item:hover {
-        border-color: var(--sa-accent);
-        color: var(--sa-accent);
-        background: rgba(0,87,184,.06);
-    }
-
-    .check-item input[type="checkbox"] {
-        accent-color: var(--sa-accent);
+    /* Custom checkmark box — shown before the label text */
+    .check-item::before {
+        content: '';
+        display: inline-flex;
+        flex-shrink: 0;
         width: 14px;
         height: 14px;
-        cursor: pointer;
-        flex-shrink: 0;
+        border-radius: 4px;
+        border: 1.5px solid var(--sa-cb-border);
+        background: var(--sa-cb-bg);
+        transition: background .15s, border-color .15s;
     }
 
-    .check-item:has(input:checked) {
-        background: rgba(0,87,184,.10);
-        border-color: var(--sa-accent);
-        color: var(--sa-accent);
+    /* Hover state */
+    .check-item:hover {
+        border-color: var(--sa-cb-hover-border);
+        color: var(--sa-cb-hover-text);
+        background: var(--sa-cb-hover-bg);
     }
-    .check-item input { accent-color: var(--sa-accent); width: 15px; height: 15px; cursor: pointer; }
+    .check-item:hover::before {
+        border-color: var(--sa-cb-hover-border);
+    }
+
+    /* Checked state — pill */
+    .check-item:has(input:checked) {
+        background: var(--sa-cb-checked-bg);
+        border-color: var(--sa-cb-checked-border);
+        color: var(--sa-cb-checked-text);
+    }
+
+    /* Checked state — inner box becomes a filled checkmark */
+    .check-item:has(input:checked)::before {
+        background: var(--sa-cb-checked-border);
+        border-color: var(--sa-cb-checked-border);
+        /* SVG tick, white, base64 */
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 10 8' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 4l3 3 5-6' stroke='%23fff' stroke-width='1.8' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: 10px 8px;
+    }
 
     /* ── Discount table ── */
     .disc-table { width: 100%; border-collapse: collapse; font-size: 13px; }
