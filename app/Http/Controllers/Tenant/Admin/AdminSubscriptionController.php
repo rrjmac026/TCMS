@@ -10,8 +10,6 @@ class AdminSubscriptionController extends Controller
 {
     public function index()
     {
-        $plans = SubscriptionPlan::active()->get();
-        // Load plans from the central DB so the view shows live prices/features
         $dbPlans = collect();
         try {
             $dbPlans = SubscriptionPlan::active()->get()->keyBy('slug');
@@ -21,6 +19,9 @@ class AdminSubscriptionController extends Controller
 
         $tenant      = tenancy()->tenant;
         $currentPlan = $tenant->subscription ?? 'basic';
+
+        // Pass $plans as the same collection (view expects both variables)
+        $plans = $dbPlans->values();
 
         return view('tenants.admin.subscription.upgrade', compact('dbPlans', 'currentPlan', 'plans'));
     }

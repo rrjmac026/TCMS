@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class SubscriptionPlan extends Model
 {
+    protected $connection = 'mysql';
+    
     protected $fillable = [
         'slug',
         'name',
