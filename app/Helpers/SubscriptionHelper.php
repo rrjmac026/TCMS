@@ -39,31 +39,18 @@ class SubscriptionHelper
 
     public static function getLimit(string $plan, string $resource): ?int
     {
-        $limits = [
-            'basic' => [
-                'trainees'        => 100,
-                'trainers'        => 0,
-                'users'           => 1,
-                'courses'         => 20,
-                'exports_monthly' => 0,      // no exports on basic
-            ],
-            'standard' => [
-                'trainees'        => 500,
-                'trainers'        => null,
-                'users'           => 5,
-                'courses'         => null,
-                'exports_monthly' => 3000,   // 3,000 records/month, CSV only
-            ],
-            'premium' => [
-                'trainees'        => null,
-                'trainers'        => null,
-                'users'           => null,
-                'courses'         => null,
-                'exports_monthly' => null,   // unlimited exports (CSV, Excel, PDF)
-            ],
-        ];
+        $planModel = SubscriptionPlan::where('slug', $plan)->first();
 
-        return $limits[$plan][$resource] ?? null;
+        if (! $planModel) return 0;
+
+        return match($resource) {
+            'trainees'        => $planModel->max_trainees,
+            'trainers'        => $planModel->max_trainers,
+            'users'           => $planModel->max_users,
+            'courses'         => $planModel->max_courses,
+            'exports_monthly' => $planModel->max_exports_monthly,
+            default           => null,
+        };
     }
 
     /**
@@ -85,11 +72,8 @@ class SubscriptionHelper
      */
     public static function getAllowedExportFormats(string $plan): array
     {
-        return match($plan) {
-            'standard' => ['csv'],
-            'premium'  => ['csv', 'excel', 'pdf'],
-            default    => [],
-        };
+        $planModel = SubscriptionPlan::where('slug', $plan)->first();
+        return $planModel?->allowed_export_formats ?? [];
     }
 
     /**

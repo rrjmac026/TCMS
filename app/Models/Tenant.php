@@ -83,4 +83,9 @@ class Tenant extends BaseTenant implements TenantWithDatabase
         return $this->status === 'approved' &&
                (! $this->expires_at || $this->expires_at->isFuture());
     }
+
+    public function subscriptionPlan()
+    {
+        return $this->belongsTo(SubscriptionPlan::class, 'subscription', 'slug');
+    }
 }
