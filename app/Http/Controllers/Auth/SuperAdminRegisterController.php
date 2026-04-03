@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\SubscriptionPlan;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Notification;
@@ -13,7 +14,15 @@ class SuperAdminRegisterController extends Controller
 {
     public function showRegistrationForm()
     {
-        return view('auth.register');
+        // Load active plans from DB so the view can render real prices/features
+        $plans = collect();
+        try {
+            $plans = SubscriptionPlan::active()->get()->keyBy('slug');
+        } catch (\Throwable) {
+            // Table not yet migrated — view will fall back to static copy
+        }
+
+        return view('auth.register', compact('plans'));
     }
 
     public function register(Request $request)

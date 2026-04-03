@@ -15,13 +15,11 @@
         @vite(['resources/css/app.css','resources/css/auth/register.css', 'resources/js/app.js'])
     @endif
 
-
 </head>
 <body>
 
     <div class="stripe"></div>
 
-    <!-- Page header -->
     <div class="page-header">
         <a href="{{ url('/') }}" class="header-brand">
             <div class="header-logo">
@@ -37,10 +35,7 @@
         </a>
     </div>
 
-    <!-- Main card -->
     <div class="card">
-
-        <!-- Card top -->
         <div class="card-top">
             <div class="card-top-inner">
                 <div class="icon-badge">
@@ -58,27 +53,23 @@
             </div>
         </div>
 
-        <!-- Card body -->
         <div class="card-body">
 
-            {{-- Flash messages --}}
             @if (session('status'))
                 <div class="alert alert-success">
-                    <i class="fas fa-circle-check"></i>
-                    {{ session('status') }}
+                    <i class="fas fa-circle-check"></i> {{ session('status') }}
                 </div>
             @endif
             @if (session('error'))
                 <div class="alert alert-error">
-                    <i class="fas fa-circle-exclamation"></i>
-                    {{ session('error') }}
+                    <i class="fas fa-circle-exclamation"></i> {{ session('error') }}
                 </div>
             @endif
 
             <form method="POST" action="{{ route('register') }}">
                 @csrf
 
-                <!-- ── Section 1: Organization Details ── -->
+                {{-- ── Section 1: Organization Details ── --}}
                 <div class="section-header">
                     <div class="section-icon blue"><i class="fas fa-building-columns"></i></div>
                     <div>
@@ -87,80 +78,58 @@
                     </div>
                 </div>
 
-                <!-- Name + Email -->
                 <div class="field-row-2">
-
                     <div class="field">
                         <label for="name">
-                            <span class="required-dot"></span>
-                            Organization / Center Name
+                            <span class="required-dot"></span> Organization / Center Name
                         </label>
                         <div class="input-wrap">
                             <i class="fas fa-building field-icon"></i>
-                            <input
-                                id="name" type="text" name="name"
-                                value="{{ old('name') }}"
-                                required autofocus autocomplete="organization"
-                                placeholder="e.g. MACC Vocational Institute"
-                                class="{{ $errors->has('name') ? 'is-invalid' : '' }}"
-                            >
+                            <input id="name" type="text" name="name" value="{{ old('name') }}"
+                                   required autofocus autocomplete="organization"
+                                   placeholder="e.g. MACC Vocational Institute"
+                                   class="{{ $errors->has('name') ? 'is-invalid' : '' }}">
                         </div>
-                        @if ($errors->has('name'))
-                            <div class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $errors->first('name') }}</div>
-                        @endif
+                        @error('name')<div class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</div>@enderror
                     </div>
 
                     <div class="field">
                         <label for="admin_email">
-                            <span class="required-dot"></span>
-                            Admin Email Address
+                            <span class="required-dot"></span> Admin Email Address
                         </label>
                         <div class="input-wrap">
                             <i class="fas fa-envelope field-icon"></i>
-                            <input
-                                id="admin_email" type="email" name="admin_email"
-                                value="{{ old('admin_email') }}"
-                                required autocomplete="email"
-                                placeholder="admin@yourcenter.com"
-                                class="{{ $errors->has('admin_email') ? 'is-invalid' : '' }}"
-                            >
+                            <input id="admin_email" type="email" name="admin_email" value="{{ old('admin_email') }}"
+                                   required autocomplete="email"
+                                   placeholder="admin@yourcenter.com"
+                                   class="{{ $errors->has('admin_email') ? 'is-invalid' : '' }}">
                         </div>
-                        @if ($errors->has('admin_email'))
-                            <div class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $errors->first('admin_email') }}</div>
-                        @endif
-                        <div class="field-hint"><i class="fas fa-info-circle"></i>Login credentials will be sent here upon approval.</div>
+                        @error('admin_email')<div class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</div>@enderror
+                        <div class="field-hint"><i class="fas fa-info-circle"></i> Login credentials will be sent here upon approval.</div>
                     </div>
-
                 </div>
 
-                <!-- Subdomain -->
                 <div class="field">
                     <label for="subdomain">
-                        <span class="required-dot"></span>
-                        Preferred Subdomain
+                        <span class="required-dot"></span> Preferred Subdomain
                     </label>
                     <div class="input-wrap subdomain-wrap">
                         <i class="fas fa-globe field-icon"></i>
-                        <input
-                            id="subdomain" type="text" name="subdomain"
-                            value="{{ old('subdomain') }}"
-                            required autocomplete="off"
-                            placeholder="yourcenter"
-                            pattern="[a-z0-9\-_]+"
-                            oninput="this.value = this.value.toLowerCase().replace(/[^a-z0-9\-_]/g, '')"
-                            class="{{ $errors->has('subdomain') ? 'is-invalid' : '' }}"
-                        >
+                        <input id="subdomain" type="text" name="subdomain" value="{{ old('subdomain') }}"
+                               required autocomplete="off"
+                               placeholder="yourcenter"
+                               pattern="[a-z0-9\-_]+"
+                               oninput="this.value = this.value.toLowerCase().replace(/[^a-z0-9\-_]/g, '')"
+                               class="{{ $errors->has('subdomain') ? 'is-invalid' : '' }}">
                         <span class="subdomain-suffix">.tcm.com</span>
                     </div>
-                    @if ($errors->has('subdomain'))
-                        <div class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $errors->first('subdomain') }}</div>
-                    @endif
-                    <div class="field-hint"><i class="fas fa-info-circle"></i>Lowercase letters, numbers, hyphens and underscores only. This will be your tenant URL.</div>
+                    @error('subdomain')<div class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</div>@enderror
+                    <div class="field-hint"><i class="fas fa-info-circle"></i> Lowercase letters, numbers, hyphens and underscores only.</div>
                 </div>
 
                 <div class="section-divider"></div>
 
-                <!-- ── Section 2: Subscription Plan ── -->
+                {{-- ── Section 2: Subscription Plan ── --}}
                 <div class="section-header">
                     <div class="section-icon gold"><i class="fas fa-layer-group"></i></div>
                     <div>
@@ -169,76 +138,126 @@
                     </div>
                 </div>
 
-                {{-- Hidden select (keeps validation working) --}}
+                {{-- Hidden select keeps validation working --}}
                 <input type="hidden" name="subscription" id="subscription-value" value="{{ old('subscription', '') }}">
+
+                @php
+                    // Helper: get a value from the DB plan if available, otherwise use the fallback
+                    $p = fn(string $slug, string $field, mixed $fallback) =>
+                        isset($plans[$slug]) ? $plans[$slug]->$field : $fallback;
+
+                    // Formatted prices
+                    $basicPrice    = $p('basic',    'price', 0)    == 0   ? 'Free'   : '₱' . number_format($p('basic',    'price', 0),    0);
+                    $standardPrice = '₱' . number_format($p('standard', 'price', 1499), 0);
+                    $premiumPrice  = '₱' . number_format($p('premium',  'price', 3999), 0);
+
+                    // Duration labels
+                    $basicDuration    = $p('basic',    'duration_label', '30 days');
+                    $standardDuration = $p('standard', 'duration_label', '6 months');
+                    $premiumDuration  = $p('premium',  'duration_label', '1 year');
+
+                    // Trainee limits
+                    $basicTrainees    = $p('basic',    'max_trainees', 100)  ?? 'Unlimited';
+                    $standardTrainees = $p('standard', 'max_trainees', 500)  ?? 'Unlimited';
+                    $premiumTrainees  = $p('premium',  'max_trainees', null) ?? 'Unlimited';
+
+                    // Feature flags
+                    $stdHasTrainers    = $p('standard', 'has_trainers',   true);
+                    $stdHasAssess      = $p('standard', 'has_assessments', true);
+                    $preHasCerts       = $p('premium',  'has_certificates', true);
+                    $preHasBranding    = $p('premium',  'has_branding',    true);
+                    $preHasCustomRep   = $p('premium',  'has_custom_reports', true);
+
+                    // Export formats
+                    $stdExportFmts  = $p('standard', 'allowed_export_formats', ['csv']);
+                    $preExportFmts  = $p('premium',  'allowed_export_formats', ['csv','excel','pdf']);
+                    $stdExportLabel = $stdExportFmts ? strtoupper(implode('/', $stdExportFmts)) . ' export' : 'No exports';
+                    $preExportLabel = $preExportFmts ? strtoupper(implode('/', $preExportFmts)) . ' export' : 'No exports';
+
+                    // Export monthly limit
+                    $stdExportLimit = $p('standard', 'max_exports_monthly', 3000);
+                    $stdExportDesc  = $stdExportLimit ? number_format($stdExportLimit) . ' records/mo' : 'Unlimited';
+                @endphp
 
                 <div class="plan-grid" id="plan-grid">
 
-                    <!-- Basic -->
-                    <div class="plan-card {{ old('subscription') === 'basic' ? 'selected' : '' }}" data-plan="basic" onclick="selectPlan('basic')">
+                    {{-- ── Basic ── --}}
+                    <div class="plan-card {{ old('subscription') === 'basic' ? 'selected' : '' }}"
+                         data-plan="basic" onclick="selectPlan('basic')">
                         <div class="plan-check"><i class="fas fa-check"></i></div>
                         <div class="plan-icon basic"><i class="fas fa-seedling"></i></div>
                         <div class="plan-name">Basic</div>
-                        <div class="plan-price">Starts at <span>Free</span></div>
+                        <div class="plan-price">Starts at <span>{{ $basicPrice }}</span></div>
                         <ul class="plan-features">
-                            <li><i class="fas fa-check"></i> Up to 50 trainees</li>
-                            <li><i class="fas fa-check"></i> 5 courses</li>
-                            <li><i class="fas fa-check"></i> Basic reports</li>
-                            <li class="muted"><i class="fas fa-xmark"></i> PDF/Excel export</li>
-                            <li class="muted"><i class="fas fa-xmark"></i> Priority support</li>
+                            <li><i class="fas fa-check"></i> Up to {{ $basicTrainees }} trainees</li>
+                            <li><i class="fas fa-check"></i> Courses & enrollments</li>
+                            <li><i class="fas fa-check"></i> Attendance tracking</li>
+                            <li class="muted"><i class="fas fa-xmark"></i> Trainer management</li>
+                            <li class="muted"><i class="fas fa-xmark"></i> Assessments & reports</li>
                         </ul>
                         <div style="margin-top:10px;">
-                            <span style="font-size:10px;background:var(--light);color:var(--blue);padding:3px 8px;border-radius:5px;font-weight:700;">30-day trial</span>
+                            <span style="font-size:10px;background:var(--light);color:var(--blue);padding:3px 8px;border-radius:5px;font-weight:700;">
+                                {{ $basicDuration }}
+                            </span>
                         </div>
                     </div>
 
-                    <!-- Standard -->
-                    <div class="plan-card {{ old('subscription') === 'standard' ? 'selected' : '' }}" data-plan="standard" onclick="selectPlan('standard')">
+                    {{-- ── Standard ── --}}
+                    <div class="plan-card {{ old('subscription') === 'standard' ? 'selected' : '' }}"
+                         data-plan="standard" onclick="selectPlan('standard')">
                         <div class="plan-badge popular">Popular</div>
                         <div class="plan-check"><i class="fas fa-check"></i></div>
                         <div class="plan-icon standard"><i class="fas fa-rocket"></i></div>
                         <div class="plan-name">Standard</div>
-                        <div class="plan-price">Up to <span>200</span> trainees</div>
+                        <div class="plan-price">Up to <span>{{ $standardTrainees }}</span> trainees</div>
                         <ul class="plan-features">
-                            <li><i class="fas fa-check"></i> Up to 200 trainees</li>
-                            <li><i class="fas fa-check"></i> 20 courses</li>
-                            <li><i class="fas fa-check"></i> Advanced reports</li>
-                            <li><i class="fas fa-check"></i> CSV/Excel export</li>
-                            <li class="muted"><i class="fas fa-xmark"></i> Priority support</li>
+                            <li><i class="fas fa-check"></i> Up to {{ $standardTrainees }} trainees</li>
+                            @if($stdHasTrainers)<li><i class="fas fa-check"></i> Trainer management</li>@endif
+                            @if($stdHasAssess)<li><i class="fas fa-check"></i> Assessments & schedules</li>@endif
+                            <li><i class="fas fa-check"></i> {{ $stdExportLabel }} ({{ $stdExportDesc }})</li>
+                            <li class="muted"><i class="fas fa-xmark"></i> Certificates</li>
                         </ul>
                         <div style="margin-top:10px;">
-                            <span style="font-size:10px;background:#fff0f2;color:var(--red);padding:3px 8px;border-radius:5px;font-weight:700;">6-month access</span>
+                            <span style="font-size:10px;background:#fff0f2;color:var(--red);padding:3px 8px;border-radius:5px;font-weight:700;">
+                                {{ $standardDuration }}
+                            </span>
                         </div>
                     </div>
 
-                    <!-- Premium -->
-                    <div class="plan-card {{ old('subscription') === 'premium' ? 'selected selected-premium' : '' }}" data-plan="premium" onclick="selectPlan('premium')">
+                    {{-- ── Premium ── --}}
+                    <div class="plan-card {{ old('subscription') === 'premium' ? 'selected selected-premium' : '' }}"
+                         data-plan="premium" onclick="selectPlan('premium')">
                         <div class="plan-badge best">Best Value</div>
                         <div class="plan-check"><i class="fas fa-check"></i></div>
                         <div class="plan-icon premium"><i class="fas fa-crown"></i></div>
                         <div class="plan-name">Premium</div>
-                        <div class="plan-price">Unlimited trainees</div>
+                        <div class="plan-price">
+                            @if($premiumTrainees === 'Unlimited') Unlimited trainees
+                            @else Up to <span>{{ $premiumTrainees }}</span> trainees
+                            @endif
+                        </div>
                         <ul class="plan-features">
-                            <li><i class="fas fa-check"></i> Unlimited trainees</li>
-                            <li><i class="fas fa-check"></i> Unlimited courses</li>
-                            <li><i class="fas fa-check"></i> Full analytics</li>
-                            <li><i class="fas fa-check"></i> PDF/Excel/CSV export</li>
-                            <li><i class="fas fa-check"></i> Priority support</li>
+                            <li><i class="fas fa-check"></i> Unlimited trainees & courses</li>
+                            @if($preHasCerts)<li><i class="fas fa-check"></i> Certifications</li>@endif
+                            <li><i class="fas fa-check"></i> {{ $preExportLabel }} (unlimited)</li>
+                            @if($preHasBranding)<li><i class="fas fa-check"></i> Custom branding</li>@endif
+                            @if($preHasCustomRep)<li><i class="fas fa-check"></i> Custom reports</li>@endif
                         </ul>
                         <div style="margin-top:10px;">
-                            <span style="font-size:10px;background:rgba(245,197,24,0.14);color:#b38a00;padding:3px 8px;border-radius:5px;font-weight:700;">1-year access</span>
+                            <span style="font-size:10px;background:rgba(245,197,24,0.14);color:#b38a00;padding:3px 8px;border-radius:5px;font-weight:700;">
+                                {{ $premiumDuration }}
+                            </span>
                         </div>
                     </div>
 
                 </div>
 
-                @if ($errors->has('subscription'))
-                    <div class="field-error" style="margin-top:8px;"><i class="fas fa-exclamation-circle"></i>{{ $errors->first('subscription') }}</div>
-                @endif
+                @error('subscription')
+                    <div class="field-error" style="margin-top:8px;"><i class="fas fa-exclamation-circle"></i> {{ $message }}</div>
+                @enderror
 
                 <div class="section-divider"></div>
 
-                <!-- ── Pending approval notice ── -->
                 <div class="notice-box">
                     <i class="fas fa-clock"></i>
                     <p>
@@ -247,7 +266,6 @@
                     </p>
                 </div>
 
-                <!-- Submit -->
                 <button type="submit" class="btn-submit" id="submit-btn">
                     <i class="fas fa-paper-plane" style="font-size:13px;"></i>
                     Submit Application
@@ -257,7 +275,6 @@
                     Already have an account?
                     <a href="{{ route('login') }}">Log in here</a>
                 </div>
-
             </form>
         </div>
     </div>
@@ -268,43 +285,27 @@
 
     <script>
         function selectPlan(plan) {
-            // Update hidden input
             document.getElementById('subscription-value').value = plan;
-
-            // Reset all cards
-            document.querySelectorAll('.plan-card').forEach(card => {
-                card.classList.remove('selected', 'selected-premium');
-            });
-
-            // Activate selected
-            const selected = document.querySelector('[data-plan="' + plan + '"]');
-            if (plan === 'premium') {
-                selected.classList.add('selected', 'selected-premium');
-            } else {
-                selected.classList.add('selected');
-            }
+            document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected','selected-premium'));
+            const sel = document.querySelector('[data-plan="' + plan + '"]');
+            sel.classList.add('selected');
+            if (plan === 'premium') sel.classList.add('selected-premium');
         }
 
-        // Restore selection on page load (for validation errors)
         document.addEventListener('DOMContentLoaded', function () {
             const val = document.getElementById('subscription-value').value;
             if (val) selectPlan(val);
 
-            // Subdomain preview feedback
             const subdomainInput = document.getElementById('subdomain');
             subdomainInput.addEventListener('input', function () {
                 const suffix = this.closest('.subdomain-wrap').querySelector('.subdomain-suffix');
-                if (this.value.length > 0) {
-                    suffix.style.color = 'var(--blue)';
-                    suffix.style.fontWeight = '700';
-                } else {
-                    suffix.style.color = '';
-                    suffix.style.fontWeight = '';
-                }
+                suffix.style.color      = this.value.length > 0 ? 'var(--blue)' : '';
+                suffix.style.fontWeight = this.value.length > 0 ? '700' : '';
             });
         });
     </script>
-    @if (session('status'))
+
+    @if (session('status') === 'submitted')
     <div id="successModal" style="position:fixed;inset:0;z-index:9999;background:rgba(0,20,60,0.55);display:flex;align-items:center;justify-content:center;padding:24px;">
         <div style="background:#fff;border-radius:20px;width:100%;max-width:420px;overflow:hidden;animation:modalIn 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards;">
             <div style="height:4px;background:linear-gradient(90deg,#CE1126 0%,#CE1126 33%,#0057B8 33%,#0057B8 66%,#F5C518 66%,#F5C518 100%);"></div>
@@ -339,12 +340,12 @@
             </div>
         </div>
     </div>
-        <style>
-            @keyframes modalIn {
-                from { opacity:0; transform:scale(0.88) translateY(12px); }
-                to   { opacity:1; transform:scale(1) translateY(0); }
-            }
-        </style>
+    <style>
+        @keyframes modalIn {
+            from { opacity:0; transform:scale(0.88) translateY(12px); }
+            to   { opacity:1; transform:scale(1) translateY(0); }
+        }
+    </style>
     @endif
 
 </body>
