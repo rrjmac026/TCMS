@@ -10,6 +10,7 @@ class AdminSubscriptionController extends Controller
 {
     public function index()
     {
+        $plans = SubscriptionPlan::active()->get();
         // Load plans from the central DB so the view shows live prices/features
         $dbPlans = collect();
         try {
@@ -21,7 +22,7 @@ class AdminSubscriptionController extends Controller
         $tenant      = tenancy()->tenant;
         $currentPlan = $tenant->subscription ?? 'basic';
 
-        return view('tenants.admin.subscription.upgrade', compact('dbPlans', 'currentPlan'));
+        return view('tenants.admin.subscription.upgrade', compact('dbPlans', 'currentPlan', 'plans'));
     }
 
     public function upgrade(Request $request)

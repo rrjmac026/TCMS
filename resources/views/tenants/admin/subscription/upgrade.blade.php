@@ -104,7 +104,6 @@
     }
     .up-card:hover { transform: translateY(-6px); }
 
-    /* Card surfaces */
     .up-card-inner {
         background: #fff;
         border: 1.5px solid #c5d8f5;
@@ -125,7 +124,7 @@
         border-color: #5b9cf6;
     }
 
-    /* Featured (Standard) card */
+    /* Featured card */
     .up-card.featured .up-card-inner {
         background: linear-gradient(145deg, #003087 0%, #0057B8 60%, #0070e0 100%);
         border-color: transparent;
@@ -157,7 +156,6 @@
         box-shadow: 0 2px 10px rgba(245,197,24,0.40);
     }
 
-    /* Current badge */
     .up-current-badge {
         position: absolute; top: 20px; right: 20px;
         background: #22c55e; color: #fff;
@@ -174,9 +172,7 @@
         font-size: 22px; margin-bottom: 16px;
         background: rgba(0,87,184,0.10);
     }
-    .up-card.featured .up-plan-icon {
-        background: rgba(255,255,255,0.15);
-    }
+    .up-card.featured .up-plan-icon { background: rgba(255,255,255,0.15); }
 
     .up-plan-name {
         font-size: 13px; font-weight: 700; letter-spacing: 1px;
@@ -203,8 +199,7 @@
 
     .up-plan-desc {
         font-size: 13.5px; color: #5a7aaa; line-height: 1.6;
-        margin-bottom: 24px;
-        min-height: 42px;
+        margin-bottom: 24px; min-height: 42px;
     }
     .dark .up-plan-desc { color: #6b8abf; }
     .up-card.featured .up-plan-desc { color: rgba(255,255,255,0.72); }
@@ -217,7 +212,7 @@
     .up-card.featured .up-card-divider { background: rgba(255,255,255,0.18); }
 
     /* ── Features list ── */
-    .up-features { list-style: none; padding: 0; margin: 0 0 28px; space-y: 10px; }
+    .up-features { list-style: none; padding: 0; margin: 0 0 28px; }
     .up-feat-item {
         display: flex; align-items: flex-start; gap: 10px;
         padding: 5px 0; font-size: 13.5px; color: #1a3a6b;
@@ -351,14 +346,13 @@
     .dark .up-modal-cancel { border-color: #1e3a6b; color: #6b8abf; }
     .up-modal-cancel:hover { background: rgba(0,87,184,0.06); color: #1a3a6b; }
 
-    /* ── Success state ── */
     .up-success { animation: successPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
     @keyframes successPop {
         from { transform: scale(0.5); opacity: 0; }
         to   { transform: scale(1); opacity: 1; }
     }
 
-    /* ── Comparison table ── */
+    /* ── Comparison Table ── */
     .up-compare { margin-top: 64px; }
     .up-compare-title {
         text-align: center; font-family: 'Instrument Serif', Georgia, serif;
@@ -369,8 +363,7 @@
     .dark .up-table-wrap { border-color: #1e3a6b; }
     .up-table {
         width: 100%; border-collapse: collapse;
-        font-size: 13.5px;
-        background: #fff;
+        font-size: 13.5px; background: #fff;
     }
     .dark .up-table { background: #0d1f3c; }
     .up-table th {
@@ -390,7 +383,6 @@
     .up-table tbody tr:hover td { background: rgba(0,87,184,0.03); }
     .dark .up-table tbody tr:hover td { background: rgba(91,156,246,0.05); }
 
-    /* Highlight current plan column */
     .up-table th.highlight { background: #e8f0fb; color: #0057B8; }
     .dark .up-table th.highlight { background: rgba(0,87,184,0.15); color: #5b9cf6; }
     .up-table td.highlight { background: rgba(0,87,184,0.03); }
@@ -405,23 +397,38 @@
         from { opacity: 0; transform: translateY(24px); }
         to   { opacity: 1; transform: translateY(0); }
     }
+
+    /* ── Duration badge ── */
+    .up-duration-badge {
+        display: inline-flex; align-items: center; gap: 5px;
+        font-size: 11px; font-weight: 600; color: #5a7aaa;
+        background: rgba(0,87,184,0.07); padding: 3px 10px;
+        border-radius: 100px; margin-bottom: 12px;
+    }
+    .up-card.featured .up-duration-badge {
+        background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.80);
+    }
 </style>
 @endpush
 
 @section('content')
 @php
-    $tenant = tenancy()->tenant;
+    $tenant      = tenancy()->tenant;
     $currentPlan = $tenant->subscription ?? 'basic';
-    $plans = ['basic', 'standard', 'premium'];
-    $currentIndex = array_search($currentPlan, $plans);
+    $planSlugs   = $plans->pluck('slug')->toArray();   // ordered: basic, standard, premium
+    $currentIndex = array_search($currentPlan, $planSlugs);
+
+    // Plan icons & "featured" slug — Standard is always featured
+    $planIcons = ['basic' => '🌱', 'standard' => '🚀', 'premium' => '💎'];
+    $featuredSlug = 'standard';
 @endphp
 
-<div class="up-page" :class="$store.darkMode.on ? 'dark' : ''">
+<div class="up-page">
     <div class="up-bg"></div>
 
     <div class="up-inner">
 
-        {{-- Header --}}
+        {{-- ── Header ── --}}
         <div class="up-header">
             <div class="up-badge">
                 <i class="fas fa-rocket"></i>
@@ -435,190 +442,326 @@
             </p>
             <div class="up-current-pill">
                 <div class="up-current-dot"></div>
-                Currently on <strong style="margin-left:4px; text-transform: capitalize;">{{ $currentPlan }} Plan</strong>
-            </div>
-        </div>
-
-        {{-- Plan Cards --}}
-        <div class="up-plans">
-
-            {{-- BASIC --}}
-            <div class="up-card {{ $currentPlan === 'basic' ? 'current-plan' : '' }}" onclick="selectPlan('basic', 'Basic', '₱0')">
-                @if($currentPlan === 'basic')
-                    <div class="up-current-badge"><i class="fas fa-check"></i> Current</div>
-                @endif
-                <div class="up-card-inner">
-                    <div class="up-plan-icon">🌱</div>
-                    <div class="up-plan-name">Basic</div>
-                    <div class="up-plan-price">
-                        <span class="up-price-amount">₱0</span>
-                        <span class="up-price-period">/month</span>
-                    </div>
-                    <div class="up-plan-desc">Get started with core training management tools.</div>
-                    <div class="up-card-divider"></div>
-                    <ul class="up-features">
-                        <li class="up-feat-item"><div class="up-feat-icon"><i class="fas fa-check"></i></div> Up to 100 trainees</li>
-                        <li class="up-feat-item"><div class="up-feat-icon"><i class="fas fa-check"></i></div> Course & enrollment management</li>
-                        <li class="up-feat-item"><div class="up-feat-icon"><i class="fas fa-check"></i></div> Attendance tracking</li>
-                        <li class="up-feat-item"><div class="up-feat-icon"><i class="fas fa-check"></i></div> 1 admin account</li>
-                        <li class="up-feat-item locked"><div class="up-feat-icon"><i class="fas fa-lock"></i></div> Trainer management</li>
-                        <li class="up-feat-item locked"><div class="up-feat-icon"><i class="fas fa-lock"></i></div> Assessments & reports</li>
-                        <li class="up-feat-item locked"><div class="up-feat-icon"><i class="fas fa-lock"></i></div> Certifications</li>
-                    </ul>
-                    @if($currentPlan === 'basic')
-                        <button class="up-cta-btn current" disabled>
-                            <i class="fas fa-check-circle"></i> Current Plan
-                        </button>
-                    @else
-                        <button class="up-cta-btn primary" disabled style="opacity:0.4;cursor:not-allowed;">
-                            <i class="fas fa-arrow-down"></i> Downgrade Not Allowed
-                        </button>
-                    @endif
-                </div>
-            </div>
-
-            {{-- STANDARD (featured) --}}
-            <div class="up-card featured {{ $currentPlan === 'standard' ? 'current-plan' : '' }}" onclick="{{ $currentPlan !== 'standard' && $currentIndex < 1 ? 'selectPlan(\'standard\', \'Standard\', \'₱1,499\')' : '' }}">
-                @if($currentPlan === 'standard')
-                    <div class="up-current-badge"><i class="fas fa-check"></i> Current</div>
+                Currently on <strong style="margin-left:4px; text-transform:capitalize;">{{ $currentPlan }} Plan</strong>
+                &nbsp;·&nbsp;
+                @if($tenant->expires_at)
+                    Expires {{ $tenant->expires_at->format('M d, Y') }}
                 @else
-                    <div class="up-popular-badge">⭐ Most Popular</div>
+                    No expiry set
                 @endif
-                <div class="up-card-inner">
-                    <div class="up-plan-icon">🚀</div>
-                    <div class="up-plan-name">Standard</div>
-                    <div class="up-plan-price">
-                        <span class="up-price-amount">₱1,499</span>
-                        <span class="up-price-period">/month</span>
-                    </div>
-                    <div class="up-plan-desc">Everything your growing training center needs.</div>
-                    <div class="up-card-divider"></div>
-                    <ul class="up-features">
-                        <li class="up-feat-item"><div class="up-feat-icon"><i class="fas fa-check"></i></div> Up to 500 trainees</li>
-                        <li class="up-feat-item"><div class="up-feat-icon"><i class="fas fa-check"></i></div> Full training management</li>
-                        <li class="up-feat-item"><div class="up-feat-icon"><i class="fas fa-check"></i></div> Trainer & assessment tools</li>
-                        <li class="up-feat-item"><div class="up-feat-icon"><i class="fas fa-check"></i></div> Basic analytics & reports</li>
-                        <li class="up-feat-item"><div class="up-feat-icon"><i class="fas fa-check"></i></div> CSV export (3,000 records/mo)</li>
-                        <li class="up-feat-item"><div class="up-feat-icon"><i class="fas fa-check"></i></div> Up to 5 users</li>
-                        <li class="up-feat-item locked"><div class="up-feat-icon"><i class="fas fa-lock"></i></div> Certifications</li>
-                    </ul>
-                    @if($currentPlan === 'standard')
-                        <button class="up-cta-btn current" disabled>
-                            <i class="fas fa-check-circle"></i> Current Plan
-                        </button>
-                    @elseif($currentIndex < 1)
-                        <button class="up-cta-btn on-dark" onclick="event.stopPropagation(); selectPlan('standard', 'Standard', '₱1,499')">
-                            <i class="fas fa-arrow-up"></i> Upgrade to Standard
-                        </button>
-                    @else
-                        <button class="up-cta-btn on-dark" disabled style="opacity:0.4;cursor:not-allowed;">
-                            <i class="fas fa-arrow-down"></i> Downgrade Not Allowed
-                        </button>
-                    @endif
-                </div>
             </div>
-
-            {{-- PREMIUM --}}
-            <div class="up-card {{ $currentPlan === 'premium' ? 'current-plan' : '' }}" onclick="{{ $currentIndex < 2 ? 'selectPlan(\'premium\', \'Premium\', \'₱3,999\')' : '' }}">
-                @if($currentPlan === 'premium')
-                    <div class="up-current-badge"><i class="fas fa-check"></i> Current</div>
-                @endif
-                <div class="up-card-inner">
-                    <div class="up-plan-icon">💎</div>
-                    <div class="up-plan-name">Premium</div>
-                    <div class="up-plan-price">
-                        <span class="up-price-amount">₱3,999</span>
-                        <span class="up-price-period">/month</span>
-                    </div>
-                    <div class="up-plan-desc">Full power for large or multi-branch training centers.</div>
-                    <div class="up-card-divider"></div>
-                    <ul class="up-features">
-                        <li class="up-feat-item"><div class="up-feat-icon"><i class="fas fa-check"></i></div> Unlimited trainees & courses</li>
-                        <li class="up-feat-item"><div class="up-feat-icon"><i class="fas fa-check"></i></div> Advanced analytics dashboard</li>
-                        <li class="up-feat-item"><div class="up-feat-icon"><i class="fas fa-check"></i></div> Certification & competency tracking</li>
-                        <li class="up-feat-item"><div class="up-feat-icon"><i class="fas fa-check"></i></div> Unlimited exports (CSV, Excel, PDF)</li>
-                        <li class="up-feat-item"><div class="up-feat-icon"><i class="fas fa-check"></i></div> Unlimited users</li>
-                        <li class="up-feat-item"><div class="up-feat-icon"><i class="fas fa-check"></i></div> Custom branding & API access</li>
-                        <li class="up-feat-item"><div class="up-feat-icon"><i class="fas fa-check"></i></div> Priority support</li>
-                    </ul>
-                    @if($currentPlan === 'premium')
-                        <button class="up-cta-btn current" disabled>
-                            <i class="fas fa-check-circle"></i> Current Plan
-                        </button>
-                    @else
-                        <button class="up-cta-btn primary" onclick="event.stopPropagation(); selectPlan('premium', 'Premium', '₱3,999')">
-                            <i class="fas fa-crown"></i> Upgrade to Premium
-                        </button>
-                    @endif
-                </div>
-            </div>
-
         </div>
 
-        {{-- Guarantee note --}}
+        {{-- ── Plan Cards ── --}}
+        <div class="up-plans">
+            @foreach($plans as $plan)
+                @php
+                    $planIndex   = array_search($plan->slug, $planSlugs);
+                    $isCurrent   = $plan->slug === $currentPlan;
+                    $isFeatured  = $plan->slug === $featuredSlug;
+                    $canUpgrade  = !$isCurrent && $planIndex > $currentIndex;
+                    $isDowngrade = !$isCurrent && $planIndex < $currentIndex;
+
+                    $formattedPrice = number_format($plan->price, 0);
+
+                    // Build feature bullet list dynamically from DB fields
+                    $features = [];
+
+                    // Trainees
+                    $features[] = [
+                        'label'  => $plan->max_trainees ? 'Up to ' . number_format($plan->max_trainees) . ' trainees' : 'Unlimited trainees',
+                        'locked' => false,
+                    ];
+
+                    // Courses
+                    $features[] = [
+                        'label'  => $plan->max_courses ? 'Up to ' . number_format($plan->max_courses) . ' courses' : 'Unlimited courses',
+                        'locked' => false,
+                    ];
+
+                    // Attendance — all plans have it
+                    $features[] = ['label' => 'Course & enrollment management', 'locked' => false];
+                    $features[] = ['label' => 'Attendance tracking', 'locked' => false];
+
+                    // Users
+                    $features[] = [
+                        'label'  => $plan->max_users ? ($plan->max_users === 1 ? '1 admin account' : 'Up to ' . $plan->max_users . ' user accounts') : 'Unlimited user accounts',
+                        'locked' => false,
+                    ];
+
+                    // Trainers
+                    $features[] = [
+                        'label'  => 'Trainer management',
+                        'locked' => !$plan->has_trainers,
+                    ];
+
+                    // Assessments
+                    $features[] = [
+                        'label'  => 'Assessments & training schedules',
+                        'locked' => !$plan->has_assessments,
+                    ];
+
+                    // Exports
+                    $exportFormats = $plan->allowed_export_formats ?? [];
+                    if (count($exportFormats) === 0) {
+                        $features[] = ['label' => 'Data exports', 'locked' => true];
+                    } elseif ($plan->max_exports_monthly) {
+                        $fmtLabel = strtoupper(implode(', ', $exportFormats));
+                        $features[] = ['label' => number_format($plan->max_exports_monthly) . ' exports/mo (' . $fmtLabel . ')', 'locked' => false];
+                    } else {
+                        $fmtLabel = strtoupper(implode(', ', $exportFormats));
+                        $features[] = ['label' => 'Unlimited exports (' . $fmtLabel . ')', 'locked' => false];
+                    }
+
+                    // Certificates
+                    $features[] = ['label' => 'Certifications & competency tracking', 'locked' => !$plan->has_certificates];
+
+                    // Custom reports
+                    $features[] = ['label' => 'Custom reports & analytics', 'locked' => !$plan->has_custom_reports];
+
+                    // Branding
+                    $features[] = ['label' => 'Custom branding', 'locked' => !$plan->has_branding];
+                @endphp
+
+                <div class="up-card {{ $isFeatured && !$isCurrent ? 'featured' : '' }} {{ $isCurrent ? 'current-plan' : '' }}"
+                     onclick="{{ $canUpgrade ? "selectPlan('{$plan->slug}', '{$plan->name}', '₱{$formattedPrice}', '{$plan->duration_label}')" : '' }}">
+
+                    {{-- Badge --}}
+                    @if($isCurrent)
+                        <div class="up-current-badge"><i class="fas fa-check"></i> Current</div>
+                    @elseif($isFeatured && !$isCurrent)
+                        <div class="up-popular-badge">⭐ Most Popular</div>
+                    @endif
+
+                    <div class="up-card-inner">
+                        <div class="up-plan-icon">{{ $planIcons[$plan->slug] ?? '📦' }}</div>
+
+                        {{-- Duration badge --}}
+                        <div class="up-duration-badge">
+                            <i class="fas fa-clock"></i> {{ $plan->duration_label }} access
+                        </div>
+
+                        <div class="up-plan-name">{{ $plan->name }}</div>
+
+                        <div class="up-plan-price">
+                            <span class="up-price-amount">₱{{ $formattedPrice }}</span>
+                            <span class="up-price-period">/plan</span>
+                        </div>
+
+                        @if($plan->description)
+                            <div class="up-plan-desc">{{ $plan->description }}</div>
+                        @endif
+
+                        <div class="up-card-divider"></div>
+
+                        <ul class="up-features">
+                            @foreach($features as $feat)
+                                <li class="up-feat-item {{ $feat['locked'] ? 'locked' : '' }}">
+                                    <div class="up-feat-icon">
+                                        <i class="fas {{ $feat['locked'] ? 'fa-lock' : 'fa-check' }}"></i>
+                                    </div>
+                                    {{ $feat['label'] }}
+                                </li>
+                            @endforeach
+                        </ul>
+
+                        {{-- CTA --}}
+                        @if($isCurrent)
+                            <button class="up-cta-btn current" disabled>
+                                <i class="fas fa-check-circle"></i> Current Plan
+                            </button>
+                        @elseif($canUpgrade)
+                            <button class="up-cta-btn {{ $isFeatured ? 'on-dark' : 'primary' }}"
+                                    onclick="event.stopPropagation(); selectPlan('{{ $plan->slug }}', '{{ $plan->name }}', '₱{{ $formattedPrice }}', '{{ $plan->duration_label }}')">
+                                <i class="fas fa-arrow-up"></i> Upgrade to {{ $plan->name }}
+                            </button>
+                        @else
+                            <button class="up-cta-btn {{ $isFeatured ? 'on-dark' : 'primary' }}" disabled style="opacity:0.4;cursor:not-allowed;">
+                                <i class="fas fa-arrow-down"></i> Downgrade Not Allowed
+                            </button>
+                        @endif
+                    </div>
+                </div>
+            @endforeach
+        </div>
+
+        {{-- ── Guarantee note ── --}}
         <div class="up-guarantee">
-            <i class="fas fa-shield-check" style="color: #22c55e;"></i>
+            <i class="fas fa-shield-check" style="color:#22c55e;"></i>
             Simulation only — no payment required &nbsp;·&nbsp;
-            <i class="fas fa-headset" style="color: #0057B8; margin-left: 4px;"></i>
+            <i class="fas fa-headset" style="color:#0057B8; margin-left:4px;"></i>
             &nbsp;Contact your system administrator for billing
         </div>
 
-        {{-- Comparison Table --}}
+        {{-- ── Comparison Table (fully dynamic) ── --}}
         <div class="up-compare">
             <h2 class="up-compare-title">Compare all features</h2>
             <div class="up-table-wrap">
                 <table class="up-table">
                     <thead>
                         <tr>
-                            <th style="width: 40%">Feature</th>
-                            <th class="{{ $currentPlan === 'basic' ? 'highlight' : '' }}">Basic</th>
-                            <th class="{{ $currentPlan === 'standard' ? 'highlight' : '' }}">Standard</th>
-                            <th class="{{ $currentPlan === 'premium' ? 'highlight' : '' }}">Premium</th>
+                            <th style="width:40%">Feature</th>
+                            @foreach($plans as $plan)
+                                <th class="{{ $plan->slug === $currentPlan ? 'highlight' : '' }}">
+                                    {{ $plan->name }}
+                                    @if($plan->slug === $currentPlan)
+                                        <div style="font-size:10px;font-weight:600;color:#22c55e;margin-top:2px;">✓ Current</div>
+                                    @endif
+                                </th>
+                            @endforeach
                         </tr>
                     </thead>
                     <tbody>
-                        @php
-                        $rows = [
-                            ['Trainees',                  '100',            '500',               'Unlimited'],
-                            ['Courses & Enrollments',     '✅',             '✅',                '✅'],
-                            ['Attendance Tracking',       '✅',             '✅',                '✅'],
-                            ['Trainer Management',        '❌',             '✅',                '✅'],
-                            ['Assessments',               '❌',             '✅',                '✅'],
-                            ['Training Schedules',        '❌',             '✅',                '✅'],
-                            ['User Accounts',             '1 (Admin)',      'Up to 5',           'Unlimited'],
-                            ['Analytics & Reports',       '❌',             'Basic',             'Advanced'],
-                            ['CSV Export',                '❌',             '3,000 rec/mo',      'Unlimited'],
-                            ['PDF & Excel Export',        '❌',             '❌',                '✅'],
-                            ['Certifications',            '❌',             '❌',                '✅'],
-                            ['Custom Branding',           '❌',             '❌',                '✅'],
-                            ['API Access',                '❌',             '❌',                '✅'],
-                            ['Email Notifications',       '❌',             '✅',                '✅'],
-                            ['Priority Support',          '❌',             '❌',                '✅'],
-                        ];
-                        @endphp
-                        @foreach($rows as $row)
+                        {{-- Price row --}}
                         <tr>
-                            <td style="font-weight: 500;">{{ $row[0] }}</td>
-                            <td class="{{ $currentPlan === 'basic' ? 'highlight' : '' }}">
-                                @if($row[1] === '✅') <i class="fas fa-check up-check"></i>
-                                @elseif($row[1] === '❌') <i class="fas fa-times up-cross"></i>
-                                @else <span style="font-size:13px;">{{ $row[1] }}</span>
-                                @endif
-                            </td>
-                            <td class="{{ $currentPlan === 'standard' ? 'highlight' : '' }}">
-                                @if($row[2] === '✅') <i class="fas fa-check up-check"></i>
-                                @elseif($row[2] === '❌') <i class="fas fa-times up-cross"></i>
-                                @else <span style="font-size:13px;">{{ $row[2] }}</span>
-                                @endif
-                            </td>
-                            <td class="{{ $currentPlan === 'premium' ? 'highlight' : '' }}">
-                                @if($row[3] === '✅') <i class="fas fa-check up-check"></i>
-                                @elseif($row[3] === '❌') <i class="fas fa-times up-cross"></i>
-                                @else <span style="font-size:13px;">{{ $row[3] }}</span>
-                                @endif
-                            </td>
+                            <td style="font-weight:500;">Price</td>
+                            @foreach($plans as $plan)
+                                <td class="{{ $plan->slug === $currentPlan ? 'highlight' : '' }}" style="font-weight:700;">
+                                    ₱{{ number_format($plan->price, 0) }}
+                                    <div style="font-size:11px;color:#5a7aaa;font-weight:400;">{{ $plan->duration_label }}</div>
+                                </td>
+                            @endforeach
                         </tr>
-                        @endforeach
+
+                        {{-- Trainees --}}
+                        <tr>
+                            <td style="font-weight:500;">Trainees</td>
+                            @foreach($plans as $plan)
+                                <td class="{{ $plan->slug === $currentPlan ? 'highlight' : '' }}">
+                                    {{ $plan->max_trainees ? number_format($plan->max_trainees) : 'Unlimited' }}
+                                </td>
+                            @endforeach
+                        </tr>
+
+                        {{-- Courses --}}
+                        <tr>
+                            <td style="font-weight:500;">Courses</td>
+                            @foreach($plans as $plan)
+                                <td class="{{ $plan->slug === $currentPlan ? 'highlight' : '' }}">
+                                    {{ $plan->max_courses ? number_format($plan->max_courses) : 'Unlimited' }}
+                                </td>
+                            @endforeach
+                        </tr>
+
+                        {{-- Enrollments & Attendance --}}
+                        <tr>
+                            <td style="font-weight:500;">Enrollments & Attendance</td>
+                            @foreach($plans as $plan)
+                                <td class="{{ $plan->slug === $currentPlan ? 'highlight' : '' }}">
+                                    <i class="fas fa-check up-check"></i>
+                                </td>
+                            @endforeach
+                        </tr>
+
+                        {{-- Trainers --}}
+                        <tr>
+                            <td style="font-weight:500;">Trainer Management</td>
+                            @foreach($plans as $plan)
+                                <td class="{{ $plan->slug === $currentPlan ? 'highlight' : '' }}">
+                                    @if($plan->has_trainers)
+                                        <i class="fas fa-check up-check"></i>
+                                    @else
+                                        <i class="fas fa-times up-cross"></i>
+                                    @endif
+                                </td>
+                            @endforeach
+                        </tr>
+
+                        {{-- Assessments --}}
+                        <tr>
+                            <td style="font-weight:500;">Assessments</td>
+                            @foreach($plans as $plan)
+                                <td class="{{ $plan->slug === $currentPlan ? 'highlight' : '' }}">
+                                    @if($plan->has_assessments)
+                                        <i class="fas fa-check up-check"></i>
+                                    @else
+                                        <i class="fas fa-times up-cross"></i>
+                                    @endif
+                                </td>
+                            @endforeach
+                        </tr>
+
+                        {{-- Users --}}
+                        <tr>
+                            <td style="font-weight:500;">User Accounts</td>
+                            @foreach($plans as $plan)
+                                <td class="{{ $plan->slug === $currentPlan ? 'highlight' : '' }}">
+                                    {{ $plan->max_users ? ($plan->max_users === 1 ? '1 (Admin)' : 'Up to ' . $plan->max_users) : 'Unlimited' }}
+                                </td>
+                            @endforeach
+                        </tr>
+
+                        {{-- Exports --}}
+                        <tr>
+                            <td style="font-weight:500;">Monthly Exports</td>
+                            @foreach($plans as $plan)
+                                <td class="{{ $plan->slug === $currentPlan ? 'highlight' : '' }}">
+                                    @if(($plan->max_exports_monthly ?? -1) === 0 || count($plan->allowed_export_formats ?? []) === 0)
+                                        <i class="fas fa-times up-cross"></i>
+                                    @elseif($plan->max_exports_monthly === null)
+                                        Unlimited
+                                    @else
+                                        {{ number_format($plan->max_exports_monthly) }} records
+                                    @endif
+                                </td>
+                            @endforeach
+                        </tr>
+
+                        {{-- Export formats --}}
+                        <tr>
+                            <td style="font-weight:500;">Export Formats</td>
+                            @foreach($plans as $plan)
+                                <td class="{{ $plan->slug === $currentPlan ? 'highlight' : '' }}" style="font-size:12px;">
+                                    @if(count($plan->allowed_export_formats ?? []) === 0)
+                                        <i class="fas fa-times up-cross"></i>
+                                    @else
+                                        {{ strtoupper(implode(', ', $plan->allowed_export_formats)) }}
+                                    @endif
+                                </td>
+                            @endforeach
+                        </tr>
+
+                        {{-- Certificates --}}
+                        <tr>
+                            <td style="font-weight:500;">Certifications</td>
+                            @foreach($plans as $plan)
+                                <td class="{{ $plan->slug === $currentPlan ? 'highlight' : '' }}">
+                                    @if($plan->has_certificates)
+                                        <i class="fas fa-check up-check"></i>
+                                    @else
+                                        <i class="fas fa-times up-cross"></i>
+                                    @endif
+                                </td>
+                            @endforeach
+                        </tr>
+
+                        {{-- Custom reports --}}
+                        <tr>
+                            <td style="font-weight:500;">Custom Reports</td>
+                            @foreach($plans as $plan)
+                                <td class="{{ $plan->slug === $currentPlan ? 'highlight' : '' }}">
+                                    @if($plan->has_custom_reports)
+                                        <i class="fas fa-check up-check"></i>
+                                    @else
+                                        <i class="fas fa-times up-cross"></i>
+                                    @endif
+                                </td>
+                            @endforeach
+                        </tr>
+
+                        {{-- Branding --}}
+                        <tr>
+                            <td style="font-weight:500;">Custom Branding</td>
+                            @foreach($plans as $plan)
+                                <td class="{{ $plan->slug === $currentPlan ? 'highlight' : '' }}">
+                                    @if($plan->has_branding)
+                                        <i class="fas fa-check up-check"></i>
+                                    @else
+                                        <i class="fas fa-times up-cross"></i>
+                                    @endif
+                                </td>
+                            @endforeach
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -627,22 +770,22 @@
     </div>
 </div>
 
-{{-- Upgrade Confirmation Modal --}}
-<div id="upgradeModal" class="up-modal-backdrop" style="display:none;" onclick="closeModal(event)">
-    <div class="up-modal" id="modalBox" onclick="event.stopPropagation()">
+{{-- ── Upgrade Confirmation Modal ── --}}
+<div id="upgradeModal" class="up-modal-backdrop" style="display:none;" onclick="closeUpgradeModal(event)">
+    <div class="up-modal" onclick="event.stopPropagation()">
         <div id="confirmView">
-            <div class="up-modal-icon" style="background: linear-gradient(135deg,#e8f0fb,#c5d8f5);">
-                🚀
-            </div>
+            <div class="up-modal-icon" style="background:linear-gradient(135deg,#e8f0fb,#c5d8f5);">🚀</div>
             <h3 class="up-modal-title">Confirm Upgrade</h3>
             <p class="up-modal-sub">You're about to upgrade your plan to:</p>
-            <div class="up-modal-plan-pill" id="planPill">
-                <i class="fas fa-crown"></i> <span id="planName">Standard</span> — <span id="planPrice">₱1,499</span>/mo
+            <div class="up-modal-plan-pill">
+                <i class="fas fa-crown"></i>
+                <span id="planName">—</span> — <span id="planPrice">—</span>
+                <span id="planDuration" style="font-size:12px;opacity:0.8;"></span>
             </div>
-            <p class="up-modal-sub" style="margin-bottom:0">
+            <p class="up-modal-sub" style="margin-bottom:0;">
                 This is a <strong>simulation</strong>. No payment will be charged. Your features will be upgraded immediately.
             </p>
-            <div class="up-modal-actions" style="margin-top: 24px;">
+            <div class="up-modal-actions" style="margin-top:24px;">
                 <button class="up-modal-confirm" id="confirmBtn" onclick="confirmUpgrade()">
                     <i class="fas fa-check"></i> Yes, Upgrade Now
                 </button>
@@ -653,10 +796,10 @@
         </div>
         <div id="successView" style="display:none;">
             <div class="up-success">
-                <div class="up-modal-icon" style="background: rgba(34,197,94,0.15); font-size:36px; margin: 0 auto 16px;">✅</div>
+                <div class="up-modal-icon" style="background:rgba(34,197,94,0.15);font-size:36px;margin:0 auto 16px;">✅</div>
                 <h3 class="up-modal-title">Plan Upgraded!</h3>
                 <p class="up-modal-sub">
-                    Your plan has been successfully upgraded to <strong id="successPlanName">Standard</strong>. New features are now active.
+                    Your plan has been successfully upgraded to <strong id="successPlanName">—</strong>. New features are now active.
                 </p>
                 <button class="up-modal-confirm" onclick="window.location.href='{{ route('admin.dashboard') }}'">
                     <i class="fas fa-arrow-right"></i> Go to Dashboard
@@ -671,24 +814,25 @@
 <script>
 let selectedPlanKey = null;
 
-function selectPlan(key, name, price) {
-    const currentPlan = '{{ $currentPlan }}';
-    const plans = ['basic', 'standard', 'premium'];
-    const currentIdx = plans.indexOf(currentPlan);
-    const newIdx = plans.indexOf(key);
+const planSlugs = @json($planSlugs);
+const currentPlan = '{{ $currentPlan }}';
+const currentIndex = planSlugs.indexOf(currentPlan);
 
-    if (newIdx <= currentIdx) return; // No downgrade
+function selectPlan(key, name, price, duration) {
+    const newIndex = planSlugs.indexOf(key);
+    if (newIndex <= currentIndex) return;
 
     selectedPlanKey = key;
     document.getElementById('planName').textContent = name;
     document.getElementById('planPrice').textContent = price;
+    document.getElementById('planDuration').textContent = '· ' + duration;
     document.getElementById('successPlanName').textContent = name;
     document.getElementById('confirmView').style.display = 'block';
     document.getElementById('successView').style.display = 'none';
     document.getElementById('upgradeModal').style.display = 'flex';
 }
 
-function closeModal(event) {
+function closeUpgradeModal(event) {
     document.getElementById('upgradeModal').style.display = 'none';
 }
 
