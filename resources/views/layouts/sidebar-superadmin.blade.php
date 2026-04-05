@@ -197,6 +197,15 @@
             <span class="sb-icon"><i class="fas fa-shield-alt"></i></span>
             Activity Logs
     </a>
+    
+    <div class="sb-divider"></div>
+    <span class="sb-section-label">Infrastructure</span>
+
+    <a href="{{ route('superadmin.monitoring.index') }}"
+       class="sb-link {{ request()->routeIs('superadmin.monitoring*') ? 'active' : '' }}">
+        <span class="sb-icon"><i class="fas fa-server"></i></span>
+        DB Storage & Bandwidth
+    </a>
 <!-- 
     <div class="sb-divider"></div>
     <span class="sb-section-label">Configuration</span>

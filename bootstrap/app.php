@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'superadmin' => SuperAdminMiddleware::class,
             'subscription' => CheckSubscription::class,
             'tenant.active' => \App\Http\Middleware\EnsureTenantIsActive::class,
+            'track.bandwidth' => \App\Http\Middleware\TrackTenantBandwidth::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

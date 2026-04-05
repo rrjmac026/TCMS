@@ -52,6 +52,7 @@ Route::middleware([
     InitializeTenancyByDomain::class,
     PreventAccessFromCentralDomains::class,
     'tenant.active',
+    'track.bandwidth',
 ])->group(function () {
 
     Route::get('/', WelcomeController::class);

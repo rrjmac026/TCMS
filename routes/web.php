@@ -8,6 +8,7 @@ use App\Http\Controllers\SuperAdmin\SuperAdminAnalyticsController;
 use App\Http\Controllers\SuperAdmin\SuperAdminReportController;
 use App\Http\Controllers\SuperAdmin\SuperAdminActivityLogController;
 use App\Http\Controllers\SuperAdmin\SuperAdminPlanController;
+use App\Http\Controllers\SuperAdmin\SuperAdminMonitoringController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\NotificationController;
 
@@ -91,6 +92,12 @@ foreach (config('tenancy.central_domains') as $domain) {
 
                 Route::get('/activity-logs', [SuperAdminActivityLogController::class, 'index'])
                     ->name('activity-logs.index');
-            });
+                
+                Route::prefix('monitoring')->name('monitoring.')->group(function () {
+                    Route::get('/',                                     [SuperAdminMonitoringController::class, 'index'])          ->name('index');
+                    Route::post('/recalculate-all',                     [SuperAdminMonitoringController::class, 'recalculateAll'])->name('recalculate.all');
+                    Route::post('/recalculate/{tenant}',                [SuperAdminMonitoringController::class, 'recalculate'])   ->name('recalculate');
+                });
+        });
     });
 }

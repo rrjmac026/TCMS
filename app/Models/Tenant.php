@@ -88,4 +88,9 @@ class Tenant extends BaseTenant implements TenantWithDatabase
     {
         return $this->belongsTo(SubscriptionPlan::class, 'subscription', 'slug');
     }
+    
+    public function usageStat()
+    {
+        return $this->hasOne(\App\Models\TenantUsageStat::class, 'tenant_id', 'id');
+    }
 }
