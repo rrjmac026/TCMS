@@ -19,6 +19,10 @@
     <div class="up-bg"></div>
     <div class="up-inner">
         @include('tenants.admin.subscription._header')
+
+        {{-- ── Promo banner + code widget (new) ── --}}
+        @include('tenants.admin.subscription._promo_banner')
+
         @include('tenants.admin.subscription._plan_cards')
         @include('tenants.admin.subscription._comparison_table')
     </div>
