@@ -3,156 +3,88 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Carbon\Carbon;
 
 class Discount extends Model
 {
-    use SoftDeletes;
-
     protected $fillable = [
-        'name',
-        'code',
-        'type',
-        'value',
-        'applicable_plans',
-        'applicable_actions',
-        'tenant_id',
-        'valid_from',
-        'valid_until',
-        'max_uses',
-        'uses_count',
-        'minimum_price',
-        'is_active',
-        'created_by',
+        'code', 'label', 'type', 'value', 'plan_slug',
+        'valid_from', 'valid_until', 'is_active',
     ];
 
     protected $casts = [
-        'applicable_plans'   => 'array',
-        'applicable_actions' => 'array',
-        'valid_from'         => 'date',
-        'valid_until'        => 'date',
-        'is_active'          => 'boolean',
-        'value'              => 'decimal:2',
-        'minimum_price'      => 'decimal:2',
+        'valid_from'  => 'date',
+        'valid_until' => 'date',
+        'is_active'   => 'boolean',
+        'value'       => 'decimal:2',
     ];
 
-    // ── Relationships ─────────────────────────────────────────────────────
-
-    public function tenant()
-    {
-        return $this->belongsTo(Tenant::class);
-    }
-
-    public function creator()
-    {
-        return $this->belongsTo(User::class, 'created_by');
-    }
-
-    public function usages()
-    {
-        return $this->hasMany(DiscountUsage::class);
-    }
-
-    // ── Scopes ────────────────────────────────────────────────────────────
+    // ── Scopes ───────────────────────────────────────────────────────────────
 
     public function scopeActive($query)
     {
-        return $query->where('is_active', true)->whereNull('deleted_at');
+        return $query->where('is_active', true);
     }
 
-    public function scopeValid($query)
+    public function scopeValidNow($query)
     {
+        $today = now()->toDateString();
         return $query->active()
-            ->where(function ($q) {
-                $q->whereNull('valid_from')->orWhereDate('valid_from', '<=', now());
-            })
-            ->where(function ($q) {
-                $q->whereNull('valid_until')->orWhereDate('valid_until', '>=', now());
-            })
-            ->where(function ($q) {
-                $q->whereNull('max_uses')->orWhereColumn('uses_count', '<', 'max_uses');
-            });
+            ->where(fn ($q) => $q->whereNull('valid_from')->orWhere('valid_from', '<=', $today))
+            ->where(fn ($q) => $q->whereNull('valid_until')->orWhere('valid_until', '>=', $today));
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────
-
-    /**
-     * Calculate the discounted price for a given base price.
-     */
-    public function applyTo(float $basePrice): float
+    public function scopeForPlan($query, string $plan)
     {
-        if ($this->type === 'percentage') {
-            $discount = $basePrice * ($this->value / 100);
-        } else {
-            $discount = (float) $this->value;
-        }
-
-        return max(0, round($basePrice - $discount, 2));
+        return $query->where(fn ($q) => $q->whereNull('plan_slug')->orWhere('plan_slug', $plan));
     }
 
-    /**
-     * Amount saved (not the final price).
-     */
-    public function discountAmount(float $basePrice): float
+    // ── Helpers ──────────────────────────────────────────────────────────────
+
+    /** Returns true when this discount is currently valid for a given plan. */
+    public function isValidFor(string $plan): bool
     {
-        return round($basePrice - $this->applyTo($basePrice), 2);
-    }
+        if (!$this->is_active) return false;
+        if ($this->plan_slug && $this->plan_slug !== $plan) return false;
 
-    /**
-     * Check if this discount can be used for a given plan slug and action.
-     */
-    public function isValidFor(string $planSlug, string $action, ?string $tenantId = null, float $price = 0): bool
-    {
-        if (! $this->is_active || $this->trashed()) return false;
-
-        // Date window
-        if ($this->valid_from && now()->lt($this->valid_from->startOfDay())) return false;
-        if ($this->valid_until && now()->gt($this->valid_until->endOfDay())) return false;
-
-        // Usage cap
-        if ($this->max_uses !== null && $this->uses_count >= $this->max_uses) return false;
-
-        // Tenant restriction
-        if ($this->tenant_id && $this->tenant_id !== $tenantId) return false;
-
-        // Plan restriction
-        if ($this->applicable_plans && ! in_array($planSlug, $this->applicable_plans)) return false;
-
-        // Action restriction
-        if ($this->applicable_actions && ! in_array($action, $this->applicable_actions)) return false;
-
-        // Minimum price gate
-        if ($this->minimum_price !== null && $price < $this->minimum_price) return false;
+        $today = now()->toDateString();
+        if ($this->valid_from && $this->valid_from->toDateString() > $today) return false;
+        if ($this->valid_until && $this->valid_until->toDateString() < $today) return false;
 
         return true;
     }
 
-    public function getStatusLabelAttribute(): string
+    /** Calculate the discount amount off a base price. */
+    public function discountAmount(float $price): float
     {
-        if (! $this->is_active)                                      return 'Inactive';
-        if ($this->valid_until && now()->gt($this->valid_until))     return 'Expired';
-        if ($this->valid_from  && now()->lt($this->valid_from))      return 'Scheduled';
-        if ($this->max_uses !== null && $this->uses_count >= $this->max_uses) return 'Exhausted';
-        return 'Active';
+        if ($this->type === 'percentage') {
+            return round($price * ($this->value / 100), 2);
+        }
+        return min((float) $this->value, $price);
     }
 
-    public function getStatusColorAttribute(): string
+    /** Apply the discount and return the final price. */
+    public function applyTo(float $price): float
     {
-        return match($this->status_label) {
-            'Active'    => 'success',
-            'Scheduled' => 'warning',
-            'Expired',
-            'Exhausted',
-            'Inactive'  => 'danger',
-            default     => 'gray',
-        };
+        return max(0, $price - $this->discountAmount($price));
     }
 
+    /** Formatted value string for display. */
     public function getFormattedValueAttribute(): string
     {
         return $this->type === 'percentage'
-            ? $this->value . '%'
+            ? number_format($this->value, 0) . '%'
             : '₱' . number_format($this->value, 2);
+    }
+
+    /** Status for display in the table. */
+    public function getStatusLabelAttribute(): string
+    {
+        if (!$this->is_active) return 'Inactive';
+
+        $today = now()->toDateString();
+        if ($this->valid_from && $this->valid_from->toDateString() > $today) return 'Scheduled';
+        if ($this->valid_until && $this->valid_until->toDateString() < $today) return 'Expired';
+
+        return 'Active';
     }
 }
