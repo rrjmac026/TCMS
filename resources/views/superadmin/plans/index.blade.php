@@ -200,6 +200,17 @@
     }
     .type-auto { background: rgba(22,163,74,.10); color: var(--sa-success); }
     .type-code { background: rgba(0,87,184,.10);  color: var(--sa-accent); }
+
+    /* ── Plan scope pills ── */
+    .plan-pill {
+        display: inline-flex; align-items: center;
+        padding: 1px 8px; border-radius: 20px; font-size: 10px; font-weight: 700;
+        text-transform: uppercase; letter-spacing: .4px; margin: 1px 2px;
+    }
+    .pill-basic    { background: rgba(90,122,170,.12); color: var(--sa-muted); }
+    .pill-standard { background: rgba(0,87,184,.12);   color: var(--sa-accent); }
+    .pill-premium  { background: rgba(245,197,24,.15); color: #a07800; }
+    .pill-all      { background: rgba(22,163,74,.10);  color: var(--sa-success); }
 </style>
 
 <div class="space-y-6">
@@ -295,7 +306,6 @@
                         default    => 'rgba(90,122,170,.04)',
                     };
 
-                    // Build feature rows from model fields
                     $features = [
                         'Trainees'        => $plan->max_trainees  ? number_format($plan->max_trainees)  : 'Unlimited',
                         'Trainers'        => $plan->max_trainers  ? number_format($plan->max_trainers)  : ($plan->has_trainers ? 'Unlimited' : '—'),
@@ -369,7 +379,7 @@
                                 <th>Type</th>
                                 <th>Code / Label</th>
                                 <th>Discount</th>
-                                <th>Plan</th>
+                                <th>Applies To</th>
                                 <th>Valid Period</th>
                                 <th>Status</th>
                                 <th></th>
@@ -383,6 +393,7 @@
                                         'Scheduled' => 'sb-warning',
                                         default     => 'sb-danger',
                                     };
+                                    $planSlugsJson = json_encode($d->plan_slugs ?? []);
                                 @endphp
                                 <tr>
                                     <td>
@@ -413,8 +424,15 @@
                                         </span>
                                         <div class="text-xs" style="color:var(--sa-muted);">{{ ucfirst($d->type) }}</div>
                                     </td>
-                                    <td class="text-xs" style="color:var(--sa-muted);">
-                                        {{ $d->plan_slug ? ucfirst($d->plan_slug) : 'All plans' }}
+                                    {{-- Applies-to column: multi-plan pills --}}
+                                    <td>
+                                        @if(empty($d->plan_slugs))
+                                            <span class="plan-pill pill-all">All plans</span>
+                                        @else
+                                            @foreach($d->plan_slugs as $slug)
+                                                <span class="plan-pill pill-{{ $slug }}">{{ ucfirst($slug) }}</span>
+                                            @endforeach
+                                        @endif
                                     </td>
                                     <td class="text-xs" style="color:var(--sa-muted);">
                                         @if($d->valid_from || $d->valid_until)
@@ -448,7 +466,7 @@
                                              data-label="{{ $d->label }}"
                                              data-type="{{ $d->type }}"
                                              data-value="{{ $d->value }}"
-                                             data-plan-slug="{{ $d->plan_slug ?? '' }}"
+                                             data-plan-slugs="{{ $planSlugsJson }}"
                                              data-valid-from="{{ $d->valid_from?->format('Y-m-d') ?? '' }}"
                                              data-valid-until="{{ $d->valid_until?->format('Y-m-d') ?? '' }}"
                                              data-active="{{ $d->is_active ? '1' : '0' }}"
@@ -567,7 +585,7 @@
                                     </code>
                                     <span class="font-semibold" style="color:var(--sa-success);">{{ $d->formatted_value }}</span>
                                     <span class="text-xs" style="color:var(--sa-muted);">
-                                        {{ $d->plan_slug ? ucfirst($d->plan_slug) : 'All plans' }}
+                                        {{ $d->plan_label }}
                                     </span>
                                 </div>
                             @endforeach
@@ -664,20 +682,34 @@
 
         document.getElementById('edit-discount-form').action = d.updateUrl;
 
-        // Set automatic vs code radio
+        // ── Set automatic vs code radio ────────────────────────────────────
         const isAuto = d.isAutomatic === '1';
         document.getElementById('ed-radio-automatic').checked = isAuto;
         document.getElementById('ed-radio-code').checked      = !isAuto;
-        toggleCodeField('ed-');
 
+        // Trigger the visual toggle update (defined in _discount_fields.blade.php)
+        document.getElementById('ed-radio-automatic').dispatchEvent(new Event('change'));
+
+        // ── Populate simple fields ─────────────────────────────────────────
         document.getElementById('ed-code').value        = d.code;
         document.getElementById('ed-label').value       = d.label;
         document.getElementById('ed-type').value        = d.type;
         document.getElementById('ed-value').value       = d.value;
-        document.getElementById('ed-plan-slug').value   = d.planSlug;
         document.getElementById('ed-valid-from').value  = d.validFrom;
         document.getElementById('ed-valid-until').value = d.validUntil;
         document.getElementById('ed-active').checked    = d.active === '1';
+
+        // ── Populate multi-plan checkboxes ─────────────────────────────────
+        let planSlugs = [];
+        try { planSlugs = JSON.parse(d.planSlugs || '[]'); } catch(e) {}
+
+        ['basic', 'standard', 'premium'].forEach(slug => {
+            const cb = document.getElementById('ed-plan-' + slug);
+            if (cb) {
+                cb.checked = planSlugs.includes(slug);
+                syncPlanLabel('ed-', slug);
+            }
+        });
 
         openModal('modal-edit-discount');
     }

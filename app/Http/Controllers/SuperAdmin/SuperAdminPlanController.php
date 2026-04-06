@@ -131,8 +131,8 @@ class SuperAdminPlanController extends Controller
      * is_automatic = true  → shown automatically on plan cards (no code entry needed)
      * is_automatic = false → tenant must enter the code manually on the upgrade page
      *
-     * In BOTH cases the discount only ever affects the displayed/recorded price.
-     * It NEVER changes or assigns a plan by itself.
+     * plan_slugs = null        → applies to all plans
+     * plan_slugs = ['standard','premium'] → applies only to those plans
      */
     public function storeDiscount(Request $request)
     {
@@ -141,7 +141,8 @@ class SuperAdminPlanController extends Controller
             'label'        => ['required', 'string', 'max:150'],
             'type'         => ['required', 'in:percentage,fixed'],
             'value'        => ['required', 'numeric', 'min:0.01'],
-            'plan_slug'    => ['nullable', 'in:basic,standard,premium'],
+            'plan_slugs'   => ['nullable', 'array'],
+            'plan_slugs.*' => ['in:basic,standard,premium'],
             'valid_from'   => ['nullable', 'date'],
             'valid_until'  => ['nullable', 'date', 'after_or_equal:valid_from'],
             'is_active'    => ['boolean'],
@@ -162,6 +163,9 @@ class SuperAdminPlanController extends Controller
             $data['code'] = strtoupper($data['code'] ?? '');
         }
 
+        // Normalise plan_slugs: empty array → null (means "all plans")
+        $planSlugs = $request->input('plan_slugs', []);
+        $data['plan_slugs']   = (is_array($planSlugs) && count($planSlugs) > 0) ? $planSlugs : null;
         $data['is_active']    = $request->boolean('is_active', true);
         $data['is_automatic'] = $isAutomatic;
 
@@ -181,7 +185,8 @@ class SuperAdminPlanController extends Controller
             'label'        => ['required', 'string', 'max:150'],
             'type'         => ['required', 'in:percentage,fixed'],
             'value'        => ['required', 'numeric', 'min:0.01'],
-            'plan_slug'    => ['nullable', 'in:basic,standard,premium'],
+            'plan_slugs'   => ['nullable', 'array'],
+            'plan_slugs.*' => ['in:basic,standard,premium'],
             'valid_from'   => ['nullable', 'date'],
             'valid_until'  => ['nullable', 'date', 'after_or_equal:valid_from'],
             'is_active'    => ['boolean'],
@@ -195,6 +200,10 @@ class SuperAdminPlanController extends Controller
         $isAutomatic = $request->boolean('is_automatic', false);
         $data['is_active']    = $request->boolean('is_active', true);
         $data['is_automatic'] = $isAutomatic;
+
+        // Normalise plan_slugs
+        $planSlugs = $request->input('plan_slugs', []);
+        $data['plan_slugs'] = (is_array($planSlugs) && count($planSlugs) > 0) ? $planSlugs : null;
 
         // Keep the auto-generated code for automatic discounts
         if ($isAutomatic) {

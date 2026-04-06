@@ -10,7 +10,7 @@ class Discount extends Model
     protected $connection = 'mysql';
 
     protected $fillable = [
-        'code', 'label', 'type', 'value', 'plan_slug',
+        'code', 'label', 'type', 'value', 'plan_slugs',
         'valid_from', 'valid_until', 'is_active', 'is_automatic',
     ];
 
@@ -20,6 +20,7 @@ class Discount extends Model
         'is_active'    => 'boolean',
         'is_automatic' => 'boolean',
         'value'        => 'decimal:2',
+        'plan_slugs'   => 'array',   // JSON array e.g. ["standard","premium"] or null = all plans
     ];
 
     // ── Scopes ───────────────────────────────────────────────────────────────
@@ -37,9 +38,17 @@ class Discount extends Model
             ->where(fn ($q) => $q->whereNull('valid_until')->orWhere('valid_until', '>=', $today));
     }
 
+    /**
+     * Filter discounts that apply to a given plan slug.
+     * plan_slugs = null  → applies to ALL plans
+     * plan_slugs = [...] → applies only to the listed plans
+     */
     public function scopeForPlan($query, string $plan)
     {
-        return $query->where(fn ($q) => $q->whereNull('plan_slug')->orWhere('plan_slug', $plan));
+        return $query->where(function ($q) use ($plan) {
+            $q->whereNull('plan_slugs')
+              ->orWhereJsonContains('plan_slugs', $plan);
+        });
     }
 
     /** Automatic discounts: shown on plan cards with no code entry needed. */
@@ -64,8 +73,8 @@ class Discount extends Model
     {
         if (! $this->is_active) return false;
 
-        // plan_slug = null means discount applies to ALL plans
-        if ($this->plan_slug && $this->plan_slug !== $plan) return false;
+        // plan_slugs = null means discount applies to ALL plans
+        if (! empty($this->plan_slugs) && ! in_array($plan, $this->plan_slugs)) return false;
 
         $today = now()->toDateString();
         if ($this->valid_from  && $this->valid_from->toDateString()  > $today) return false;
@@ -95,6 +104,16 @@ class Discount extends Model
         return $this->type === 'percentage'
             ? number_format($this->value, 0) . '%'
             : '₱' . number_format($this->value, 2);
+    }
+
+    /**
+     * Human-readable label for which plans this discount applies to.
+     * e.g. "All plans", "Standard", "Standard, Premium"
+     */
+    public function getPlanLabelAttribute(): string
+    {
+        if (empty($this->plan_slugs)) return 'All plans';
+        return implode(', ', array_map('ucfirst', $this->plan_slugs));
     }
 
     /** Status for display in the table. */
