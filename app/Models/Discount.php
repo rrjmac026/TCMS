@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class Discount extends Model
 {
+    // ── CRITICAL: discounts live in the central DB, not tenant DBs ───────────
+    protected $connection = 'mysql';
+
     protected $fillable = [
         'code', 'label', 'type', 'value', 'plan_slug',
         'valid_from', 'valid_until', 'is_active', 'is_automatic',
@@ -39,17 +42,13 @@ class Discount extends Model
         return $query->where(fn ($q) => $q->whereNull('plan_slug')->orWhere('plan_slug', $plan));
     }
 
-    /**
-     * Automatic discounts: no code needed, shown directly on plan cards.
-     */
+    /** Automatic discounts: shown on plan cards with no code entry needed. */
     public function scopeAutomatic($query)
     {
         return $query->where('is_automatic', true);
     }
 
-    /**
-     * Code-based discounts: tenant must type the code manually.
-     */
+    /** Code-based discounts: tenant must type the code manually. */
     public function scopeCodeBased($query)
     {
         return $query->where('is_automatic', false);
@@ -112,23 +111,27 @@ class Discount extends Model
 
     /**
      * Find the best active automatic discount for a given plan slug.
-     * Returns null if none exists.
+     * Forces central DB connection — safe to call from within a tenant context.
      */
     public static function bestAutomaticFor(string $planSlug): ?self
     {
-        return static::validNow()
+        return static::on('mysql')
+            ->validNow()
             ->automatic()
             ->forPlan($planSlug)
-            ->orderByDesc('value') // prefer higher discount
+            ->orderByDesc('value')
             ->first();
     }
 
     /**
      * Find a valid code-based discount by code + plan.
+     * Forces central DB connection. Rejects automatic discounts (can't be typed in).
      */
     public static function findValidCode(string $code, string $planSlug): ?self
     {
-        $discount = static::where('code', strtoupper($code))->first();
+        $discount = static::on('mysql')
+            ->where('code', strtoupper($code))
+            ->first();
 
         if (! $discount || $discount->is_automatic) return null;
         if (! $discount->isValidFor($planSlug))     return null;

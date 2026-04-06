@@ -3,7 +3,6 @@
 
 @section('content')
 
-{{-- ── Styles (from old _styles.blade.php) ── --}}
 <style>
     :root {
         --sa-primary:  #003087;
@@ -193,6 +192,14 @@
     .stat-pill { display: flex; flex-direction: column; align-items: center; padding: 14px 20px; border-radius: 14px; background: var(--sa-surface); border: 1.5px solid var(--sa-border); gap: 4px; }
     .stat-pill-val { font-size: 22px; font-weight: 800; color: var(--sa-primary); line-height: 1; }
     .stat-pill-lbl { font-size: 10px; font-weight: 600; color: var(--sa-muted); text-transform: uppercase; letter-spacing: .5px; }
+
+    /* ── Type badge inside discount table ── */
+    .type-badge {
+        display: inline-flex; align-items: center; gap: 4px;
+        padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 700; text-transform: uppercase;
+    }
+    .type-auto { background: rgba(22,163,74,.10); color: var(--sa-success); }
+    .type-code { background: rgba(0,87,184,.10);  color: var(--sa-accent); }
 </style>
 
 <div class="space-y-6">
@@ -204,7 +211,7 @@
                 <i class="fas fa-tags mr-2" style="color:var(--sa-accent);"></i> Plan Management
             </h1>
             <p class="text-sm mt-1" style="color:var(--sa-muted);">
-                Configure subscription plans, manage discount codes, and apply pricing to tenants
+                Configure subscription plans, manage discounts, and apply pricing to tenants
             </p>
         </div>
         <div class="flex gap-2">
@@ -225,13 +232,6 @@
             </div>
         </div>
     @endif
-    @if(session('error'))
-        <div class="rounded-xl border-2 p-4" style="background:rgba(206,17,38,.05);border-color:var(--sa-danger);">
-            <div style="color:var(--sa-danger);" class="font-semibold flex items-center gap-3">
-                <i class="fas fa-times-circle"></i> {{ session('error') }}
-            </div>
-        </div>
-    @endif
     @if($errors->any())
         <div class="rounded-xl border-2 p-4" style="background:rgba(206,17,38,.05);border-color:var(--sa-danger);">
             <div style="color:var(--sa-danger);" class="font-semibold flex items-start gap-3">
@@ -244,7 +244,7 @@
     {{-- ── Stats Row ── --}}
     <div class="flex flex-wrap gap-3">
         <div class="stat-pill">
-            <span class="stat-pill-val">{{ count($plans) }}</span>
+            <span class="stat-pill-val">{{ $plans->count() }}</span>
             <span class="stat-pill-lbl">Plans</span>
         </div>
         <div class="stat-pill">
@@ -252,8 +252,12 @@
             <span class="stat-pill-lbl">Active Discounts</span>
         </div>
         <div class="stat-pill">
-            <span class="stat-pill-val">{{ $discounts->count() }}</span>
-            <span class="stat-pill-lbl">Total Codes</span>
+            <span class="stat-pill-val">{{ $discounts->where('is_automatic', true)->count() }}</span>
+            <span class="stat-pill-lbl">Auto Discounts</span>
+        </div>
+        <div class="stat-pill">
+            <span class="stat-pill-val">{{ $discounts->where('is_automatic', false)->count() }}</span>
+            <span class="stat-pill-lbl">Promo Codes</span>
         </div>
     </div>
 
@@ -263,7 +267,7 @@
             <i class="fas fa-layer-group"></i> Subscription Plans
         </button>
         <button class="tab-btn" onclick="switchTab('discounts', this)">
-            <i class="fas fa-percent"></i> Discount Codes
+            <i class="fas fa-percent"></i> Discounts
             @if($discounts->count())
                 <span class="px-2 py-0.5 rounded-full text-xs" style="background:var(--sa-surface);color:var(--sa-muted);">{{ $discounts->count() }}</span>
             @endif
@@ -278,42 +282,59 @@
     {{-- ══════════════════════════════════════════════════════════════════════ --}}
     <div id="tab-plans" class="tab-content active">
         <div class="plan-grid">
-            @foreach($plans as $slug => $plan)
+            @foreach($plans as $plan)
                 @php
-                    $badgeClass = match($slug) {
+                    $badgeClass = match($plan->slug) {
                         'standard' => 'badge-standard',
                         'premium'  => 'badge-premium',
                         default    => 'badge-basic',
                     };
-                    $headerBg = match($slug) {
+                    $headerBg = match($plan->slug) {
                         'standard' => 'rgba(0,87,184,.04)',
                         'premium'  => 'rgba(245,197,24,.06)',
                         default    => 'rgba(90,122,170,.04)',
                     };
+
+                    // Build feature rows from model fields
+                    $features = [
+                        'Trainees'        => $plan->max_trainees  ? number_format($plan->max_trainees)  : 'Unlimited',
+                        'Trainers'        => $plan->max_trainers  ? number_format($plan->max_trainers)  : ($plan->has_trainers ? 'Unlimited' : '—'),
+                        'Users'           => $plan->max_users     ? number_format($plan->max_users)     : 'Unlimited',
+                        'Courses'         => $plan->max_courses   ? number_format($plan->max_courses)   : 'Unlimited',
+                        'Trainer Mgmt'    => $plan->has_trainers,
+                        'Assessments'     => $plan->has_assessments,
+                        'Certificates'    => $plan->has_certificates,
+                        'Custom Reports'  => $plan->has_custom_reports,
+                        'Custom Branding' => $plan->has_branding,
+                        'Exports/month'   => $plan->max_exports_monthly === null
+                            ? 'Unlimited'
+                            : ($plan->max_exports_monthly === 0 ? '—' : number_format($plan->max_exports_monthly)),
+                        'Export Formats'  => count($plan->allowed_export_formats ?? [])
+                            ? strtoupper(implode(', ', $plan->allowed_export_formats))
+                            : '—',
+                    ];
                 @endphp
 
                 <div class="plan-card">
-                    {{-- Header --}}
                     <div class="plan-header" style="background:{{ $headerBg }};">
                         <span class="plan-slug-badge {{ $badgeClass }}">
                             <i class="fas fa-circle" style="font-size:6px;"></i>
-                            {{ strtoupper($slug) }}
+                            {{ strtoupper($plan->slug) }}
                         </span>
-                        <div class="font-bold text-lg mb-1" style="color:var(--sa-primary);">{{ $plan['name'] }}</div>
+                        <div class="font-bold text-lg mb-1" style="color:var(--sa-primary);">{{ $plan->name }}</div>
                         <div class="plan-price">
-                            @if($plan['price'] === 0) Free
-                            @else ₱{{ number_format($plan['price']) }}
+                            @if((float)$plan->price === 0.0) Free
+                            @else ₱{{ number_format($plan->price, 0) }}
                             @endif
                             <span>/ plan</span>
                         </div>
                         <div class="plan-duration">
-                            <i class="fas fa-clock mr-1"></i> {{ $plan['duration_days'] }} days access
+                            <i class="fas fa-clock mr-1"></i> {{ $plan->duration_label }}
                         </div>
                     </div>
 
-                    {{-- Features --}}
                     <div class="plan-body">
-                        @foreach($plan['features'] as $label => $val)
+                        @foreach($features as $label => $val)
                             <div class="feature-row">
                                 <span class="feature-label">{{ $label }}</span>
                                 <span class="feature-val">
@@ -323,8 +344,6 @@
                                         @else
                                             <span class="feature-no"><i class="fas fa-times"></i></span>
                                         @endif
-                                    @elseif($val === null)
-                                        ∞
                                     @else
                                         {{ $val }}
                                     @endif
@@ -347,8 +366,8 @@
                     <table class="disc-table">
                         <thead>
                             <tr>
-                                <th>Code</th>
-                                <th>Label</th>
+                                <th>Type</th>
+                                <th>Code / Label</th>
                                 <th>Discount</th>
                                 <th>Plan</th>
                                 <th>Valid Period</th>
@@ -367,12 +386,24 @@
                                 @endphp
                                 <tr>
                                     <td>
-                                        <code class="px-2 py-1 rounded text-xs font-bold"
-                                              style="background:rgba(0,48,135,.08);color:var(--sa-accent);">
-                                            {{ $d->code }}
-                                        </code>
+                                        @if($d->is_automatic)
+                                            <span class="type-badge type-auto">🗓 Auto</span>
+                                        @else
+                                            <span class="type-badge type-code">🔑 Code</span>
+                                        @endif
                                     </td>
-                                    <td class="font-semibold">{{ $d->label }}</td>
+                                    <td>
+                                        @if($d->is_automatic)
+                                            <span class="font-semibold">{{ $d->label }}</span>
+                                            <div class="text-xs mt-0.5" style="color:var(--sa-muted);">No code needed</div>
+                                        @else
+                                            <code class="px-2 py-1 rounded text-xs font-bold"
+                                                  style="background:rgba(0,48,135,.08);color:var(--sa-accent);">
+                                                {{ $d->code }}
+                                            </code>
+                                            <div class="text-xs mt-0.5" style="color:var(--sa-muted);">{{ $d->label }}</div>
+                                        @endif
+                                    </td>
                                     <td>
                                         <span class="font-bold text-base" style="color:var(--sa-success);">
                                             {{ $d->formatted_value }}
@@ -401,7 +432,7 @@
                                                 <i class="fas fa-pencil-alt"></i>
                                             </button>
                                             <form action="{{ route('superadmin.plans.discounts.destroy', $d) }}" method="POST"
-                                                  onsubmit="return confirm('Delete discount {{ $d->code }}?')">
+                                                  onsubmit="return confirm('Delete this discount?')">
                                                 @csrf @method('DELETE')
                                                 <button type="submit" class="btn btn-danger btn-sm">
                                                     <i class="fas fa-trash"></i>
@@ -411,6 +442,8 @@
 
                                         {{-- Hidden data for JS --}}
                                         <div id="disc-data-{{ $d->id }}" class="hidden"
+                                             data-id="{{ $d->id }}"
+                                             data-is-automatic="{{ $d->is_automatic ? '1' : '0' }}"
                                              data-code="{{ $d->code }}"
                                              data-label="{{ $d->label }}"
                                              data-type="{{ $d->type }}"
@@ -430,7 +463,7 @@
             @else
                 <div class="flex flex-col items-center justify-center py-14 text-center">
                     <i class="fas fa-percent text-5xl mb-4" style="color:var(--sa-muted);opacity:.3;"></i>
-                    <p style="color:var(--sa-muted);" class="mb-3">No discount codes yet.</p>
+                    <p style="color:var(--sa-muted);" class="mb-3">No discounts yet.</p>
                     <button onclick="openModal('modal-new-discount')" class="btn btn-gold">
                         <i class="fas fa-plus"></i> Create First Discount
                     </button>
@@ -445,12 +478,15 @@
     <div id="tab-apply" class="tab-content">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-            {{-- Apply Form --}}
             <div class="apply-panel">
                 <h2 class="font-bold text-lg mb-5" style="color:var(--sa-primary);">
                     <i class="fas fa-magic mr-2" style="color:var(--sa-accent);"></i>
                     Apply Plan to Tenant
                 </h2>
+                <p class="text-sm mb-5" style="color:var(--sa-muted);">
+                    This <strong style="color:var(--sa-text);">changes the tenant's active plan</strong>.
+                    An optional promo code only adjusts the recorded price — it does not affect the plan assigned.
+                </p>
 
                 <form action="{{ route('superadmin.plans.apply') }}" method="POST" class="space-y-4">
                     @csrf
@@ -459,8 +495,11 @@
                         <label>Select Tenant</label>
                         <select name="tenant_id" required>
                             <option value="">— Choose tenant —</option>
-                            @foreach(\App\Models\Tenant::where('status', 'approved')->orderBy('name')->get() as $t)
-                                <option value="{{ $t->id }}">{{ $t->name }} ({{ ucfirst($t->subscription) }})</option>
+                            @foreach(\App\Models\Tenant::orderBy('name')->get() as $t)
+                                <option value="{{ $t->id }}">
+                                    {{ $t->name }} — currently on {{ ucfirst($t->subscription ?? 'basic') }}
+                                    ({{ $t->status }})
+                                </option>
                             @endforeach
                         </select>
                     </div>
@@ -469,14 +508,19 @@
                         <label>Target Plan</label>
                         <select name="plan_slug" id="apply-plan-select" required onchange="liveValidate()">
                             <option value="">— Choose plan —</option>
-                            @foreach($plans as $slug => $plan)
-                                <option value="{{ $slug }}">{{ $plan['name'] }} (₱{{ number_format($plan['price']) }})</option>
+                            @foreach($plans as $plan)
+                                <option value="{{ $plan->slug }}">
+                                    {{ $plan->name }} (₱{{ number_format($plan->price, 0) }} / {{ $plan->duration_label }})
+                                </option>
                             @endforeach
                         </select>
                     </div>
 
                     <div class="fi">
-                        <label>Discount Code <span style="color:var(--sa-muted);font-weight:400;text-transform:none;">(optional)</span></label>
+                        <label>
+                            Promo Code
+                            <span style="color:var(--sa-muted);font-weight:400;text-transform:none;">(optional — affects recorded price only)</span>
+                        </label>
                         <div class="flex gap-2">
                             <input type="text" name="discount_code" id="apply-code-input"
                                    placeholder="e.g. SAVE20"
@@ -489,36 +533,33 @@
                         <div id="validate-result" class="validate-result"></div>
                     </div>
 
-                    <div class="flex gap-2 pt-2">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-magic"></i> Apply & Set Plan
-                        </button>
-                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-magic"></i> Apply & Set Plan
+                    </button>
                 </form>
             </div>
 
-            {{-- Info + Quick List --}}
             <div class="space-y-4">
                 <div class="rounded-xl border-2 p-5" style="background:rgba(0,87,184,.04);border-color:rgba(0,87,184,.2);">
                     <div class="font-bold text-sm mb-3" style="color:var(--sa-primary);">
-                        <i class="fas fa-info-circle mr-2"></i> How Discounts Work
+                        <i class="fas fa-info-circle mr-2"></i> How it works
                     </div>
                     <div class="space-y-2 text-sm" style="color:var(--sa-muted);">
-                        <p>• <strong style="color:var(--sa-text);">Percentage</strong> — deducts a % from the plan's base price</p>
-                        <p>• <strong style="color:var(--sa-text);">Fixed (₱)</strong> — deducts a flat amount from the base price</p>
-                        <p>• Discounts can be restricted to a specific plan and date range</p>
-                        <p>• Applying here also sets the tenant's plan and expiry date</p>
+                        <p>• <strong style="color:var(--sa-text);">Plan assignment</strong> changes the tenant's subscription immediately</p>
+                        <p>• <strong style="color:var(--sa-text);">Promo codes</strong> here only reduce the amount recorded in billing history</p>
+                        <p>• <strong style="color:var(--sa-text);">Automatic discounts</strong> are shown directly on tenant plan cards — no code needed</p>
+                        <p>• Tenants can also self-upgrade from their subscription page</p>
                     </div>
                 </div>
 
-                @php $activeDiscounts = $discounts->where('is_active', true)->take(6); @endphp
-                @if($activeDiscounts->count())
+                @php $activeCodes = $discounts->where('is_active', true)->where('is_automatic', false)->take(5); @endphp
+                @if($activeCodes->count())
                     <div class="rounded-xl border-2 p-5" style="background:var(--sa-bg);border-color:var(--sa-border);">
                         <div class="font-bold text-sm mb-3" style="color:var(--sa-primary);">
-                            <i class="fas fa-bolt mr-2" style="color:var(--sa-gold);"></i> Active Codes
+                            <i class="fas fa-bolt mr-2" style="color:var(--sa-gold);"></i> Active Promo Codes
                         </div>
                         <div class="space-y-2">
-                            @foreach($activeDiscounts as $d)
+                            @foreach($activeCodes as $d)
                                 <div class="flex items-center justify-between text-sm">
                                     <code class="px-2 py-0.5 rounded text-xs font-bold"
                                           style="background:rgba(0,48,135,.08);color:var(--sa-accent);">
@@ -547,7 +588,7 @@
     <div class="modal-box">
         <div class="modal-header">
             <span class="modal-title">
-                <i class="fas fa-percent mr-2" style="color:var(--sa-accent);"></i> New Discount Code
+                <i class="fas fa-percent mr-2" style="color:var(--sa-accent);"></i> New Discount
             </span>
             <button onclick="closeModal('modal-new-discount')"
                     style="background:none;border:none;cursor:pointer;color:var(--sa-muted);font-size:18px;">
@@ -561,7 +602,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" onclick="closeModal('modal-new-discount')" class="btn btn-outline">Cancel</button>
-                <button type="submit" class="btn btn-primary"><i class="fas fa-plus"></i> Create Discount</button>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-plus"></i> Create</button>
             </div>
         </form>
     </div>
@@ -574,7 +615,7 @@
     <div class="modal-box">
         <div class="modal-header">
             <span class="modal-title">
-                <i class="fas fa-pencil-alt mr-2" style="color:var(--sa-accent);"></i> Edit Discount Code
+                <i class="fas fa-pencil-alt mr-2" style="color:var(--sa-accent);"></i> Edit Discount
             </span>
             <button onclick="closeModal('modal-edit-discount')"
                     style="background:none;border:none;cursor:pointer;color:var(--sa-muted);font-size:18px;">
@@ -622,6 +663,13 @@
         const d = document.getElementById('disc-data-' + id).dataset;
 
         document.getElementById('edit-discount-form').action = d.updateUrl;
+
+        // Set automatic vs code radio
+        const isAuto = d.isAutomatic === '1';
+        document.getElementById('ed-radio-automatic').checked = isAuto;
+        document.getElementById('ed-radio-code').checked      = !isAuto;
+        toggleCodeField('ed-');
+
         document.getElementById('ed-code').value        = d.code;
         document.getElementById('ed-label').value       = d.label;
         document.getElementById('ed-type').value        = d.type;
@@ -646,7 +694,7 @@
 
         validateTimeout = setTimeout(() => {
             fetch('{{ route('superadmin.plans.discounts.validate') }}', {
-                method: 'POST',
+                method : 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
@@ -661,16 +709,12 @@
                         `<i class="fas fa-check-circle mr-1"></i> Code valid! Saves ${data.formatted_value}<br>` +
                         `<span style="font-size:11px;">` +
                         `Original: ₱${Number(data.original_price).toFixed(2)} → ` +
-                        `Discount: ₱${Number(data.discount_amount).toFixed(2)} → ` +
+                        `Discount: −₱${Number(data.discount_amount).toFixed(2)} → ` +
                         `<strong>Final: ₱${Number(data.final_price).toFixed(2)}</strong></span>`;
                 } else {
                     result.className = 'validate-result invalid';
                     result.innerHTML = `<i class="fas fa-times-circle mr-1"></i> ${data.message}`;
                 }
-            })
-            .catch(() => {
-                result.className = 'validate-result invalid';
-                result.innerHTML = '<i class="fas fa-exclamation-circle mr-1"></i> Validation failed.';
             });
         }, 400);
     }
