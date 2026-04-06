@@ -88,6 +88,8 @@ Route::middleware([
         Route::get('/subscription',          [AdminSubscriptionController::class, 'index'])->name('subscription.index');
         Route::post('/subscription/upgrade', [AdminSubscriptionController::class, 'upgrade'])->name('subscription.upgrade');
 
+        Route::post('/subscription/validate-code', [AdminSubscriptionController::class, 'validateCode'])->name('subscription.validate-code');
+
         // ── Analytics & Reports ────────────────────────────────────────────
         Route::middleware('subscription:reports')->group(function () {
             Route::get('/reports', [AdminReportController::class, 'index'])->name('reports.index');

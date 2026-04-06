@@ -40,7 +40,7 @@
         @endphp
 
         <div class="up-card {{ $isFeatured && !$isCurrent ? 'featured' : '' }} {{ $isCurrent ? 'current-plan' : '' }}"
-             onclick="{{ $canUpgrade ? "selectPlan('{$plan->slug}', '{$plan->name}', '₱{$formattedPrice}', '{$plan->duration_label}')" : '' }}">
+             onclick="{{ $canUpgrade ? "selectPlan('{$plan->slug}', '{$plan->name}', '₱{$formattedPrice}', '{$plan->duration_label}', {$plan->price})" : '' }}">
 
             @if($isCurrent)
                 <div class="up-current-badge"><i class="fas fa-check"></i> Current</div>

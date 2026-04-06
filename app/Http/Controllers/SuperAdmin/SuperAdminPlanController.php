@@ -8,6 +8,9 @@ use App\Models\Tenant;
 use App\Models\SubscriptionPlan;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use App\Models\DiscountUsage;
+use App\Models\TenantSubscription;
+use Illuminate\Support\Facades\DB;
 
 class SuperAdminPlanController extends Controller
 {
@@ -89,28 +92,59 @@ class SuperAdminPlanController extends Controller
             'discount_code' => ['nullable', 'string'],
         ]);
 
-        $tenant   = Tenant::findOrFail($data['tenant_id']);
-        $plan     = config('plans.' . $data['plan_slug']);
-        $price    = (float) $plan['price'];
-        $discount = null;
+        $tenant    = Tenant::findOrFail($data['tenant_id']);
+        $plan      = config('plans.' . $data['plan_slug']);
+        $planModel = SubscriptionPlan::where('slug', $data['plan_slug'])->first();
+        $price     = $planModel ? (float) $planModel->price : (float) $plan['price'];
+        $discount  = null;
 
-        // Validate and apply discount if provided
-        if (!empty($data['discount_code'])) {
+        if (! empty($data['discount_code'])) {
             $discount = Discount::where('code', strtoupper($data['discount_code']))->first();
 
-            if (!$discount || !$discount->isValidFor($data['plan_slug'])) {
+            if (! $discount || ! $discount->isValidFor($data['plan_slug'])) {
                 return back()->withErrors(['discount_code' => 'Invalid or inapplicable discount code.']);
             }
 
             $price = $discount->applyTo($price);
         }
 
-        // Set plan on tenant
-        $tenant->subscription = $data['plan_slug'];
-        $tenant->expires_at   = now()->addDays($plan['duration_days']);
-        $tenant->status       = 'approved';
-        $tenant->is_active    = true;
-        $tenant->save();
+        $expiresAt = $planModel?->getExpiresAt() ?? now()->addDays($plan['duration_days']);
+
+        DB::transaction(function () use ($tenant, $data, $planModel, $discount, $price, $expiresAt, $plan) {
+            $basePrice       = $planModel ? (float) $planModel->price : (float) $plan['price'];
+            $discountUsageId = null;
+
+            if ($discount) {
+                $usage = DiscountUsage::create([
+                    'discount_id'     => $discount->id,
+                    'tenant_id'       => $tenant->id,
+                    'action'          => 'approve',
+                    'plan_slug'       => $data['plan_slug'],
+                    'original_price'  => $basePrice,
+                    'discount_amount' => $discount->discountAmount($basePrice),
+                    'final_price'     => $price,
+                    'applied_by'      => auth()->id(),
+                ]);
+                $discountUsageId = $usage->id;
+            }
+
+            TenantSubscription::create([
+                'tenant_id'         => $tenant->id,
+                'plan_slug'         => $data['plan_slug'],
+                'discount_usage_id' => $discountUsageId,
+                'amount_paid'       => $price,
+                'action'            => 'approve',
+                'starts_at'         => now(),
+                'expires_at'        => $expiresAt,
+                'applied_by'        => auth()->id(),
+            ]);
+
+            $tenant->subscription = $data['plan_slug'];
+            $tenant->expires_at   = $expiresAt;
+            $tenant->status       = 'approved';
+            $tenant->is_active    = true;
+            $tenant->save();
+        });
 
         $msg = "Plan set to {$plan['name']} for {$tenant->name}.";
         if ($discount) {

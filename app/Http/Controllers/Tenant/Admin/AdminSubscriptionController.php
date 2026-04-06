@@ -3,8 +3,12 @@
 namespace App\Http\Controllers\Tenant\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Discount;
+use App\Models\DiscountUsage;
 use App\Models\SubscriptionPlan;
+use App\Models\TenantSubscription;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class AdminSubscriptionController extends Controller
 {
@@ -12,30 +16,60 @@ class AdminSubscriptionController extends Controller
     {
         $dbPlans = collect();
         try {
-            $dbPlans = SubscriptionPlan::active()->get()->keyBy('slug');
-        } catch (\Throwable) {
-            // Plans table not yet migrated — view falls back to static copy
-        }
+            $dbPlans = SubscriptionPlan::active()->orderBy('sort_order')->get()->keyBy('slug');
+        } catch (\Throwable) {}
 
         $tenant      = tenancy()->tenant;
         $currentPlan = $tenant->subscription ?? 'basic';
-
-        // Pass $plans as the same collection (view expects both variables)
-        $plans = $dbPlans->values();
+        $plans       = $dbPlans->values();
 
         return view('tenants.admin.subscription.upgrade', compact('dbPlans', 'currentPlan', 'plans'));
     }
 
+    /**
+     * AJAX — validate a discount code against a plan (called from the tenant upgrade page).
+     */
+    public function validateCode(Request $request)
+    {
+        $request->validate([
+            'code'      => ['required', 'string'],
+            'plan_slug' => ['required', 'in:basic,standard,premium'],
+        ]);
+
+        $discount = Discount::where('code', strtoupper($request->code))->first();
+
+        if (! $discount || ! $discount->isValidFor($request->plan_slug)) {
+            return response()->json(['valid' => false, 'message' => 'Invalid or inapplicable discount code.']);
+        }
+
+        $planModel = SubscriptionPlan::where('slug', $request->plan_slug)->first();
+        $base      = $planModel ? (float) $planModel->price : 0;
+        $saved     = $discount->discountAmount($base);
+        $final     = $discount->applyTo($base);
+
+        return response()->json([
+            'valid'           => true,
+            'formatted_value' => $discount->formatted_value,
+            'original_price'  => $base,
+            'discount_amount' => $saved,
+            'final_price'     => $final,
+        ]);
+    }
+
+    /**
+     * Confirm upgrade — validates plan, optional discount, records everything, updates tenant.
+     */
     public function upgrade(Request $request)
     {
         $request->validate([
-            'subscription' => ['required', 'in:basic,standard,premium'],
+            'subscription'  => ['required', 'in:basic,standard,premium'],
+            'discount_code' => ['nullable', 'string'],
         ]);
 
         $tenant = tenancy()->tenant;
         $plans  = ['basic', 'standard', 'premium'];
 
-        $currentIndex = array_search($tenant->subscription, $plans);
+        $currentIndex = array_search($tenant->subscription ?? 'basic', $plans);
         $newIndex     = array_search($request->subscription, $plans);
 
         if ($newIndex <= $currentIndex) {
@@ -45,27 +79,70 @@ class AdminSubscriptionController extends Controller
             ], 422);
         }
 
-        // Read duration from SubscriptionPlan if available
-        $expiresAt = null;
-        try {
-            $plan = SubscriptionPlan::where('slug', $request->subscription)->first();
-            if ($plan) {
-                $expiresAt = $plan->getExpiresAt();
-            }
-        } catch (\Throwable) {}
+        $planModel = SubscriptionPlan::where('slug', $request->subscription)->first();
 
-        // Fallback to hardcoded durations if plans table isn't ready
-        if (! $expiresAt) {
-            $expiresAt = match($request->subscription) {
-                'standard' => now()->addMonths(6),
-                'premium'  => now()->addYear(),
-                default    => now()->addDays(30),
-            };
+        if (! $planModel) {
+            return response()->json(['success' => false, 'message' => 'Plan not found.'], 422);
         }
 
-        $tenant->subscription = $request->subscription;
-        $tenant->expires_at   = $expiresAt;
-        $tenant->save();
+        $basePrice     = (float) $planModel->price;
+        $finalPrice    = $basePrice;
+        $discountModel = null;
+
+        // Validate discount if provided
+        if (! empty($request->discount_code)) {
+            $discountModel = Discount::where('code', strtoupper($request->discount_code))->first();
+
+            if (! $discountModel || ! $discountModel->isValidFor($request->subscription)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'The discount code is invalid or does not apply to this plan.',
+                ], 422);
+            }
+
+            $finalPrice = $discountModel->applyTo($basePrice);
+        }
+
+        $expiresAt = $planModel->getExpiresAt() ?? match($request->subscription) {
+            'standard' => now()->addMonths(6),
+            'premium'  => now()->addYear(),
+            default    => now()->addDays(30),
+        };
+
+        DB::transaction(function () use ($tenant, $planModel, $discountModel, $basePrice, $finalPrice, $expiresAt, $request) {
+            // Record discount usage
+            $discountUsageId = null;
+            if ($discountModel) {
+                $usage = DiscountUsage::create([
+                    'discount_id'     => $discountModel->id,
+                    'tenant_id'       => $tenant->id,
+                    'action'          => 'upgrade_tenant',
+                    'plan_slug'       => $planModel->slug,
+                    'original_price'  => $basePrice,
+                    'discount_amount' => $discountModel->discountAmount($basePrice),
+                    'final_price'     => $finalPrice,
+                    'applied_by'      => auth()->id(),
+                ]);
+                $discountUsageId = $usage->id;
+            }
+
+            // Record subscription history
+            TenantSubscription::create([
+                'tenant_id'        => $tenant->id,
+                'plan_slug'        => $planModel->slug,
+                'discount_usage_id'=> $discountUsageId,
+                'amount_paid'      => $finalPrice,
+                'action'           => 'upgrade_tenant',
+                'starts_at'        => now(),
+                'expires_at'       => $expiresAt,
+                'applied_by'       => auth()->id(),
+            ]);
+
+            // Update tenant
+            $tenant->subscription = $planModel->slug;
+            $tenant->expires_at   = $expiresAt;
+            $tenant->save();
+        });
 
         return response()->json([
             'success' => true,
