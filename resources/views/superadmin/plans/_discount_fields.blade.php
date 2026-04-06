@@ -2,6 +2,7 @@
     Shared discount form fields.
     Used inside both the New and Edit modals.
     When $isEdit is true, inputs get the `ed-` id prefix so JS can populate them.
+    $tenants must be passed from the parent view (collection of all Tenant models).
 --}}
 @php $e = isset($isEdit) && $isEdit; $p = $e ? 'ed-' : ''; @endphp
 
@@ -63,6 +64,67 @@
         <input type="number" name="value" id="{{ $p }}value"
                min="0.01" step="0.01" placeholder="e.g. 20 or 500" required>
     </div>
+</div>
+
+{{-- ── Tenant Restriction (promo codes only) ───────────────────────────────── --}}
+<div class="fi" id="{{ $p }}tenant-field" style="margin-bottom:14px;">
+    <label style="margin-bottom:6px;">
+        Restrict to Tenant(s)
+        <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--sa-muted);">
+            — leave all unchecked to allow any tenant
+        </span>
+    </label>
+
+    {{-- Search box --}}
+    <div style="position:relative;margin-bottom:8px;">
+        <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--sa-muted);font-size:12px;pointer-events:none;">
+            <i class="fas fa-search"></i>
+        </span>
+        <input type="text"
+               id="{{ $p }}tenant-search"
+               placeholder="Search tenants…"
+               oninput="filterTenants('{{ $p }}')"
+               autocomplete="off"
+               style="width:100%;padding:7px 10px 7px 30px;border-radius:8px;border:1.5px solid var(--sa-border);
+                      background:var(--sa-bg);color:var(--sa-text);font-family:inherit;font-size:13px;
+                      outline:none;transition:border-color .15s;">
+    </div>
+
+    {{-- Scrollable tenant list --}}
+    <div id="{{ $p }}tenant-list"
+         style="display:flex;flex-direction:column;gap:5px;max-height:180px;overflow-y:auto;
+                padding-right:2px;">
+        @forelse($tenants ?? [] as $tenant)
+            <label id="{{ $p }}tenant-row-{{ $tenant->id }}"
+                   data-name="{{ strtolower($tenant->name) }}"
+                   style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:9px;
+                          cursor:pointer;border:1.5px solid var(--sa-border);background:var(--sa-surface);
+                          transition:border-color .15s,background .15s;user-select:none;">
+                <span id="{{ $p }}tenant-check-{{ $tenant->id }}"
+                      style="flex-shrink:0;width:18px;height:18px;border-radius:5px;border:1.5px solid var(--sa-border);
+                             background:var(--sa-bg);display:flex;align-items:center;justify-content:center;
+                             font-size:11px;font-weight:700;color:transparent;transition:all .15s;line-height:1;">✓</span>
+                <input type="checkbox"
+                       name="tenant_ids[]"
+                       value="{{ $tenant->id }}"
+                       id="{{ $p }}tenant-cb-{{ $tenant->id }}"
+                       style="position:absolute;opacity:0;width:0;height:0;pointer-events:none;"
+                       onchange="syncTenantRow('{{ $p }}', '{{ $tenant->id }}')">
+                <span style="font-size:13px;font-weight:600;color:var(--sa-text);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                    {{ $tenant->name }}
+                </span>
+                <span style="font-size:11px;color:var(--sa-muted);flex-shrink:0;">
+                    {{ ucfirst($tenant->subscription ?? 'basic') }}
+                </span>
+            </label>
+        @empty
+            <p style="font-size:12px;color:var(--sa-muted);padding:8px 0;">No tenants found.</p>
+        @endforelse
+    </div>
+
+    <p id="{{ $p }}tenant-hint" style="margin:8px 0 0;font-size:11px;color:var(--sa-muted);">
+        No tenants selected — promo code works for any tenant.
+    </p>
 </div>
 
 {{-- ── Plan Restriction ─────────────────────────────────────────────────────── --}}
@@ -173,12 +235,15 @@
         lblAuto.style.cssText = isAuto  ? active   : inactive;
         lblCode.style.cssText = !isAuto ? active + rightBorder : inactive + rightBorder;
 
-        var codeField = document.getElementById(p + 'code-field');
-        var codeInput = document.getElementById(p + 'code');
-        var hintAuto  = document.getElementById(p + 'hint-automatic');
-        var hintCode  = document.getElementById(p + 'hint-code');
+        var codeField   = document.getElementById(p + 'code-field');
+        var codeInput   = document.getElementById(p + 'code');
+        var hintAuto    = document.getElementById(p + 'hint-automatic');
+        var hintCode    = document.getElementById(p + 'hint-code');
+        var tenantField = document.getElementById(p + 'tenant-field');
 
-        codeField.style.display = isAuto ? 'none' : '';
+        codeField.style.display   = isAuto ? 'none' : '';
+        tenantField.style.display = isAuto ? 'none' : '';
+
         if (codeInput) isAuto ? codeInput.removeAttribute('required') : codeInput.setAttribute('required','required');
         hintAuto.style.display = isAuto ? 'block' : 'none';
         hintCode.style.display = isAuto ? 'none'  : 'block';
@@ -186,6 +251,57 @@
 
     document.getElementById(p + 'radio-automatic').addEventListener('change', setToggleStyles);
     document.getElementById(p + 'radio-code').addEventListener('change',      setToggleStyles);
+
+    /* ── Tenant row checkbox sync ─────────────────────────────────────────── */
+    window.syncTenantRow = function(prefix, tenantId) {
+        var cb    = document.getElementById(prefix + 'tenant-cb-' + tenantId);
+        var row   = document.getElementById(prefix + 'tenant-row-' + tenantId);
+        var check = document.getElementById(prefix + 'tenant-check-' + tenantId);
+        var hint  = document.getElementById(prefix + 'tenant-hint');
+
+        var accent    = '#0057B8';
+        var colorBase = 'rgba(0,87,184';
+
+        if (cb.checked) {
+            row.style.borderColor   = accent;
+            row.style.background    = colorBase + ',.07)';
+            check.style.background  = accent;
+            check.style.borderColor = accent;
+            check.style.color       = '#fff';
+        } else {
+            row.style.borderColor   = 'var(--sa-border)';
+            row.style.background    = 'var(--sa-surface)';
+            check.style.background  = 'var(--sa-bg)';
+            check.style.borderColor = 'var(--sa-border)';
+            check.style.color       = 'transparent';
+        }
+
+        /* Refresh hint text */
+        refreshTenantHint(prefix);
+    };
+
+    function refreshTenantHint(prefix) {
+        var hint      = document.getElementById(prefix + 'tenant-hint');
+        var checkboxes = document.querySelectorAll('#' + prefix + 'tenant-list input[type="checkbox"]:checked');
+        var count      = checkboxes.length;
+
+        if (hint) {
+            hint.textContent = count
+                ? count + ' tenant' + (count > 1 ? 's' : '') + ' selected — promo code restricted to them only.'
+                : 'No tenants selected — promo code works for any tenant.';
+        }
+    }
+
+    /* ── Tenant search filter ─────────────────────────────────────────────── */
+    window.filterTenants = function(prefix) {
+        var input = document.getElementById(prefix + 'tenant-search');
+        if (!input) return;
+        var q     = input.value.toLowerCase().trim();
+        var rows  = document.querySelectorAll('#' + prefix + 'tenant-list label[data-name]');
+        rows.forEach(function(row) {
+            row.style.display = (!q || row.dataset.name.indexOf(q) !== -1) ? '' : 'none';
+        });
+    };
 
     /* ── Plan row checkbox sync ───────────────────────────────────────────── */
     window.syncPlanRow = function(prefix, slug, accent, colorBase) {
@@ -223,6 +339,7 @@
 
     /* ── Init on load ─────────────────────────────────────────────────────── */
     setToggleStyles();
+
     var planMeta = {
         basic:    { accent: '#5a7aaa', color: 'rgba(90,122,170'  },
         standard: { accent: '#0057B8', color: 'rgba(0,87,184'    },

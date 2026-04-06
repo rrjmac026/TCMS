@@ -27,6 +27,7 @@ use Illuminate\Support\Facades\DB;
  *    Discounts are purely pricing tools. Two subtypes:
  *    a) Automatic — shown on plan cards with no code required (date-range based).
  *    b) Code-based — tenant must type the code manually on the upgrade page.
+ *       Code-based discounts can optionally be restricted to specific tenants.
  *    Neither type changes a tenant's plan on its own.
  */
 class SuperAdminPlanController extends Controller
@@ -66,7 +67,7 @@ class SuperAdminPlanController extends Controller
 
         // Resolve discount if a code was provided — only affects recorded price
         if (! empty($data['discount_code'])) {
-            $discount = Discount::findValidCode($data['discount_code'], $data['plan_slug']);
+            $discount = Discount::findValidCode($data['discount_code'], $data['plan_slug'], $tenant->id);
 
             if (! $discount) {
                 return back()->withErrors(['discount_code' => 'Invalid or inapplicable discount code.']);
@@ -133,6 +134,9 @@ class SuperAdminPlanController extends Controller
      *
      * plan_slugs = null        → applies to all plans
      * plan_slugs = ['standard','premium'] → applies only to those plans
+     *
+     * tenant_ids = null        → promo code applies to any tenant (code-based only)
+     * tenant_ids = ['uuid',…]  → promo code restricted to those tenants
      */
     public function storeDiscount(Request $request)
     {
@@ -143,6 +147,8 @@ class SuperAdminPlanController extends Controller
             'value'        => ['required', 'numeric', 'min:0.01'],
             'plan_slugs'   => ['nullable', 'array'],
             'plan_slugs.*' => ['in:basic,standard,premium'],
+            'tenant_ids'   => ['nullable', 'array'],
+            'tenant_ids.*' => ['exists:tenants,id'],
             'valid_from'   => ['nullable', 'date'],
             'valid_until'  => ['nullable', 'date', 'after_or_equal:valid_from'],
             'is_active'    => ['boolean'],
@@ -158,9 +164,14 @@ class SuperAdminPlanController extends Controller
         // Automatic discounts don't need a code — generate a placeholder so the
         // column stays non-null (it has a unique constraint)
         if ($isAutomatic) {
-            $data['code'] = 'AUTO-' . strtoupper(uniqid());
+            $data['code']       = 'AUTO-' . strtoupper(uniqid());
+            $data['tenant_ids'] = null; // tenant restriction is irrelevant for automatic discounts
         } else {
             $data['code'] = strtoupper($data['code'] ?? '');
+
+            // Normalise tenant_ids: empty array → null (means "any tenant")
+            $tenantIds          = $request->input('tenant_ids', []);
+            $data['tenant_ids'] = (is_array($tenantIds) && count($tenantIds) > 0) ? $tenantIds : null;
         }
 
         // Normalise plan_slugs: empty array → null (means "all plans")
@@ -187,6 +198,8 @@ class SuperAdminPlanController extends Controller
             'value'        => ['required', 'numeric', 'min:0.01'],
             'plan_slugs'   => ['nullable', 'array'],
             'plan_slugs.*' => ['in:basic,standard,premium'],
+            'tenant_ids'   => ['nullable', 'array'],
+            'tenant_ids.*' => ['exists:tenants,id'],
             'valid_from'   => ['nullable', 'date'],
             'valid_until'  => ['nullable', 'date', 'after_or_equal:valid_from'],
             'is_active'    => ['boolean'],
@@ -208,8 +221,13 @@ class SuperAdminPlanController extends Controller
         // Keep the auto-generated code for automatic discounts
         if ($isAutomatic) {
             unset($data['code']); // don't overwrite the AUTO-xxx code
+            $data['tenant_ids'] = null; // tenant restriction is irrelevant for automatic discounts
         } else {
             $data['code'] = strtoupper($data['code'] ?? $discount->code);
+
+            // Normalise tenant_ids
+            $tenantIds          = $request->input('tenant_ids', []);
+            $data['tenant_ids'] = (is_array($tenantIds) && count($tenantIds) > 0) ? $tenantIds : null;
         }
 
         $discount->update($data);
@@ -240,7 +258,10 @@ class SuperAdminPlanController extends Controller
             'plan_slug' => ['required', 'in:basic,standard,premium'],
         ]);
 
-        $discount = Discount::findValidCode($request->code, $request->plan_slug);
+        // Pass tenant ID if available (from tenant context or explicit param)
+        $tenantId = $request->input('tenant_id') ?? optional(tenancy()->tenant)->id;
+
+        $discount = Discount::findValidCode($request->code, $request->plan_slug, $tenantId);
 
         if (! $discount) {
             return response()->json([

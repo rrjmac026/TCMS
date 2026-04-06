@@ -15,6 +15,7 @@ return new class extends Migration
             $table->enum('type', ['percentage', 'fixed']); // % or flat ₱
             $table->decimal('value', 10, 2);            // 20.00 or 500.00
             $table->json('plan_slugs')->nullable();    // null = applies to all plans
+            $table->json('tenant_ids')->nullable();
             $table->date('valid_from')->nullable();
             $table->date('valid_until')->nullable();
             $table->boolean('is_active')->default(true);

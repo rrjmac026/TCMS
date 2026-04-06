@@ -11,6 +11,7 @@ class Discount extends Model
 
     protected $fillable = [
         'code', 'label', 'type', 'value', 'plan_slugs',
+        'tenant_ids',
         'valid_from', 'valid_until', 'is_active', 'is_automatic',
     ];
 
@@ -21,6 +22,7 @@ class Discount extends Model
         'is_automatic' => 'boolean',
         'value'        => 'decimal:2',
         'plan_slugs'   => 'array',   // JSON array e.g. ["standard","premium"] or null = all plans
+        'tenant_ids'   => 'array',   // JSON array of tenant IDs or null = any tenant (promo codes only)
     ];
 
     // ── Scopes ───────────────────────────────────────────────────────────────
@@ -66,15 +68,22 @@ class Discount extends Model
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     /**
-     * Returns true when this discount is currently valid for a given plan.
+     * Returns true when this discount is currently valid for a given plan
+     * and optionally a given tenant ID.
+     *
      * NOTE: A discount NEVER changes a plan — it only affects price display/recording.
      */
-    public function isValidFor(string $plan): bool
+    public function isValidFor(string $plan, ?string $tenantId = null): bool
     {
         if (! $this->is_active) return false;
 
         // plan_slugs = null means discount applies to ALL plans
         if (! empty($this->plan_slugs) && ! in_array($plan, $this->plan_slugs)) return false;
+
+        // tenant_ids = null means discount applies to ANY tenant (promo codes only)
+        if (! empty($this->tenant_ids) && $tenantId !== null && ! in_array($tenantId, $this->tenant_ids)) {
+            return false;
+        }
 
         $today = now()->toDateString();
         if ($this->valid_from  && $this->valid_from->toDateString()  > $today) return false;
@@ -116,6 +125,20 @@ class Discount extends Model
         return implode(', ', array_map('ucfirst', $this->plan_slugs));
     }
 
+    /**
+     * Human-readable label for which tenants this promo code is restricted to.
+     */
+    public function getTenantLabelAttribute(): string
+    {
+        if ($this->is_automatic || empty($this->tenant_ids)) return 'All tenants';
+
+        $names = \App\Models\Tenant::whereIn('id', $this->tenant_ids)
+            ->pluck('name')
+            ->toArray();
+
+        return count($names) ? implode(', ', $names) : 'All tenants';
+    }
+
     /** Status for display in the table. */
     public function getStatusLabelAttribute(): string
     {
@@ -143,17 +166,17 @@ class Discount extends Model
     }
 
     /**
-     * Find a valid code-based discount by code + plan.
+     * Find a valid code-based discount by code + plan + optional tenant.
      * Forces central DB connection. Rejects automatic discounts (can't be typed in).
      */
-    public static function findValidCode(string $code, string $planSlug): ?self
+    public static function findValidCode(string $code, string $planSlug, ?string $tenantId = null): ?self
     {
         $discount = static::on('mysql')
             ->where('code', strtoupper($code))
             ->first();
 
         if (! $discount || $discount->is_automatic) return null;
-        if (! $discount->isValidFor($planSlug))     return null;
+        if (! $discount->isValidFor($planSlug, $tenantId)) return null;
 
         return $discount;
     }

@@ -157,6 +157,24 @@
     .pill-standard { background: rgba(0,87,184,.12);   color: var(--sa-accent); }
     .pill-premium  { background: rgba(245,197,24,.15); color: #a07800; }
     .pill-all      { background: rgba(22,163,74,.10);  color: var(--sa-success); }
+
+    /* ── Tenant pills in table ── */
+    .tenant-pill {
+        display: inline-flex; align-items: center; gap: 4px;
+        padding: 1px 8px; border-radius: 20px; font-size: 10px; font-weight: 600;
+        background: rgba(0,87,184,.08); color: var(--sa-accent); margin: 1px 2px;
+        max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .tenant-pill-all {
+        display: inline-flex; align-items: center; gap: 4px;
+        padding: 1px 8px; border-radius: 20px; font-size: 10px; font-weight: 600;
+        background: rgba(22,163,74,.10); color: var(--sa-success); margin: 1px 2px;
+    }
+
+    /* ── Tenant list scrollbar in modal ── */
+    #tenant-list::-webkit-scrollbar, #ed-tenant-list::-webkit-scrollbar { width: 4px; }
+    #tenant-list::-webkit-scrollbar-track, #ed-tenant-list::-webkit-scrollbar-track { background: transparent; }
+    #tenant-list::-webkit-scrollbar-thumb, #ed-tenant-list::-webkit-scrollbar-thumb { background: var(--sa-border); border-radius: 4px; }
 </style>
 
 <div class="space-y-6">
@@ -225,6 +243,7 @@
                             <th>Code / Label</th>
                             <th>Discount</th>
                             <th>Applies To</th>
+                            <th>Tenants</th>
                             <th>Valid Period</th>
                             <th>Status</th>
                             <th></th>
@@ -233,12 +252,19 @@
                     <tbody>
                         @foreach($discounts as $d)
                             @php
-                                $statusClass = match($d->status_label) {
+                                $statusClass   = match($d->status_label) {
                                     'Active'    => 'sb-success',
                                     'Scheduled' => 'sb-warning',
                                     default     => 'sb-danger',
                                 };
-                                $planSlugsJson = json_encode($d->plan_slugs ?? []);
+                                $planSlugsJson  = json_encode($d->plan_slugs ?? []);
+                                $tenantIdsJson  = json_encode($d->tenant_ids ?? []);
+
+                                // Build tenant name map for this discount
+                                $tenantNames = [];
+                                if (!empty($d->tenant_ids)) {
+                                    $tenantNames = $tenants->whereIn('id', $d->tenant_ids)->pluck('name', 'id')->toArray();
+                                }
                             @endphp
                             <tr>
                                 <td>
@@ -279,6 +305,23 @@
                                         @endforeach
                                     @endif
                                 </td>
+                                {{-- Tenants column --}}
+                                <td>
+                                    @if($d->is_automatic)
+                                        <span style="font-size:11px;color:var(--sa-muted);">—</span>
+                                    @elseif(empty($d->tenant_ids))
+                                        <span class="tenant-pill-all"><i class="fas fa-users" style="font-size:9px;"></i> Any</span>
+                                    @else
+                                        @foreach(array_slice($tenantNames, 0, 2) as $tName)
+                                            <span class="tenant-pill" title="{{ $tName }}">{{ $tName }}</span>
+                                        @endforeach
+                                        @if(count($tenantNames) > 2)
+                                            <span class="tenant-pill" style="background:rgba(90,122,170,.10);color:var(--sa-muted);">
+                                                +{{ count($tenantNames) - 2 }} more
+                                            </span>
+                                        @endif
+                                    @endif
+                                </td>
                                 <td class="text-xs" style="color:var(--sa-muted);">
                                     @if($d->valid_from || $d->valid_until)
                                         {{ $d->valid_from?->format('M d, Y') ?? '—' }} → {{ $d->valid_until?->format('M d, Y') ?? '—' }}
@@ -312,6 +355,7 @@
                                          data-type="{{ $d->type }}"
                                          data-value="{{ $d->value }}"
                                          data-plan-slugs="{{ $planSlugsJson }}"
+                                         data-tenant-ids="{{ $tenantIdsJson }}"
                                          data-valid-from="{{ $d->valid_from?->format('Y-m-d') ?? '' }}"
                                          data-valid-until="{{ $d->valid_until?->format('Y-m-d') ?? '' }}"
                                          data-active="{{ $d->is_active ? '1' : '0' }}"
@@ -353,7 +397,7 @@
         <form action="{{ route('superadmin.plans.discounts.store') }}" method="POST">
             @csrf
             <div class="modal-body space-y-4">
-                @include('superadmin.plans._discount_fields')
+                @include('superadmin.plans._discount_fields', ['tenants' => $tenants])
             </div>
             <div class="modal-footer">
                 <button type="button" onclick="closeModal('modal-new-discount')" class="btn btn-outline">Cancel</button>
@@ -380,7 +424,7 @@
         <form id="edit-discount-form" method="POST">
             @csrf @method('PATCH')
             <div class="modal-body space-y-4">
-                @include('superadmin.plans._discount_fields', ['isEdit' => true])
+                @include('superadmin.plans._discount_fields', ['isEdit' => true, 'tenants' => $tenants])
             </div>
             <div class="modal-footer">
                 <button type="button" onclick="closeModal('modal-edit-discount')" class="btn btn-outline">Cancel</button>
@@ -442,6 +486,19 @@
                     { basic: 'rgba(90,122,170', standard: 'rgba(0,87,184', premium: 'rgba(161,122,0' }[slug]
                 );
             }
+        });
+
+        // ── Populate tenant checkboxes ─────────────────────────────────────
+        let tenantIds = [];
+        try { tenantIds = JSON.parse(d.tenantIds || '[]'); } catch(e) {}
+
+        // Clear the search filter first
+        const searchEl = document.getElementById('ed-tenant-search');
+        if (searchEl) { searchEl.value = ''; filterTenants('ed-'); }
+
+        document.querySelectorAll('#ed-tenant-list input[type="checkbox"]').forEach(cb => {
+            cb.checked = tenantIds.includes(cb.value);
+            syncTenantRow('ed-', cb.value);
         });
 
         openModal('modal-edit-discount');
