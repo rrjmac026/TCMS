@@ -9,3 +9,6 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('tenants:recalculate-storage')->hourly();
+
+// Run once daily at 8 AM — checks all tenants and notifies those expiring soon
+Schedule::command('subscriptions:notify-expiring')->dailyAt('08:00');
