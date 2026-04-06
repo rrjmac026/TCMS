@@ -18,6 +18,7 @@ return new class extends Migration
             $table->date('valid_from')->nullable();
             $table->date('valid_until')->nullable();
             $table->boolean('is_active')->default(true);
+            $table->boolean('is_automatic')->default(false);
             $table->timestamps();
         });
     }

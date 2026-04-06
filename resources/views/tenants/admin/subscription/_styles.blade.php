@@ -85,7 +85,7 @@
         border-color: transparent; box-shadow: 0 20px 60px rgba(0,87,184,0.35);
     }
     .up-card.featured:hover { transform: translateY(-10px); }
-    .up-card.featured:hover .up-card-inner { box-shadow: 0 30px 80px rgba(0,87,184,0.45); border-color: transparent; }
+    .up-card.featured:hover .up-card-inner { box-shadow: 0 30px 80px rgba(0,87,184,0.45); }
 
     .up-card.current-plan .up-card-inner { border-color: #22c55e; background: rgba(240,253,244,0.8); }
     .dark .up-card.current-plan .up-card-inner { border-color: rgba(74,222,128,0.40); background: rgba(5,46,22,0.25); }
@@ -114,6 +114,7 @@
     .up-plan-name { font-size: 13px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #5a7aaa; margin-bottom: 4px; }
     .up-card.featured .up-plan-name { color: rgba(255,255,255,0.70); }
 
+    /* ── Price block ── */
     .up-plan-price { display: flex; align-items: baseline; gap: 4px; margin-bottom: 4px; }
     .up-price-amount { font-family: 'Instrument Serif', Georgia, serif; font-size: 52px; line-height: 1; color: #001a4d; }
     .dark .up-price-amount { color: #dde8ff; }
@@ -121,6 +122,25 @@
 
     .up-price-period { font-size: 14px; color: #5a7aaa; padding-bottom: 6px; }
     .up-card.featured .up-price-period { color: rgba(255,255,255,0.65); }
+
+    /* Strikethrough original price shown when auto-discount is active */
+    .up-price-original {
+        font-size: 16px; color: #9aaccc; text-decoration: line-through;
+        font-weight: 600; margin-bottom: 2px; display: block;
+    }
+    .up-card.featured .up-price-original { color: rgba(255,255,255,0.45); }
+
+    /* Auto-discount badge shown under the price */
+    .up-auto-discount-badge {
+        display: inline-block;
+        background: rgba(22,163,74,0.12); color: #16a34a;
+        border: 1px solid rgba(22,163,74,0.25);
+        font-size: 11px; font-weight: 700;
+        padding: 3px 10px; border-radius: 100px; margin-top: 4px;
+    }
+    .up-card.featured .up-auto-discount-badge {
+        background: rgba(255,255,255,0.18); color: #fff; border-color: rgba(255,255,255,0.3);
+    }
 
     .up-plan-desc { font-size: 13.5px; color: #5a7aaa; line-height: 1.6; margin-bottom: 24px; min-height: 42px; }
     .dark .up-plan-desc { color: #6b8abf; }
@@ -184,11 +204,12 @@
         max-width: 460px; width: 100%;
         box-shadow: 0 40px 100px rgba(0,48,135,0.25); text-align: center;
         animation: modalIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        max-height: 90vh; overflow-y: auto;
     }
     .dark .up-modal { background: #0d1f3c; box-shadow: 0 40px 100px rgba(0,0,0,0.60); }
     @keyframes modalIn {
         from { opacity: 0; transform: scale(0.85) translateY(20px); }
-        to   { opacity: 1; transform: scale(1) translateY(0); }
+        to   { opacity: 1; transform: scale(1)   translateY(0); }
     }
     .up-modal-icon { width: 72px; height: 72px; border-radius: 20px; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 30px; }
     .up-modal-title { font-family: 'Instrument Serif', Georgia, serif; font-size: 28px; color: #001a4d; margin-bottom: 10px; }
@@ -197,7 +218,7 @@
     .dark .up-modal-sub { color: #6b8abf; }
     .up-modal-plan-pill {
         display: inline-flex; align-items: center; gap: 8px;
-        padding: 10px 20px; border-radius: 100px; margin-bottom: 28px;
+        padding: 10px 20px; border-radius: 100px; margin-bottom: 20px;
         font-size: 15px; font-weight: 700;
         background: linear-gradient(135deg, #003087 0%, #0057B8 100%); color: #fff;
         box-shadow: 0 4px 16px rgba(0,87,184,0.30);
@@ -221,7 +242,7 @@
     .up-success { animation: successPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
     @keyframes successPop {
         from { transform: scale(0.5); opacity: 0; }
-        to   { transform: scale(1); opacity: 1; }
+        to   { transform: scale(1);   opacity: 1; }
     }
 
     /* ── Comparison Table ── */

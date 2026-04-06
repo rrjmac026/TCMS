@@ -3,9 +3,17 @@
         @php
             $planIndex      = array_search($plan->slug, $planSlugs);
             $isCurrent      = $plan->slug === $currentPlan;
-            $isFeatured     = $plan->slug === $featuredSlug;
+            $isFeatured     = $plan->slug === 'standard';
             $canUpgrade     = !$isCurrent && $planIndex > $currentIndex;
-            $formattedPrice = number_format($plan->price, 0);
+            $basePrice      = (float) $plan->price;
+
+            // Automatic discount for this plan (resolved in controller, no code needed)
+            $autoDiscount   = $autoDiscounts[$plan->slug] ?? null;
+            $finalPrice     = $autoDiscount ? $autoDiscount->applyTo($basePrice) : $basePrice;
+            $savedAmount    = $basePrice - $finalPrice;
+
+            $formattedBase  = number_format($basePrice, 0);
+            $formattedFinal = number_format($finalPrice, 0);
 
             $features = [];
             $features[] = [
@@ -19,11 +27,13 @@
             $features[] = ['label' => 'Course & enrollment management', 'locked' => false];
             $features[] = ['label' => 'Attendance tracking',            'locked' => false];
             $features[] = [
-                'label'  => $plan->max_users ? ($plan->max_users === 1 ? '1 admin account' : 'Up to ' . $plan->max_users . ' user accounts') : 'Unlimited user accounts',
+                'label'  => $plan->max_users
+                    ? ($plan->max_users === 1 ? '1 admin account' : 'Up to ' . $plan->max_users . ' user accounts')
+                    : 'Unlimited user accounts',
                 'locked' => false,
             ];
-            $features[] = ['label' => 'Trainer management',                    'locked' => !$plan->has_trainers];
-            $features[] = ['label' => 'Assessments & training schedules',       'locked' => !$plan->has_assessments];
+            $features[] = ['label' => 'Trainer management',              'locked' => !$plan->has_trainers];
+            $features[] = ['label' => 'Assessments & training schedules','locked' => !$plan->has_assessments];
 
             $exportFormats = $plan->allowed_export_formats ?? [];
             if (count($exportFormats) === 0) {
@@ -40,7 +50,7 @@
         @endphp
 
         <div class="up-card {{ $isFeatured && !$isCurrent ? 'featured' : '' }} {{ $isCurrent ? 'current-plan' : '' }}"
-             onclick="{{ $canUpgrade ? "selectPlan('{$plan->slug}', '{$plan->name}', '₱{$formattedPrice}', '{$plan->duration_label}', {$plan->price})" : '' }}">
+             onclick="{{ $canUpgrade ? "selectPlan('{$plan->slug}', '{$plan->name}', {$basePrice}, {$finalPrice})" : '' }}">
 
             @if($isCurrent)
                 <div class="up-current-badge"><i class="fas fa-check"></i> Current</div>
@@ -49,7 +59,7 @@
             @endif
 
             <div class="up-card-inner">
-                <div class="up-plan-icon">{{ $planIcons[$plan->slug] ?? '📦' }}</div>
+                <div class="up-plan-icon">{{ ['basic' => '🌱', 'standard' => '🚀', 'premium' => '💎'][$plan->slug] ?? '📦' }}</div>
 
                 <div class="up-duration-badge">
                     <i class="fas fa-clock"></i> {{ $plan->duration_label }} access
@@ -57,9 +67,23 @@
 
                 <div class="up-plan-name">{{ $plan->name }}</div>
 
+                {{-- Price block: show strikethrough original + discounted if auto-discount active --}}
                 <div class="up-plan-price">
-                    <span class="up-price-amount">₱{{ $formattedPrice }}</span>
-                    <span class="up-price-period">/plan</span>
+                    @if($autoDiscount && $canUpgrade)
+                        <div style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;">
+                            <span class="up-price-original">₱{{ $formattedBase }}</span>
+                            <div style="display:flex;align-items:baseline;gap:4px;">
+                                <span class="up-price-amount" style="color:{{ $isFeatured ? '#fff' : '#22c55e' }};">₱{{ $formattedFinal }}</span>
+                                <span class="up-price-period">/plan</span>
+                            </div>
+                            <span class="up-auto-discount-badge">
+                                🏷 {{ $autoDiscount->formatted_value }} off — {{ $autoDiscount->label }}
+                            </span>
+                        </div>
+                    @else
+                        <span class="up-price-amount">₱{{ $formattedBase }}</span>
+                        <span class="up-price-period">/plan</span>
+                    @endif
                 </div>
 
                 @if($plan->description)
@@ -85,7 +109,7 @@
                     </button>
                 @elseif($canUpgrade)
                     <button class="up-cta-btn {{ $isFeatured ? 'on-dark' : 'primary' }}"
-                            onclick="event.stopPropagation(); selectPlan('{{ $plan->slug }}', '{{ $plan->name }}', '₱{{ $formattedPrice }}', '{{ $plan->duration_label }}')">
+                            onclick="event.stopPropagation(); selectPlan('{{ $plan->slug }}', '{{ $plan->name }}', {{ $basePrice }}, {{ $finalPrice }})">
                         <i class="fas fa-arrow-up"></i> Upgrade to {{ $plan->name }}
                     </button>
                 @else

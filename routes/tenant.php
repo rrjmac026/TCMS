@@ -85,10 +85,10 @@ Route::middleware([
 
         Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
 
-        Route::get('/subscription',          [AdminSubscriptionController::class, 'index'])->name('subscription.index');
-        Route::post('/subscription/upgrade', [AdminSubscriptionController::class, 'upgrade'])->name('subscription.upgrade');
-
+        Route::get('/subscription',                [AdminSubscriptionController::class, 'index'])->name('subscription.index');
+        Route::post('/subscription/upgrade',       [AdminSubscriptionController::class, 'upgrade'])->name('subscription.upgrade');
         Route::post('/subscription/validate-code', [AdminSubscriptionController::class, 'validateCode'])->name('subscription.validate-code');
+        Route::post('/subscription/resolve-price', [AdminSubscriptionController::class, 'resolvePrice'])->name('subscription.resolve-price');
 
         // ── Analytics & Reports ────────────────────────────────────────────
         Route::middleware('subscription:reports')->group(function () {

@@ -7,43 +7,77 @@ use App\Models\Discount;
 use App\Models\DiscountUsage;
 use App\Models\SubscriptionPlan;
 use App\Models\TenantSubscription;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * AdminSubscriptionController
+ *
+ * Handles the tenant/admin subscription upgrade page.
+ *
+ * KEY RULES enforced here:
+ *  - A discount (automatic OR code-based) ONLY affects the price that is displayed
+ *    and recorded. It NEVER changes the tenant's plan by itself.
+ *  - The tenant's plan only changes when they explicitly confirm an upgrade via
+ *    the confirmUpgrade() / upgrade() action.
+ *  - Automatic discounts are surfaced to the tenant without any code entry.
+ *  - Code-based discounts require the tenant to type the promo code manually.
+ */
 class AdminSubscriptionController extends Controller
 {
+    /**
+     * Show the subscription upgrade page.
+     *
+     * For each upgradeable plan we resolve the best active automatic discount
+     * (if any) so the blade can show the discounted price directly on the card.
+     */
     public function index()
     {
-        $dbPlans = collect();
-        try {
-            $dbPlans = SubscriptionPlan::active()->orderBy('sort_order')->get()->keyBy('slug');
-        } catch (\Throwable) {}
-
         $tenant      = tenancy()->tenant;
         $currentPlan = $tenant->subscription ?? 'basic';
-        $plans       = $dbPlans->values();
+        $planSlugs   = ['basic', 'standard', 'premium'];
 
-        return view('tenants.admin.subscription.upgrade', compact('dbPlans', 'currentPlan', 'plans'));
+        // Load all active plans ordered by sort_order
+        $plans = SubscriptionPlan::active()->get();
+
+        // For each plan, find the best active automatic discount (may be null)
+        $autoDiscounts = [];
+        foreach ($plans as $plan) {
+            $autoDiscounts[$plan->slug] = Discount::bestAutomaticFor($plan->slug);
+        }
+
+        return view('tenants.admin.subscription.upgrade', compact(
+            'plans',
+            'currentPlan',
+            'planSlugs',
+            'autoDiscounts',
+        ));
     }
 
     /**
-     * AJAX — validate a discount code against a plan (called from the tenant upgrade page).
+     * AJAX: validate a manually entered promo code.
+     *
+     * Returns pricing info only. NEVER changes the plan.
      */
-    public function validateCode(Request $request)
+    public function validateCode(Request $request): JsonResponse
     {
         $request->validate([
             'code'      => ['required', 'string'],
             'plan_slug' => ['required', 'in:basic,standard,premium'],
         ]);
 
-        $discount = Discount::where('code', strtoupper($request->code))->first();
+        $discount = Discount::findValidCode($request->code, $request->plan_slug);
 
-        if (! $discount || ! $discount->isValidFor($request->plan_slug)) {
-            return response()->json(['valid' => false, 'message' => 'Invalid or inapplicable discount code.']);
+        if (! $discount) {
+            return response()->json([
+                'valid'   => false,
+                'message' => 'Invalid or inapplicable promo code.',
+            ]);
         }
 
-        $planModel = SubscriptionPlan::where('slug', $request->plan_slug)->first();
-        $base      = $planModel ? (float) $planModel->price : 0;
+        $planModel = SubscriptionPlan::where('slug', $request->plan_slug)->firstOrFail();
+        $base      = (float) $planModel->price;
         $saved     = $discount->discountAmount($base);
         $final     = $discount->applyTo($base);
 
@@ -57,96 +91,130 @@ class AdminSubscriptionController extends Controller
     }
 
     /**
-     * Confirm upgrade — validates plan, optional discount, records everything, updates tenant.
+     * AJAX: resolve price for a plan, optionally applying an automatic discount.
+     *
+     * Called when the tenant opens the upgrade modal so we can show the
+     * auto-discounted price immediately (before any code is entered).
+     *
+     * Returns pricing info only. NEVER changes the plan.
      */
-    public function upgrade(Request $request)
+    public function resolvePrice(Request $request): JsonResponse
     {
+        $request->validate([
+            'plan_slug' => ['required', 'in:basic,standard,premium'],
+        ]);
+
+        $planModel = SubscriptionPlan::where('slug', $request->plan_slug)->firstOrFail();
+        $base      = (float) $planModel->price;
+
+        $autoDiscount = Discount::bestAutomaticFor($request->plan_slug);
+        $final        = $autoDiscount ? $autoDiscount->applyTo($base) : $base;
+        $saved        = $base - $final;
+
+        return response()->json([
+            'base_price'       => $base,
+            'final_price'      => $final,
+            'discount_amount'  => $saved,
+            'has_auto_discount'=> $autoDiscount !== null,
+            'auto_label'       => $autoDiscount?->label,
+            'auto_value'       => $autoDiscount?->formatted_value,
+        ]);
+    }
+
+    /**
+     * Confirm upgrade — the ONLY action that changes the tenant's plan.
+     *
+     * Discount logic:
+     *  1. If a valid promo code is supplied → use it (code-based discount).
+     *  2. Else if an automatic discount exists for the plan → apply it.
+     *  3. Otherwise → full price.
+     *
+     * The plan slug supplied must be strictly higher than the current plan.
+     */
+    public function upgrade(Request $request): JsonResponse
+    {
+        $tenant      = tenancy()->tenant;
+        $currentPlan = $tenant->subscription ?? 'basic';
+        $planSlugs   = ['basic', 'standard', 'premium'];
+
         $request->validate([
             'subscription'  => ['required', 'in:basic,standard,premium'],
             'discount_code' => ['nullable', 'string'],
         ]);
 
-        $tenant = tenancy()->tenant;
-        $plans  = ['basic', 'standard', 'premium'];
+        $newPlanSlug = $request->subscription;
 
-        $currentIndex = array_search($tenant->subscription ?? 'basic', $plans);
-        $newIndex     = array_search($request->subscription, $plans);
-
-        if ($newIndex <= $currentIndex) {
-            return response()->json([
-                'success' => false,
-                'message' => 'You can only upgrade to a higher plan.',
-            ], 422);
+        // Enforce upgrade-only (no downgrades)
+        if (array_search($newPlanSlug, $planSlugs) <= array_search($currentPlan, $planSlugs)) {
+            return response()->json(['success' => false, 'message' => 'You can only upgrade to a higher plan.'], 422);
         }
 
-        $planModel = SubscriptionPlan::where('slug', $request->subscription)->first();
+        $planModel = SubscriptionPlan::where('slug', $newPlanSlug)->firstOrFail();
+        $base      = (float) $planModel->price;
+        $price     = $base;
+        $discount  = null;
 
-        if (! $planModel) {
-            return response()->json(['success' => false, 'message' => 'Plan not found.'], 422);
-        }
-
-        $basePrice     = (float) $planModel->price;
-        $finalPrice    = $basePrice;
-        $discountModel = null;
-
-        // Validate discount if provided
+        // 1. Try promo code first
         if (! empty($request->discount_code)) {
-            $discountModel = Discount::where('code', strtoupper($request->discount_code))->first();
-
-            if (! $discountModel || ! $discountModel->isValidFor($request->subscription)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'The discount code is invalid or does not apply to this plan.',
-                ], 422);
+            $codeDiscount = Discount::findValidCode($request->discount_code, $newPlanSlug);
+            if ($codeDiscount) {
+                $discount = $codeDiscount;
+                $price    = $discount->applyTo($base);
             }
-
-            $finalPrice = $discountModel->applyTo($basePrice);
         }
 
-        $expiresAt = $planModel->getExpiresAt() ?? match($request->subscription) {
-            'standard' => now()->addMonths(6),
-            'premium'  => now()->addYear(),
-            default    => now()->addDays(30),
-        };
+        // 2. Fall back to automatic discount if no code was used
+        if (! $discount) {
+            $autoDiscount = Discount::bestAutomaticFor($newPlanSlug);
+            if ($autoDiscount) {
+                $discount = $autoDiscount;
+                $price    = $discount->applyTo($base);
+            }
+        }
 
-        DB::transaction(function () use ($tenant, $planModel, $discountModel, $basePrice, $finalPrice, $expiresAt, $request) {
-            // Record discount usage
+        $expiresAt = $planModel->getExpiresAt();
+
+        DB::transaction(function () use ($tenant, $newPlanSlug, $planModel, $discount, $base, $price, $expiresAt) {
             $discountUsageId = null;
-            if ($discountModel) {
+
+            if ($discount) {
                 $usage = DiscountUsage::create([
-                    'discount_id'     => $discountModel->id,
+                    'discount_id'     => $discount->id,
                     'tenant_id'       => $tenant->id,
-                    'action'          => 'upgrade_tenant',
-                    'plan_slug'       => $planModel->slug,
-                    'original_price'  => $basePrice,
-                    'discount_amount' => $discountModel->discountAmount($basePrice),
-                    'final_price'     => $finalPrice,
+                    'action'          => $discount->is_automatic ? 'auto_discount' : 'promo_code',
+                    'plan_slug'       => $newPlanSlug,
+                    'original_price'  => $base,
+                    'discount_amount' => $discount->discountAmount($base),
+                    'final_price'     => $price,
                     'applied_by'      => auth()->id(),
                 ]);
                 $discountUsageId = $usage->id;
             }
 
-            // Record subscription history
             TenantSubscription::create([
-                'tenant_id'        => $tenant->id,
-                'plan_slug'        => $planModel->slug,
-                'discount_usage_id'=> $discountUsageId,
-                'amount_paid'      => $finalPrice,
-                'action'           => 'upgrade_tenant',
-                'starts_at'        => now(),
-                'expires_at'       => $expiresAt,
-                'applied_by'       => auth()->id(),
+                'tenant_id'         => $tenant->id,
+                'plan_slug'         => $newPlanSlug,
+                'discount_usage_id' => $discountUsageId,
+                'amount_paid'       => $price,
+                'action'            => 'tenant_upgrade',
+                'starts_at'         => now(),
+                'expires_at'        => $expiresAt,
+                'applied_by'        => auth()->id(),
             ]);
 
-            // Update tenant
-            $tenant->subscription = $planModel->slug;
+            // ← This is the ONLY place where the tenant's plan slug is changed
+            //   from the tenant/admin side. Discount codes alone never reach here.
+            $tenant->subscription = $newPlanSlug;
             $tenant->expires_at   = $expiresAt;
+            $tenant->status       = 'approved';
+            $tenant->is_active    = true;
             $tenant->save();
         });
 
         return response()->json([
-            'success' => true,
-            'plan'    => $request->subscription,
+            'success'  => true,
+            'plan'     => $planModel->name,
+            'expires'  => $expiresAt->format('M d, Y'),
         ]);
     }
 }

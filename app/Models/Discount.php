@@ -8,14 +8,15 @@ class Discount extends Model
 {
     protected $fillable = [
         'code', 'label', 'type', 'value', 'plan_slug',
-        'valid_from', 'valid_until', 'is_active',
+        'valid_from', 'valid_until', 'is_active', 'is_automatic',
     ];
 
     protected $casts = [
-        'valid_from'  => 'date',
-        'valid_until' => 'date',
-        'is_active'   => 'boolean',
-        'value'       => 'decimal:2',
+        'valid_from'   => 'date',
+        'valid_until'  => 'date',
+        'is_active'    => 'boolean',
+        'is_automatic' => 'boolean',
+        'value'        => 'decimal:2',
     ];
 
     // ── Scopes ───────────────────────────────────────────────────────────────
@@ -38,16 +39,37 @@ class Discount extends Model
         return $query->where(fn ($q) => $q->whereNull('plan_slug')->orWhere('plan_slug', $plan));
     }
 
+    /**
+     * Automatic discounts: no code needed, shown directly on plan cards.
+     */
+    public function scopeAutomatic($query)
+    {
+        return $query->where('is_automatic', true);
+    }
+
+    /**
+     * Code-based discounts: tenant must type the code manually.
+     */
+    public function scopeCodeBased($query)
+    {
+        return $query->where('is_automatic', false);
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────────────
 
-    /** Returns true when this discount is currently valid for a given plan. */
+    /**
+     * Returns true when this discount is currently valid for a given plan.
+     * NOTE: A discount NEVER changes a plan — it only affects price display/recording.
+     */
     public function isValidFor(string $plan): bool
     {
-        if (!$this->is_active) return false;
+        if (! $this->is_active) return false;
+
+        // plan_slug = null means discount applies to ALL plans
         if ($this->plan_slug && $this->plan_slug !== $plan) return false;
 
         $today = now()->toDateString();
-        if ($this->valid_from && $this->valid_from->toDateString() > $today) return false;
+        if ($this->valid_from  && $this->valid_from->toDateString()  > $today) return false;
         if ($this->valid_until && $this->valid_until->toDateString() < $today) return false;
 
         return true;
@@ -79,12 +101,38 @@ class Discount extends Model
     /** Status for display in the table. */
     public function getStatusLabelAttribute(): string
     {
-        if (!$this->is_active) return 'Inactive';
+        if (! $this->is_active) return 'Inactive';
 
         $today = now()->toDateString();
-        if ($this->valid_from && $this->valid_from->toDateString() > $today) return 'Scheduled';
+        if ($this->valid_from  && $this->valid_from->toDateString()  > $today) return 'Scheduled';
         if ($this->valid_until && $this->valid_until->toDateString() < $today) return 'Expired';
 
         return 'Active';
+    }
+
+    /**
+     * Find the best active automatic discount for a given plan slug.
+     * Returns null if none exists.
+     */
+    public static function bestAutomaticFor(string $planSlug): ?self
+    {
+        return static::validNow()
+            ->automatic()
+            ->forPlan($planSlug)
+            ->orderByDesc('value') // prefer higher discount
+            ->first();
+    }
+
+    /**
+     * Find a valid code-based discount by code + plan.
+     */
+    public static function findValidCode(string $code, string $planSlug): ?self
+    {
+        $discount = static::where('code', strtoupper($code))->first();
+
+        if (! $discount || $discount->is_automatic) return null;
+        if (! $discount->isValidFor($planSlug))     return null;
+
+        return $discount;
     }
 }
