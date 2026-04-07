@@ -9,6 +9,7 @@ use App\Http\Controllers\SuperAdmin\SuperAdminReportController;
 use App\Http\Controllers\SuperAdmin\SuperAdminActivityLogController;
 use App\Http\Controllers\SuperAdmin\SuperAdminPlanController;
 use App\Http\Controllers\SuperAdmin\SuperAdminMonitoringController;
+use App\Http\Controllers\SuperAdmin\SuperAdminRenewalController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\NotificationController;
 
@@ -88,6 +89,13 @@ foreach (config('tenancy.central_domains') as $domain) {
                     Route::delete('/discounts/{discount}',[SuperAdminPlanController::class, 'destroyDiscount']) ->name('discounts.destroy');
                     Route::post('/discounts/validate',    [SuperAdminPlanController::class, 'validateCode'])    ->name('discounts.validate');
                 });
+
+                Route::get('/renewals', [SuperAdminRenewalController::class, 'index'])
+                    ->name('renewals.index');
+                Route::post('/renewals/{renewal}/approve', [SuperAdminRenewalController::class, 'approve'])
+                    ->name('renewals.approve');
+                Route::post('/renewals/{renewal}/reject', [SuperAdminRenewalController::class, 'reject'])
+                    ->name('renewals.reject');
 
                 Route::get('/activity-logs', [SuperAdminActivityLogController::class, 'index'])
                     ->name('activity-logs.index');

@@ -92,6 +92,28 @@
         ];
     @endphp
 
+    @php $tenant = tenancy()->tenant ?? null; @endphp
+    @if($tenant && $tenant->expires_at)
+        @php $daysLeft = (int) now()->startOfDay()->diffInDays($tenant->expires_at->startOfDay(), false); @endphp
+        @if($daysLeft >= 0 && $daysLeft <= 10)
+            <div style="background:{{ $daysLeft <= 3 ? 'rgba(206,17,38,.08)' : 'rgba(179,138,0,.08)' }};
+                        border-bottom:2px solid {{ $daysLeft <= 3 ? 'rgba(206,17,38,.25)' : 'rgba(179,138,0,.25)' }};
+                        padding:10px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;">
+                <span style="font-size:13px;font-weight:600;color:{{ $daysLeft <= 3 ? '#CE1126' : '#a07800' }};">
+                    {{ $daysLeft <= 3 ? '🔴' : '🟡' }}
+                    Your subscription expires in <strong>{{ $daysLeft }} day(s)</strong>
+                    ({{ $tenant->expires_at->format('M d, Y') }}).
+                </span>
+                <a href="{{ route('admin.subscription.index') }}"
+                style="padding:6px 16px;border-radius:8px;font-size:12px;font-weight:700;
+                        background:{{ $daysLeft <= 3 ? '#CE1126' : '#b38a00' }};color:#fff;
+                        text-decoration:none;flex-shrink:0;">
+                    Renew Now
+                </a>
+            </div>
+        @endif
+    @endif
+
     <div style="background:var(--db-surface); border:1.5px solid var(--db-border); border-radius:16px; padding:24px; margin-bottom:24px;">
         <div style="font-size:13px; font-weight:700; color:var(--db-muted); text-transform:uppercase; letter-spacing:.08em; margin-bottom:16px;">
             Plan Usage — {{ ucfirst($plan) }}

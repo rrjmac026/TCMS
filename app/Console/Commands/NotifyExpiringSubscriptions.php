@@ -16,8 +16,8 @@ class NotifyExpiringSubscriptions extends Command
      * An email is sent only at these exact thresholds.
      * In-app notifications are created at every threshold.
      */
-    private const EMAIL_THRESHOLDS = [30, 7, 3, 1];
-    private const BELL_THRESHOLDS  = [30, 14, 7, 3, 1];
+    private const EMAIL_THRESHOLDS = [30, 10, 7, 3, 1];
+    private const BELL_THRESHOLDS  = [30, 14, 10, 7, 3, 1];
 
     protected $signature   = 'subscriptions:notify-expiring';
     protected $description = 'Notify tenants whose subscriptions are about to expire.';

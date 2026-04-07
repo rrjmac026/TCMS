@@ -178,6 +178,12 @@
         Plans & Discounts
     </a>
 
+    <a href="{{ route('superadmin.renewals.index') }}"
+       class="sb-link {{ request()->routeIs('superadmin.renewals*') ? 'active' : '' }}">
+        <span class="sb-icon"><i class="fas fa-sync-alt"></i></span>
+        Renewal Requests
+    </a>
+
     <div class="sb-divider"></div>
     <span class="sb-section-label">Analytics & Reports</span>
 
