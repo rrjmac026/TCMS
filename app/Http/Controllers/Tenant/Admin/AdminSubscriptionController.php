@@ -1,14 +1,10 @@
 <?php
-// In AdminSubscriptionController — update the index() method to resolve
-// automatic discounts per plan and pass them to the view.
-// The rest of your upgrade() / validateCode() methods stay the same.
 
 namespace App\Http\Controllers\Tenant\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\SubscriptionPlan;
 use App\Models\Discount;
-use App\Helpers\SubscriptionHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\DiscountUsage;
@@ -26,13 +22,11 @@ class AdminSubscriptionController extends Controller
         $planSlugs   = $plans->pluck('slug')->toArray();
 
         // Resolve the best active *automatic* discount for each plan
-        // (keyed by plan slug so the Blade views can do $autoDiscounts[$plan->slug])
         $autoDiscounts = [];
         foreach ($plans as $plan) {
             $discount = Discount::where('is_active', true)
                 ->where('is_automatic', true)
                 ->where(function ($q) use ($plan) {
-                    // null plan_slugs  = applies to all plans
                     $q->whereNull('plan_slugs')
                       ->orWhereJsonContains('plan_slugs', $plan->slug);
                 })
@@ -44,7 +38,7 @@ class AdminSubscriptionController extends Controller
                     $q->whereNull('valid_until')
                       ->orWhereDate('valid_until', '>=', today());
                 })
-                ->orderByDesc('value') // pick the highest-value one
+                ->orderByDesc('value')
                 ->first();
 
             $autoDiscounts[$plan->slug] = $discount;
@@ -107,10 +101,11 @@ class AdminSubscriptionController extends Controller
 
         $tenant    = tenancy()->tenant;
         $planModel = SubscriptionPlan::where('slug', $data['subscription'])->firstOrFail();
-        $price     = (float) $planModel->price;
+        $basePrice = (float) $planModel->price;
+        $price     = $basePrice;
         $discount  = null;
 
-        // Resolve discount — only affects recorded price, not the plan change
+        // ── Resolve discount (code-based first, then automatic) ───────────
         if (! empty($data['discount_code'])) {
             $discount = Discount::findValidCode(
                 $data['discount_code'],
@@ -122,9 +117,9 @@ class AdminSubscriptionController extends Controller
             }
         }
 
-        // Also apply an automatic discount if no code was used
         if (! $discount) {
-            $autoDiscount = Discount::where('is_active', true)
+            $autoDiscount = Discount::on('mysql')
+                ->where('is_active', true)
                 ->where('is_automatic', true)
                 ->where(function ($q) use ($data) {
                     $q->whereNull('plan_slugs')
@@ -141,46 +136,56 @@ class AdminSubscriptionController extends Controller
 
             if ($autoDiscount) {
                 $discount = $autoDiscount;
-                $price    = $autoDiscount->applyTo((float) $planModel->price);
+                $price    = $autoDiscount->applyTo($basePrice);
             }
         }
 
-        $expiresAt = $planModel->getExpiresAt();
+        $expiresAt       = $planModel->getExpiresAt();
+        $appliedBy       = auth()->id();   // tenant admin user ID
+        $discountUsageId = null;
 
-        DB::transaction(function () use ($tenant, $data, $planModel, $discount, $price, $expiresAt) {
-            $basePrice       = (float) $planModel->price;
-            $discountUsageId = null;
+        // ── Write discount usage to central DB ────────────────────────────
+        if ($discount) {
+            $usage = DiscountUsage::on('mysql')->create([
+                'discount_id'     => $discount->id,
+                'tenant_id'       => $tenant->id,
+                'action'          => 'tenant_upgrade',
+                'plan_slug'       => $data['subscription'],
+                'original_price'  => $basePrice,
+                'discount_amount' => $discount->discountAmount($basePrice),
+                'final_price'     => $price,
+                'applied_by'      => $appliedBy,
+            ]);
+            $discountUsageId = $usage->id;
+        }
 
-            if ($discount) {
-                $usage = DiscountUsage::create([
-                    'discount_id'     => $discount->id,
-                    'tenant_id'       => $tenant->id,
-                    'action'          => 'tenant_upgrade',
-                    'plan_slug'       => $data['subscription'],
-                    'original_price'  => $basePrice,
-                    'discount_amount' => $discount->discountAmount($basePrice),
-                    'final_price'     => $price,
-                    'applied_by'      => auth()->id(),
-                ]);
-                $discountUsageId = $usage->id;
-            }
+        // ── Write subscription history to central DB ──────────────────────
+        TenantSubscription::on('mysql')->create([
+            'tenant_id'         => $tenant->id,
+            'plan_slug'         => $data['subscription'],
+            'discount_usage_id' => $discountUsageId,
+            'amount_paid'       => $price,
+            'action'            => 'tenant_upgrade',
+            'starts_at'         => now(),
+            'expires_at'        => $expiresAt,
+            'applied_by'        => $appliedBy,
+        ]);
 
-            TenantSubscription::create([
-                'tenant_id'         => $tenant->id,
-                'plan_slug'         => $data['subscription'],
-                'discount_usage_id' => $discountUsageId,
-                'amount_paid'       => $price,
-                'action'            => 'tenant_upgrade',
-                'starts_at'         => now(),
-                'expires_at'        => $expiresAt,
-                'applied_by'        => auth()->id(),
+        // ── Update the tenant record (central DB) ─────────────────────────
+        // Use DB::connection('mysql') to avoid the tenant-context transaction
+        // swallowing central DB writes.
+        DB::connection('mysql')->table('tenants')
+            ->where('id', $tenant->id)
+            ->update([
+                'subscription' => $data['subscription'],
+                'expires_at'   => $expiresAt,
+                'updated_at'   => now(),
             ]);
 
-            // Persist the plan change on the tenant record
-            $tenant->subscription = $data['subscription'];
-            $tenant->expires_at   = $expiresAt;
-            $tenant->save();
-        });
+        // Keep the in-memory tenant model in sync so any subsequent
+        // code in this request sees the new values.
+        $tenant->subscription = $data['subscription'];
+        $tenant->expires_at   = $expiresAt;
 
         return response()->json(['success' => true]);
     }
