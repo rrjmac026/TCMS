@@ -33,7 +33,7 @@ class NotifyExpiringSubscriptions extends Command
         $this->info("Checking {$tenants->count()} active tenant(s)...");
 
         foreach ($tenants as $tenant) {
-            $daysLeft = (int) now()->startOfDay()->diffInDays($tenant->expires_at->startOfDay(), false);
+            $daysLeft = (int) now()->startOfDay()->diffInDays($tenant->expires_at->copy()->startOfDay(), false);
 
             if ($daysLeft < 0) continue; // already expired — skip
 

@@ -26,6 +26,7 @@ use App\Http\Controllers\Tenant\Admin\AdminSubscriptionController;
 use App\Http\Controllers\Tenant\Admin\AdminReportController;
 use App\Http\Controllers\Tenant\Admin\AdminBrandingController;
 use App\Http\Controllers\Tenant\Admin\AdminAssessmentController;
+use App\Http\Controllers\Tenant\Admin\AdminRenewalController;
 
 
 // Controllers — Trainer

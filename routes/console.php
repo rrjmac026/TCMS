@@ -9,3 +9,5 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('tenants:recalculate-storage')->hourly();
+
+Schedule::command('subscriptions:notify-expiring')->dailyAt('08:00');
