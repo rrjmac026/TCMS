@@ -8,6 +8,7 @@ use App\Mail\TenantApprovalMail;
 use App\Mail\TenantRejectionMail;
 use App\Models\SubscriptionPlan;
 use App\Models\Tenant;
+use App\Models\RenewalRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -253,6 +254,25 @@ class SuperAdminController extends Controller
         if ($newIndex <= $currentIndex) {
             return back()->with('error', 'You can only upgrade to a higher plan.');
         }
+
+        // Cancel any pending renewal requests that are now stale because the
+        // tenant has moved to a higher plan.
+        $planOrder     = ['basic' => 0, 'standard' => 1, 'premium' => 2];
+        $requestedRank = $planOrder[$request->subscription] ?? 0;
+
+        RenewalRequest::on('mysql')
+            ->where('tenant_id', $tenant->id)
+            ->where('status', 'pending')
+            ->where(function ($q) use ($planOrder, $requestedRank) {
+                $stalePlanSlugs = array_keys(
+                    array_filter($planOrder, fn($rank) => $rank <= $requestedRank)
+                );
+                $q->whereIn('plan_slug', $stalePlanSlugs);
+            })
+            ->update([
+                'status' => 'cancelled_by_upgrade',
+                'notes'  => 'Automatically cancelled — tenant upgraded to a higher plan.',
+            ]);
 
         try {
             $tenant->subscription = $request->subscription;
