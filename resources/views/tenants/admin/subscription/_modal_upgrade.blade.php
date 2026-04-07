@@ -1,4 +1,15 @@
-{{-- Single modal instance (the old file had it duplicated — fixed here) --}}
+{{--
+    _modal_upgrade.blade.php
+    Changes vs original:
+      • Renewal modal now has a duration picker (months/years)
+      • Price updates live as the tenant changes duration
+      • duration_days is sent with the renewal request
+      • Upgrade modal is unchanged
+--}}
+
+{{-- ══════════════════════════════════════════════════════════════════════════ --}}
+{{-- MODAL: Upgrade plan                                                       --}}
+{{-- ══════════════════════════════════════════════════════════════════════════ --}}
 <div id="upgradeModal" class="up-modal-backdrop" style="display:none;" onclick="closeUpgradeModal(event)">
     <div class="up-modal" onclick="event.stopPropagation()">
 
@@ -14,7 +25,7 @@
                 <span id="planDuration" style="font-size:12px;opacity:0.8;"></span>
             </div>
 
-            {{-- Auto-discount notice (shown when plan already has an active automatic discount) --}}
+            {{-- Auto-discount notice --}}
             <div id="auto-discount-notice" style="display:none;
                  background:rgba(22,163,74,.08);border:1.5px solid rgba(22,163,74,.3);
                  border-radius:10px;padding:10px 14px;margin-bottom:16px;
@@ -23,11 +34,11 @@
                 <span id="auto-discount-text">—</span>
             </div>
 
-            {{-- Promo code field (code-based, manual entry) --}}
+            {{-- Promo code --}}
             <div style="margin-bottom:16px;text-align:left;">
                 <label style="display:block;font-size:11px;font-weight:700;color:#5a7aaa;
                               text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">
-                    Promo Code <span style="font-weight:400;text-transform:none;">(optional — overrides automatic discount)</span>
+                    Promo Code <span style="font-weight:400;text-transform:none;">(optional)</span>
                 </label>
                 <div style="display:flex;gap:8px;">
                     <input type="text" id="modal-discount-code"
@@ -99,25 +110,62 @@
                 </button>
             </div>
         </div>
-
     </div>
 </div>
 
-{{-- ── Renewal Modal ── --}}
+{{-- ══════════════════════════════════════════════════════════════════════════ --}}
+{{-- MODAL: Renewal — with duration picker                                     --}}
+{{-- ══════════════════════════════════════════════════════════════════════════ --}}
 <div id="renewalModal" class="up-modal-backdrop" style="display:none;" onclick="closeRenewalModal(event)">
     <div class="up-modal" onclick="event.stopPropagation()">
 
         <div id="renewalConfirmView">
             <div class="up-modal-icon" style="background:linear-gradient(135deg,#e6f9f0,#bbf7d0);">🔄</div>
             <h3 class="up-modal-title">Renew Your Plan</h3>
-            <p class="up-modal-sub">You're renewing your current plan:</p>
+            <p class="up-modal-sub">You're renewing:</p>
 
             <div class="up-modal-plan-pill"
                  style="background:linear-gradient(135deg,#0a7c3e,#16a34a);
                         box-shadow:0 4px 16px rgba(22,163,74,.30);">
                 <i class="fas fa-rotate"></i>
                 <span id="renewalPlanName">—</span>
-                <span id="renewalPlanDuration" style="font-size:12px;opacity:0.8;"></span>
+            </div>
+
+            {{-- ── Duration picker ─────────────────────────────────────── --}}
+            <div style="margin-bottom:18px;text-align:left;">
+                <label style="display:block;font-size:11px;font-weight:700;color:#5a7aaa;
+                              text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">
+                    How long do you want to extend? *
+                </label>
+
+                {{-- Quick-select chips --}}
+                <div id="renewal-duration-chips"
+                     style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+                    {{-- chips injected by JS --}}
+                </div>
+
+                {{-- Custom input row --}}
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <input type="number" id="renewal-custom-amount"
+                           min="1" max="60" value=""
+                           placeholder="Custom"
+                           style="width:90px;padding:8px 10px;border-radius:8px;
+                                  border:1.5px solid #c5d8f5;background:#fff;color:#001a4d;
+                                  font-family:inherit;font-size:13px;outline:none;"
+                           oninput="onCustomDurationInput()">
+                    <select id="renewal-custom-unit"
+                            style="padding:8px 10px;border-radius:8px;border:1.5px solid #c5d8f5;
+                                   background:#fff;color:#001a4d;font-family:inherit;font-size:13px;
+                                   outline:none;cursor:pointer;"
+                            onchange="onCustomDurationInput()">
+                        <option value="months">Months</option>
+                        <option value="years">Years</option>
+                        <option value="days">Days</option>
+                    </select>
+                    <span style="font-size:12px;color:#5a7aaa;white-space:nowrap;">
+                        = <strong id="renewal-days-label">—</strong> days
+                    </span>
+                </div>
             </div>
 
             {{-- Pending request warning --}}
@@ -163,14 +211,13 @@
             </div>
 
             {{-- Price summary --}}
-            <div id="renewal-price-summary" style="background:#f4f8ff;border-radius:12px;padding:14px;
-                 margin-bottom:20px;font-size:13px;">
+            <div style="background:#f4f8ff;border-radius:12px;padding:14px;margin-bottom:20px;font-size:13px;">
                 <div style="display:flex;justify-content:space-between;color:#5a7aaa;margin-bottom:4px;">
-                    <span>Plan price</span>
+                    <span>Plan price <span id="renewal-duration-note" style="font-size:11px;"></span></span>
                     <span id="renewal-summary-original">—</span>
                 </div>
-                <div id="renewal-summary-discount-row" style="display:none;justify-content:space-between;
-                     color:#16a34a;margin-bottom:4px;">
+                <div id="renewal-summary-discount-row"
+                     style="display:none;justify-content:space-between;color:#16a34a;margin-bottom:4px;">
                     <span id="renewal-summary-discount-label">Discount</span>
                     <span id="renewal-summary-discount">—</span>
                 </div>
@@ -181,8 +228,10 @@
                 </div>
             </div>
 
-            <p class="up-modal-sub" style="margin-bottom:0;">
-                Renewing will extend your access by another full plan period.
+            <p class="up-modal-sub" style="margin-bottom:0;font-size:12px;">
+                Extending from
+                <strong id="renewal-from-date">—</strong> →
+                <strong id="renewal-to-date">—</strong>.
                 A super admin will review and approve your request.
             </p>
 
@@ -217,6 +266,25 @@
                 </button>
             </div>
         </div>
-
     </div>
 </div>
+
+<style>
+/* Duration chip styling */
+.renewal-chip {
+    padding: 6px 14px;
+    border-radius: 100px;
+    border: 1.5px solid #c5d8f5;
+    background: #f4f8ff;
+    color: #1a3a6b;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+}
+.renewal-chip:hover  { border-color: #0057B8; color: #0057B8; background: rgba(0,87,184,.06); }
+.renewal-chip.active { border-color: #0a7c3e; color: #0a7c3e; background: rgba(10,124,62,.08); }
+.dark .renewal-chip  { background: #0d1f3c; border-color: #1e3a6b; color: #adc4f0; }
+.dark .renewal-chip.active { border-color: #4ade80; color: #4ade80; background: rgba(74,222,128,.08); }
+</style>

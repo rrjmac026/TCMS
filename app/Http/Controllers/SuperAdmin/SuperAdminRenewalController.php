@@ -1,10 +1,8 @@
 <?php
-// app/Http/Controllers/SuperAdmin/SuperAdminRenewalController.php
 
 namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
-use App\Mail\SubscriptionExpiringMail;
 use App\Models\Discount;
 use App\Models\DiscountUsage;
 use App\Models\Notification;
@@ -29,12 +27,10 @@ class SuperAdminRenewalController extends Controller
             ->latest()
             ->paginate(20);
 
-        // Summary counts for tabs
         $counts = RenewalRequest::selectRaw('status, count(*) as total')
             ->groupBy('status')
             ->pluck('total', 'status');
 
-        // Tenants expiring within 10 days (not yet expired, no pending request)
         $expiringSoon = Tenant::where('status', 'approved')
             ->whereNotNull('expires_at')
             ->where('expires_at', '>', now())
@@ -55,14 +51,14 @@ class SuperAdminRenewalController extends Controller
             return back()->withErrors(['error' => 'This request has already been processed.']);
         }
 
-        $tenant    = Tenant::findOrFail($renewal->tenant_id);
-        $planModel = SubscriptionPlan::where('slug', $renewal->plan_slug)->firstOrFail();
-        $expiresAt = $planModel->getExpiresAt();
+        $tenant = Tenant::findOrFail($renewal->tenant_id);
 
-        DB::transaction(function () use ($renewal, $tenant, $planModel, $expiresAt) {
+        // ── KEY FIX: extend from current expiry, never reset to now ──────
+        $expiresAt = $renewal->calculateNewExpiry($tenant);
+
+        DB::transaction(function () use ($renewal, $tenant, $expiresAt) {
             $discountUsageId = null;
 
-            // Record discount usage if a code or discount was applied
             if ($renewal->discount_amount > 0 && $renewal->discount_code) {
                 $discount = Discount::findValidCode(
                     $renewal->discount_code, $renewal->plan_slug, $tenant->id
@@ -82,7 +78,6 @@ class SuperAdminRenewalController extends Controller
                 }
             }
 
-            // Record subscription history
             TenantSubscription::create([
                 'tenant_id'         => $tenant->id,
                 'plan_slug'         => $renewal->plan_slug,
@@ -94,14 +89,13 @@ class SuperAdminRenewalController extends Controller
                 'applied_by'        => auth()->id(),
             ]);
 
-            // Activate the tenant
+            // Update the tenant — extend expiry, activate
             $tenant->subscription = $renewal->plan_slug;
-            $tenant->expires_at   = $expiresAt;
+            $tenant->expires_at   = $expiresAt;   // ← the actual fix
             $tenant->status       = 'approved';
             $tenant->is_active    = true;
             $tenant->save();
 
-            // Mark the request as approved
             $renewal->update([
                 'status'      => 'approved',
                 'reviewed_by' => auth()->id(),
@@ -109,16 +103,14 @@ class SuperAdminRenewalController extends Controller
             ]);
         });
 
-        // Notify the tenant admin in-app
         $this->notifyTenantAdmin($tenant, 'approved', $renewal->plan_slug, $expiresAt);
 
-        // Send approval email
         try {
             Mail::to($tenant->admin_email)
                 ->send(new \App\Mail\RenewalApprovedMail($tenant, $renewal));
         } catch (\Throwable) {}
 
-        return back()->with('success', "Renewal approved for {$tenant->name}.");
+        return back()->with('success', "Renewal approved for {$tenant->name}. Expires: {$expiresAt->format('M d, Y')}.");
     }
 
     // ── Reject renewal ────────────────────────────────────────────────────

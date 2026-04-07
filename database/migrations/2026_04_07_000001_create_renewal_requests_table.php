@@ -15,6 +15,7 @@ return new class extends Migration
             $table->string('tenant_id');
             $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
             $table->string('plan_slug');                    // plan they want to renew to
+            $table->unsignedInteger('duration_days')->default(0);
             $table->string('discount_code')->nullable();    // optional promo code
             $table->decimal('original_price', 10, 2);
             $table->decimal('discount_amount', 10, 2)->default(0);

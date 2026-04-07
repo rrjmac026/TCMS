@@ -9,12 +9,13 @@ class RenewalRequest extends Model
     protected $connection = 'mysql'; // central DB
 
     protected $fillable = [
-        'tenant_id', 'plan_slug', 'discount_code',
+        'tenant_id', 'plan_slug', 'duration_days', 'discount_code',
         'original_price', 'discount_amount', 'final_price',
         'status', 'reviewed_by', 'reviewed_at', 'notes',
     ];
 
     protected $casts = [
+        'duration_days'   => 'integer',
         'original_price'  => 'decimal:2',
         'discount_amount' => 'decimal:2',
         'final_price'     => 'decimal:2',
@@ -26,4 +27,25 @@ class RenewalRequest extends Model
 
     public function isPending()  { return $this->status === 'pending'; }
     public function isApproved() { return $this->status === 'approved'; }
+
+    /**
+     * Calculate the new expires_at when this renewal is approved.
+     *
+     * Key rule: always extend FROM the current expiry (or now if already
+     * expired) so the tenant never loses remaining time.
+     */
+    public function calculateNewExpiry(\App\Models\Tenant $tenant): \Carbon\Carbon
+    {
+        $days = $this->duration_days > 0
+            ? $this->duration_days
+            : optional(SubscriptionPlan::where('slug', $this->plan_slug)->first())->duration_days
+              ?? 30;
+
+        // Extend from the later of: today or the current expiry
+        $base = ($tenant->expires_at && $tenant->expires_at->isFuture())
+            ? $tenant->expires_at
+            : now();
+
+        return $base->copy()->addDays($days);
+    }
 }
