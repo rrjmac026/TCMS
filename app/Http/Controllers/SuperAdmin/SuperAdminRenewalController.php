@@ -27,10 +27,12 @@ class SuperAdminRenewalController extends Controller
             ->latest()
             ->paginate(20);
 
+        // Summary counts for all statuses (including the new one)
         $counts = RenewalRequest::selectRaw('status, count(*) as total')
             ->groupBy('status')
             ->pluck('total', 'status');
 
+        // Tenants expiring within 10 days with no pending request
         $expiringSoon = Tenant::where('status', 'approved')
             ->whereNotNull('expires_at')
             ->where('expires_at', '>', now())
@@ -51,9 +53,31 @@ class SuperAdminRenewalController extends Controller
             return back()->withErrors(['error' => 'This request has already been processed.']);
         }
 
-        $tenant = Tenant::findOrFail($renewal->tenant_id);
+        $tenant    = Tenant::findOrFail($renewal->tenant_id);
 
-        // ── KEY FIX: extend from current expiry, never reset to now ──────
+        // Safety check: if the tenant has since upgraded past the requested
+        // plan, approving would be a downgrade — block it.
+        $planOrder     = ['basic' => 0, 'standard' => 1, 'premium' => 2];
+        $tenantRank    = $planOrder[$tenant->subscription] ?? 0;
+        $requestedRank = $planOrder[$renewal->plan_slug]   ?? 0;
+
+        if ($requestedRank < $tenantRank) {
+            $renewal->update([
+                'status' => 'cancelled_by_upgrade',
+                'notes'  => 'Blocked from approval — tenant has already upgraded to a higher plan ('
+                          . ucfirst($tenant->subscription) . ').',
+                'reviewed_by' => auth()->id(),
+                'reviewed_at' => now(),
+            ]);
+
+            return back()->with('error',
+                "Cannot approve: {$tenant->name} has already upgraded to "
+                . ucfirst($tenant->subscription)
+                . ". The renewal request has been cancelled."
+            );
+        }
+
+        // Extend from the later of now or the current expiry
         $expiresAt = $renewal->calculateNewExpiry($tenant);
 
         DB::transaction(function () use ($renewal, $tenant, $expiresAt) {
@@ -89,9 +113,8 @@ class SuperAdminRenewalController extends Controller
                 'applied_by'        => auth()->id(),
             ]);
 
-            // Update the tenant — extend expiry, activate
             $tenant->subscription = $renewal->plan_slug;
-            $tenant->expires_at   = $expiresAt;   // ← the actual fix
+            $tenant->expires_at   = $expiresAt;
             $tenant->status       = 'approved';
             $tenant->is_active    = true;
             $tenant->save();
@@ -110,16 +133,16 @@ class SuperAdminRenewalController extends Controller
                 ->send(new \App\Mail\RenewalApprovedMail($tenant, $renewal));
         } catch (\Throwable) {}
 
-        return back()->with('success', "Renewal approved for {$tenant->name}. Expires: {$expiresAt->format('M d, Y')}.");
+        return back()->with('success',
+            "Renewal approved for {$tenant->name}. New expiry: {$expiresAt->format('M d, Y')}."
+        );
     }
 
     // ── Reject renewal ────────────────────────────────────────────────────
 
     public function reject(Request $request, RenewalRequest $renewal)
     {
-        $request->validate([
-            'notes' => ['nullable', 'string', 'max:500'],
-        ]);
+        $request->validate(['notes' => ['nullable', 'string', 'max:500']]);
 
         if (! $renewal->isPending()) {
             return back()->withErrors(['error' => 'This request has already been processed.']);
@@ -140,8 +163,12 @@ class SuperAdminRenewalController extends Controller
 
     // ── Notify tenant admin in-app ────────────────────────────────────────
 
-    private function notifyTenantAdmin(Tenant $tenant, string $outcome, string $planSlug, $expiresAt = null): void
-    {
+    private function notifyTenantAdmin(
+        Tenant $tenant,
+        string $outcome,
+        string $planSlug,
+        $expiresAt = null
+    ): void {
         try {
             $tenant->run(function () use ($outcome, $planSlug, $expiresAt) {
                 $admin = \App\Models\User::where('role', 'admin')->first();
@@ -151,7 +178,7 @@ class SuperAdminRenewalController extends Controller
                     Notification::create([
                         'user_id' => $admin->id,
                         'title'   => '✅ Subscription Renewed!',
-                        'message' => 'Your ' . ucfirst($planSlug) . ' Plan has been renewed successfully.'
+                        'message' => 'Your ' . ucfirst($planSlug) . ' Plan has been renewed.'
                                    . ($expiresAt ? ' New expiry: ' . $expiresAt->format('F d, Y') . '.' : ''),
                         'is_read' => false,
                         'link'    => '/admin/subscription',

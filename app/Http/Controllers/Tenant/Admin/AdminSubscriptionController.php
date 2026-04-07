@@ -3,12 +3,13 @@
 namespace App\Http\Controllers\Tenant\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\SubscriptionPlan;
 use App\Models\Discount;
+use App\Models\DiscountUsage;
+use App\Models\RenewalRequest;
+use App\Models\SubscriptionPlan;
+use App\Models\TenantSubscription;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Models\DiscountUsage;
-use App\Models\TenantSubscription;
 
 class AdminSubscriptionController extends Controller
 {
@@ -21,34 +22,35 @@ class AdminSubscriptionController extends Controller
         $plans       = SubscriptionPlan::active()->orderBy('sort_order')->get();
         $planSlugs   = $plans->pluck('slug')->toArray();
 
-        // Resolve the best active *automatic* discount for each plan
+        // Best active automatic discount for each plan
         $autoDiscounts = [];
         foreach ($plans as $plan) {
-            $discount = Discount::where('is_active', true)
+            $autoDiscounts[$plan->slug] = Discount::on('mysql')
+                ->where('is_active', true)
                 ->where('is_automatic', true)
-                ->where(function ($q) use ($plan) {
-                    $q->whereNull('plan_slugs')
-                      ->orWhereJsonContains('plan_slugs', $plan->slug);
-                })
-                ->where(function ($q) {
-                    $q->whereNull('valid_from')
-                      ->orWhereDate('valid_from', '<=', today());
-                })
-                ->where(function ($q) {
-                    $q->whereNull('valid_until')
-                      ->orWhereDate('valid_until', '>=', today());
-                })
+                ->where(fn($q) => $q->whereNull('plan_slugs')
+                                    ->orWhereJsonContains('plan_slugs', $plan->slug))
+                ->where(fn($q) => $q->whereNull('valid_from')
+                                    ->orWhereDate('valid_from', '<=', today()))
+                ->where(fn($q) => $q->whereNull('valid_until')
+                                    ->orWhereDate('valid_until', '>=', today()))
                 ->orderByDesc('value')
                 ->first();
-
-            $autoDiscounts[$plan->slug] = $discount;
         }
+
+        // Any pending renewal request — shown to the tenant so they know
+        $pendingRenewal = RenewalRequest::on('mysql')
+            ->where('tenant_id', $tenant->id)
+            ->where('status', 'pending')
+            ->latest()
+            ->first();
 
         return view('tenants.admin.subscription.upgrade', compact(
             'plans',
             'currentPlan',
             'planSlugs',
             'autoDiscounts',
+            'pendingRenewal',
         ));
     }
 
@@ -62,36 +64,43 @@ class AdminSubscriptionController extends Controller
         ]);
 
         $tenantId = optional(tenancy()->tenant)->id;
-
-        $discount = Discount::findValidCode(
-            $request->code,
-            $request->plan_slug,
-            $tenantId
-        );
+        $discount = Discount::findValidCode($request->code, $request->plan_slug, $tenantId);
 
         if (! $discount) {
-            return response()->json([
-                'valid'   => false,
-                'message' => 'Invalid or inapplicable promo code.',
-            ]);
+            return response()->json(['valid' => false, 'message' => 'Invalid or inapplicable promo code.']);
         }
 
-        $planModel = SubscriptionPlan::where('slug', $request->plan_slug)->firstOrFail();
-        $base      = (float) $planModel->price;
-        $saved     = $discount->discountAmount($base);
-        $final     = $discount->applyTo($base);
+        $plan  = SubscriptionPlan::where('slug', $request->plan_slug)->firstOrFail();
+        $base  = (float) $plan->price;
 
         return response()->json([
             'valid'           => true,
             'formatted_value' => $discount->formatted_value,
             'original_price'  => $base,
-            'discount_amount' => $saved,
-            'final_price'     => $final,
+            'discount_amount' => $discount->discountAmount($base),
+            'final_price'     => $discount->applyTo($base),
         ]);
     }
 
     // ── AJAX: upgrade plan ────────────────────────────────────────────────
 
+    /**
+     * Upgrade the tenant to a higher plan immediately.
+     *
+     * BILLING RULES enforced here:
+     *
+     * 1. The upgrade takes effect NOW — expires_at = today + new plan's full duration.
+     *    Remaining days on the old plan are NOT carried over as time; they are replaced.
+     *    (Basic → Standard: no credit because Basic is free.
+     *     Standard → Premium: credit logic could be added later.)
+     *
+     * 2. Any pending RENEWAL REQUEST for the OLD plan is automatically cancelled
+     *    because it is now stale — the tenant has already moved to a different plan.
+     *    A pending request for the NEW (or higher) plan is left untouched.
+     *
+     * 3. Central-DB models (TenantSubscription, DiscountUsage, Tenant) are written
+     *    with explicit .on('mysql') to avoid the tenant-context connection interfering.
+     */
     public function upgrade(Request $request)
     {
         $data = $request->validate([
@@ -105,46 +114,71 @@ class AdminSubscriptionController extends Controller
         $price     = $basePrice;
         $discount  = null;
 
-        // ── Resolve discount (code-based first, then automatic) ───────────
+        // Enforce upgrade-only (no downgrades via this endpoint)
+        $planOrder    = ['basic' => 0, 'standard' => 1, 'premium' => 2];
+        $currentRank  = $planOrder[$tenant->subscription] ?? 0;
+        $requestedRank = $planOrder[$data['subscription']] ?? 0;
+
+        if ($requestedRank <= $currentRank) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You can only upgrade to a higher plan.',
+            ], 422);
+        }
+
+        // ── Resolve discount ──────────────────────────────────────────────
         if (! empty($data['discount_code'])) {
-            $discount = Discount::findValidCode(
-                $data['discount_code'],
-                $data['subscription'],
-                $tenant->id
-            );
+            $discount = Discount::findValidCode($data['discount_code'], $data['subscription'], $tenant->id);
             if ($discount) {
                 $price = $discount->applyTo($price);
             }
         }
 
         if (! $discount) {
-            $autoDiscount = Discount::on('mysql')
+            $auto = Discount::on('mysql')
                 ->where('is_active', true)
                 ->where('is_automatic', true)
-                ->where(function ($q) use ($data) {
-                    $q->whereNull('plan_slugs')
-                      ->orWhereJsonContains('plan_slugs', $data['subscription']);
-                })
-                ->where(function ($q) {
-                    $q->whereNull('valid_from')->orWhereDate('valid_from', '<=', today());
-                })
-                ->where(function ($q) {
-                    $q->whereNull('valid_until')->orWhereDate('valid_until', '>=', today());
-                })
+                ->where(fn($q) => $q->whereNull('plan_slugs')
+                                    ->orWhereJsonContains('plan_slugs', $data['subscription']))
+                ->where(fn($q) => $q->whereNull('valid_from')
+                                    ->orWhereDate('valid_from', '<=', today()))
+                ->where(fn($q) => $q->whereNull('valid_until')
+                                    ->orWhereDate('valid_until', '>=', today()))
                 ->orderByDesc('value')
                 ->first();
 
-            if ($autoDiscount) {
-                $discount = $autoDiscount;
-                $price    = $autoDiscount->applyTo($basePrice);
+            if ($auto) {
+                $discount = $auto;
+                $price    = $auto->applyTo($basePrice);
             }
         }
 
-        $expiresAt       = $planModel->getExpiresAt();
-        $appliedBy       = auth()->id();   // tenant admin user ID
-        $discountUsageId = null;
+        // New expiry: full duration of the new plan from today.
+        // Old remaining time is intentionally not carried over.
+        $expiresAt = $planModel->getExpiresAt();
+        $appliedBy = auth()->id();
+
+        // ── Cancel stale pending renewal requests ─────────────────────────
+        // Any renewal request for a plan LOWER than the one being upgraded to
+        // is now meaningless — cancel it automatically so the superadmin
+        // doesn't accidentally approve an outdated request.
+        RenewalRequest::on('mysql')
+            ->where('tenant_id', $tenant->id)
+            ->where('status', 'pending')
+            ->where(function ($q) use ($planOrder, $requestedRank) {
+                // Cancel requests for plans at or below the new plan level
+                $stalePlanSlugs = array_keys(
+                    array_filter($planOrder, fn($rank) => $rank <= $requestedRank)
+                );
+                $q->whereIn('plan_slug', $stalePlanSlugs);
+            })
+            ->update([
+                'status' => 'cancelled_by_upgrade',
+                'notes'  => 'Automatically cancelled — tenant upgraded to a higher plan.',
+            ]);
 
         // ── Write discount usage to central DB ────────────────────────────
+        $discountUsageId = null;
         if ($discount) {
             $usage = DiscountUsage::on('mysql')->create([
                 'discount_id'     => $discount->id,
@@ -171,9 +205,8 @@ class AdminSubscriptionController extends Controller
             'applied_by'        => $appliedBy,
         ]);
 
-        // ── Update the tenant record (central DB) ─────────────────────────
-        // Use DB::connection('mysql') to avoid the tenant-context transaction
-        // swallowing central DB writes.
+        // ── Update tenant record on central DB ────────────────────────────
+        // Use a raw query so the tenant-context DB connection cannot interfere.
         DB::connection('mysql')->table('tenants')
             ->where('id', $tenant->id)
             ->update([
@@ -182,8 +215,7 @@ class AdminSubscriptionController extends Controller
                 'updated_at'   => now(),
             ]);
 
-        // Keep the in-memory tenant model in sync so any subsequent
-        // code in this request sees the new values.
+        // Keep in-memory model in sync for any code later in this request
         $tenant->subscription = $data['subscription'];
         $tenant->expires_at   = $expiresAt;
 

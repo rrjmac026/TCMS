@@ -20,7 +20,7 @@ return new class extends Migration
             $table->decimal('original_price', 10, 2);
             $table->decimal('discount_amount', 10, 2)->default(0);
             $table->decimal('final_price', 10, 2);
-            $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
+            $table->string('status', 32)->default('pending');
             $table->unsignedBigInteger('reviewed_by')->nullable();
             $table->foreign('reviewed_by')->references('id')->on('users')->onDelete('set null');
             $table->timestamp('reviewed_at')->nullable();
