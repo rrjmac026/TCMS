@@ -202,4 +202,153 @@ function styleBox(color) {
     };
     return map[color] || '';
 }
+
+// ── Renewal modal state ───────────────────────────────────────────────────────
+let renewalPlanKey      = null;
+let renewalPlanBase     = 0;
+let renewalPlanAuto     = 0;
+let renewalValidCode    = null;
+let renewalActiveCodeFinal = 0;
+let renewalCodeTimer    = null;
+const RENEWAL_URL       = '{{ route("admin.renewal.request") }}';
+
+function selectRenewal(slug, name, basePrice, autoPrice) {
+    renewalPlanKey         = slug;
+    renewalPlanBase        = parseFloat(basePrice) || 0;
+    renewalPlanAuto        = parseFloat(autoPrice)  || renewalPlanBase;
+    renewalValidCode       = null;
+    renewalActiveCodeFinal = 0;
+
+    document.getElementById('renewalPlanName').textContent        = name;
+    document.getElementById('renewalSuccessPlanName').textContent = name;
+    document.getElementById('renewal-discount-code').value        = '';
+    document.getElementById('renewal-discount-result').style.display = 'none';
+    document.getElementById('renewal-pending-warning').style.display = 'none';
+
+    // Auto-discount notice
+    const hasAutoDiscount = renewalPlanAuto < renewalPlanBase;
+    const notice = document.getElementById('renewal-auto-discount-notice');
+    if (hasAutoDiscount) {
+        const saved = renewalPlanBase - renewalPlanAuto;
+        document.getElementById('renewal-auto-discount-text').textContent =
+            'Automatic discount applied — you save ₱' + fmt(saved) +
+            ' (₱' + fmt(renewalPlanBase) + ' → ₱' + fmt(renewalPlanAuto) + ')';
+        notice.style.display = 'block';
+    } else {
+        notice.style.display = 'none';
+    }
+
+    updateRenewalPriceSummary(renewalPlanBase, renewalPlanAuto, null);
+
+    document.getElementById('renewalConfirmView').style.display  = 'block';
+    document.getElementById('renewalSuccessView').style.display  = 'none';
+    document.getElementById('renewalModal').style.display        = 'flex';
+}
+
+function closeRenewalModal(event) {
+    if (event && event.target !== document.getElementById('renewalModal')) return;
+    document.getElementById('renewalModal').style.display = 'none';
+}
+
+function scheduleRenewalCodeCheck() {
+    clearTimeout(renewalCodeTimer);
+    const code = document.getElementById('renewal-discount-code').value.trim();
+    if (!code) {
+        renewalValidCode       = null;
+        renewalActiveCodeFinal = 0;
+        document.getElementById('renewal-discount-result').style.display = 'none';
+        updateRenewalPriceSummary(renewalPlanBase, renewalPlanAuto, null);
+        return;
+    }
+    renewalCodeTimer = setTimeout(checkRenewalPromoCode, 500);
+}
+
+function checkRenewalPromoCode() {
+    const code   = document.getElementById('renewal-discount-code').value.trim();
+    const result = document.getElementById('renewal-discount-result');
+    if (!code || !renewalPlanKey) return;
+
+    fetch('{{ route("admin.subscription.validate-code") }}', {
+        method  : 'POST',
+        headers : { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        body    : JSON.stringify({ code, plan_slug: renewalPlanKey }),
+    })
+    .then(r => r.json())
+    .then(data => {
+        result.style.display = 'block';
+        if (data.valid) {
+            result.style.cssText = styleBox('green');
+            result.innerHTML = '<i class="fas fa-check-circle" style="margin-right:5px;"></i>' +
+                               'Code valid — saves ' + data.formatted_value;
+            renewalValidCode       = code;
+            renewalActiveCodeFinal = parseFloat(data.final_price);
+            updateRenewalPriceSummary(renewalPlanBase, renewalActiveCodeFinal, 'Promo code (' + code + ')');
+        } else {
+            result.style.cssText = styleBox('red');
+            result.innerHTML = '<i class="fas fa-times-circle" style="margin-right:5px;"></i>' + data.message;
+            renewalValidCode       = null;
+            renewalActiveCodeFinal = 0;
+            updateRenewalPriceSummary(renewalPlanBase, renewalPlanAuto, null);
+        }
+    });
+}
+
+function updateRenewalPriceSummary(base, final, discountLabel) {
+    document.getElementById('renewal-summary-original').textContent = '₱' + fmt(base);
+    document.getElementById('renewal-summary-final').textContent    = '₱' + fmt(final);
+
+    const row   = document.getElementById('renewal-summary-discount-row');
+    const saved = base - final;
+
+    if (discountLabel && saved > 0) {
+        document.getElementById('renewal-summary-discount-label').textContent = discountLabel;
+        document.getElementById('renewal-summary-discount').textContent       = '−₱' + fmt(saved);
+        row.style.display = 'flex';
+    } else if (!discountLabel && final < base) {
+        document.getElementById('renewal-summary-discount-label').textContent = 'Automatic discount';
+        document.getElementById('renewal-summary-discount').textContent       = '−₱' + fmt(saved);
+        row.style.display = 'flex';
+    } else {
+        row.style.display = 'none';
+    }
+}
+
+function confirmRenewal() {
+    if (!renewalPlanKey) return;
+
+    const btn = document.getElementById('renewalConfirmBtn');
+    btn.disabled  = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting…';
+
+    fetch(RENEWAL_URL, {
+        method  : 'POST',
+        headers : { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        body    : JSON.stringify({
+            plan_slug     : renewalPlanKey,
+            discount_code : renewalValidCode ?? '',
+        }),
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('renewalConfirmView').style.display = 'none';
+            document.getElementById('renewalSuccessView').style.display  = 'block';
+        } else {
+            // Check for "already pending" duplicate error
+            if (data.message && data.message.toLowerCase().includes('pending')) {
+                document.getElementById('renewal-pending-warning').style.display = 'block';
+            } else {
+                alert(data.message || 'Submission failed. Please try again.');
+            }
+            btn.disabled  = false;
+            btn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Renewal Request';
+        }
+    })
+    .catch(() => {
+        alert('A network error occurred. Please try again.');
+        btn.disabled  = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Renewal Request';
+    });
+}
+
 </script>
