@@ -19,7 +19,14 @@ class AdminSubscriptionController extends Controller
     {
         $tenant      = tenancy()->tenant;
         $currentPlan = $tenant->subscription ?? 'basic';
-        $plans       = SubscriptionPlan::active()->orderBy('sort_order')->get();
+        $today = today();
+        $plans = SubscriptionPlan::active()
+            ->where(fn($q) => $q->whereNull('available_from')
+                                ->orWhereDate('available_from', '<=', $today))
+            ->where(fn($q) => $q->whereNull('available_until')
+                                ->orWhereDate('available_until', '>=', $today))
+            ->orderBy('sort_order')
+            ->get();
         $planSlugs   = $plans->pluck('slug')->toArray();
 
         // Best active automatic discount for each plan

@@ -42,6 +42,8 @@ return new class extends Migration
 
             $table->boolean('is_active')->default(true);
             $table->unsignedTinyInteger('sort_order')->default(0);
+            $table->date('available_from')->nullable();
+            $table->date('available_until')->nullable();
 
             $table->timestamps();
         });

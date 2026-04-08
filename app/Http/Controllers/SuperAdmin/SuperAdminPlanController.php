@@ -43,6 +43,72 @@ class SuperAdminPlanController extends Controller
         return view('superadmin.plans.index', compact('plans', 'discounts', 'tenants'));
     }
 
+    public function create()
+    {
+        return view('superadmin.plans.manage', ['plan' => null]);
+    }
+
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'name'                   => ['required', 'string', 'max:100'],
+            'slug'                   => ['required', 'in:basic,standard,premium'],
+            'description'            => ['nullable', 'string'],
+            'price'                  => ['required', 'numeric', 'min:0'],
+            'duration_days'          => ['required', 'integer', 'min:1'],
+            'max_trainees'           => ['nullable', 'integer', 'min:1'],
+            'max_trainers'           => ['nullable', 'integer', 'min:1'],
+            'max_users'              => ['nullable', 'integer', 'min:1'],
+            'max_courses'            => ['nullable', 'integer', 'min:1'],
+            'max_exports_monthly'    => ['nullable', 'integer', 'min:0'],
+            'allowed_export_formats' => ['nullable', 'array'],
+            'allowed_export_formats.*' => ['in:csv,excel,pdf'],
+            'has_assessments'        => ['boolean'],
+            'has_certificates'       => ['boolean'],
+            'has_custom_reports'     => ['boolean'],
+            'has_branding'           => ['boolean'],
+            'has_trainers'           => ['boolean'],
+            'is_active'              => ['boolean'],
+            'available_from'         => ['nullable', 'date'],
+            'available_until'        => ['nullable', 'date', 'after_or_equal:available_from'],
+            'sort_order'             => ['integer', 'min:0'],
+        ]);
+
+        // Convert nulls for "unlimited" fields
+        foreach (['max_trainees','max_trainers','max_users','max_courses','max_exports_monthly'] as $field) {
+            $data[$field] = $request->filled($field) ? (int) $data[$field] : null;
+        }
+
+        $data['has_assessments']     = $request->boolean('has_assessments');
+        $data['has_certificates']    = $request->boolean('has_certificates');
+        $data['has_custom_reports']  = $request->boolean('has_custom_reports');
+        $data['has_branding']        = $request->boolean('has_branding');
+        $data['has_trainers']        = $request->boolean('has_trainers');
+        $data['is_active']           = $request->boolean('is_active', true);
+
+        SubscriptionPlan::create($data);
+
+        return back()->with('success', 'Plan created.');
+    }
+
+    public function edit(SubscriptionPlan $plan)
+    {
+        return view('superadmin.plans.manage', compact('plan'));
+    }
+
+    public function update(Request $request, SubscriptionPlan $plan)
+    {
+        // same validation as store, then:
+        $plan->update($data);
+        return back()->with('success', 'Plan updated.');
+    }
+
+    public function destroy(SubscriptionPlan $plan)
+    {
+        $plan->delete();
+        return back()->with('success', 'Plan deleted.');
+    }
+
     // ── Plan Assignment ───────────────────────────────────────────────────────
 
     /**

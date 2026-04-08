@@ -90,6 +90,11 @@ foreach (config('tenancy.central_domains') as $domain) {
                     Route::post('/discounts/validate',    [SuperAdminPlanController::class, 'validateCode'])    ->name('discounts.validate');
                 });
 
+                Route::resource('plans/manage', SuperAdminPlanController::class)
+                    ->names('plans.manage')
+                    ->parameters(['manage' => 'plan'])
+                    ->except(['show', 'index']);
+
                 Route::get('/renewals', [SuperAdminRenewalController::class, 'index'])
                     ->name('renewals.index');
                 Route::post('/renewals/{renewal}/approve', [SuperAdminRenewalController::class, 'approve'])
