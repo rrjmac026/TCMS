@@ -107,12 +107,14 @@
                     <button class="up-cta-btn current" disabled>
                         <i class="fas fa-check-circle"></i> Current Plan
                     </button>
+                    @if($plan->slug !== 'basic')
                     <button class="up-cta-btn primary"
                             style="margin-top:10px;background:linear-gradient(135deg,#0a7c3e,#16a34a);
                                 box-shadow:0 4px 20px rgba(22,163,74,.30);"
                             onclick="event.stopPropagation(); selectRenewal('{{ $plan->slug }}', '{{ $plan->name }}', {{ $basePrice }}, {{ $finalPrice }})">
                         <i class="fas fa-rotate"></i> Renew This Plan
                     </button>
+                    @endif
                 @elseif($canUpgrade)
                     <button class="up-cta-btn {{ $isFeatured ? 'on-dark' : 'primary' }}"
                             onclick="event.stopPropagation(); selectPlan('{{ $plan->slug }}', '{{ $plan->name }}', {{ $basePrice }}, {{ $finalPrice }})">

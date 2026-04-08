@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 
 class SuperAdminController extends Controller
 {
@@ -64,6 +65,43 @@ class SuperAdminController extends Controller
         };
     }
 
+    /**
+     * Generate a unique, database-safe tenant ID from the tenant's name.
+     *
+     * Examples:
+     *   "Makati Training Center" → "makati_training_center"
+     *   "ABC Corp (Cebu)"        → "abc_corp_cebu"
+     *
+     * If the slug is already taken, a numeric suffix is appended:
+     *   "makati_training_center_2", "makati_training_center_3", …
+     */
+    private function generateTenantId(string $name): string
+    {
+        // Convert to lowercase, replace spaces/hyphens with underscores,
+        // strip anything that isn't alphanumeric or underscore.
+        $base = preg_replace('/[^a-z0-9]+/', '_', strtolower($name));
+        $base = trim($base, '_');
+
+        // Ensure it starts with a letter (MySQL requirement for DB names used
+        // directly, and avoids issues with some tenancy drivers).
+        if (!preg_match('/^[a-z]/', $base)) {
+            $base = 'tenant_' . $base;
+        }
+
+        // Truncate to a safe length (MySQL DB name limit is 64 chars).
+        $base = substr($base, 0, 50);
+
+        $candidate = $base;
+        $counter   = 2;
+
+        while (Tenant::where('id', $candidate)->exists()) {
+            $candidate = $base . '_' . $counter;
+            $counter++;
+        }
+
+        return $candidate;
+    }
+
     // -------------------------------------------------------------------------
     // Dashboard & Index
     // -------------------------------------------------------------------------
@@ -97,7 +135,13 @@ class SuperAdminController extends Controller
         ]);
 
         try {
+            // Generate a human-readable, name-based ID so the tenant database
+            // is named after the organisation (e.g. "makati_training_center")
+            // instead of a random UUID.
+            $tenantId = $this->generateTenantId($request->name);
+
             Tenant::create([
+                'id'           => $tenantId,
                 'name'         => $request->name,
                 'admin_email'  => $request->admin_email,
                 'subdomain'    => strtolower($request->subdomain),
@@ -151,7 +195,7 @@ class SuperAdminController extends Controller
 
             $tenant->status     = 'approved';
             $tenant->is_active  = true;
-            $tenant->expires_at = $this->expiresAt($tenant->subscription); // ← reads from plan
+            $tenant->expires_at = $this->expiresAt($tenant->subscription);
             $tenant->save();
 
             $tenant->run(function () use ($tenant, $password) {
@@ -276,7 +320,7 @@ class SuperAdminController extends Controller
 
         try {
             $tenant->subscription = $request->subscription;
-            $tenant->expires_at   = $this->expiresAt($request->subscription); // ← reads from plan
+            $tenant->expires_at   = $this->expiresAt($request->subscription);
             $tenant->save();
 
             return redirect()->back()

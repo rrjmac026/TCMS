@@ -22,7 +22,13 @@ class Tenant extends BaseTenant implements TenantWithDatabase
         parent::boot();
 
         static::creating(function ($model) {
-            $model->id = Str::uuid()->toString();
+            // Only auto-generate an ID if one hasn't already been set.
+            // When SuperAdminController passes a name-based ID (e.g.
+            // "makati_training_center"), that value is used as-is so the
+            // tenant database gets a human-readable name.
+            if (empty($model->id)) {
+                $model->id = Str::uuid()->toString();
+            }
         });
     }
 
