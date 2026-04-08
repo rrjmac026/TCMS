@@ -1,10 +1,10 @@
 {{--
     _modal_upgrade.blade.php
-    Changes vs original:
-      • Renewal modal now has a duration picker (months/years)
+    Changes:
+      • Upgrade modal now has a duration picker (months/years) for paid plans
       • Price updates live as the tenant changes duration
-      • duration_days is sent with the renewal request
-      • Upgrade modal is unchanged
+      • duration_days is sent with the upgrade request
+      • Renewal modal is unchanged
 --}}
 
 {{-- ══════════════════════════════════════════════════════════════════════════ --}}
@@ -23,6 +23,43 @@
                 <i class="fas fa-crown"></i>
                 <span id="planName">—</span>
                 <span id="planDuration" style="font-size:12px;opacity:0.8;"></span>
+            </div>
+
+            {{-- ── Duration picker (hidden for free/basic plans) ───────────── --}}
+            <div id="upgrade-duration-section" style="display:none;margin-bottom:18px;text-align:left;">
+                <label style="display:block;font-size:11px;font-weight:700;color:#5a7aaa;
+                              text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">
+                    How long do you want access? *
+                </label>
+
+                {{-- Quick-select chips --}}
+                <div id="upgrade-duration-chips"
+                     style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+                    {{-- chips injected by JS --}}
+                </div>
+
+                {{-- Custom input row --}}
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <input type="number" id="upgrade-custom-amount"
+                           min="1" max="60" value=""
+                           placeholder="Custom"
+                           style="width:90px;padding:8px 10px;border-radius:8px;
+                                  border:1.5px solid #c5d8f5;background:#fff;color:#001a4d;
+                                  font-family:inherit;font-size:13px;outline:none;"
+                           oninput="onUpgradeCustomDurationInput()">
+                    <select id="upgrade-custom-unit"
+                            style="padding:8px 10px;border-radius:8px;border:1.5px solid #c5d8f5;
+                                   background:#fff;color:#001a4d;font-family:inherit;font-size:13px;
+                                   outline:none;cursor:pointer;"
+                            onchange="onUpgradeCustomDurationInput()">
+                        <option value="months">Months</option>
+                        <option value="years">Years</option>
+                        <option value="days">Days</option>
+                    </select>
+                    <span style="font-size:12px;color:#5a7aaa;white-space:nowrap;">
+                        = <strong id="upgrade-days-label">—</strong> days
+                    </span>
+                </div>
             </div>
 
             {{-- Auto-discount notice --}}
@@ -62,7 +99,7 @@
             <div id="price-summary" style="background:#f4f8ff;border-radius:12px;padding:14px;
                  margin-bottom:20px;font-size:13px;">
                 <div style="display:flex;justify-content:space-between;color:#5a7aaa;margin-bottom:4px;">
-                    <span>Plan price</span>
+                    <span>Plan price <span id="upgrade-duration-note" style="font-size:11px;"></span></span>
                     <span id="summary-original">—</span>
                 </div>
                 <div id="summary-discount-row" style="display:none;justify-content:space-between;
@@ -270,8 +307,8 @@
 </div>
 
 <style>
-/* Duration chip styling */
-.renewal-chip {
+/* Duration chip styling — shared by both upgrade and renewal modals */
+.renewal-chip, .upgrade-chip {
     padding: 6px 14px;
     border-radius: 100px;
     border: 1.5px solid #c5d8f5;
@@ -283,8 +320,10 @@
     transition: all .15s;
     white-space: nowrap;
 }
-.renewal-chip:hover  { border-color: #0057B8; color: #0057B8; background: rgba(0,87,184,.06); }
-.renewal-chip.active { border-color: #0a7c3e; color: #0a7c3e; background: rgba(10,124,62,.08); }
-.dark .renewal-chip  { background: #0d1f3c; border-color: #1e3a6b; color: #adc4f0; }
+.renewal-chip:hover, .upgrade-chip:hover  { border-color: #0057B8; color: #0057B8; background: rgba(0,87,184,.06); }
+.renewal-chip.active  { border-color: #0a7c3e; color: #0a7c3e; background: rgba(10,124,62,.08); }
+.upgrade-chip.active  { border-color: #0057B8; color: #0057B8; background: rgba(0,87,184,.10); }
+.dark .renewal-chip, .dark .upgrade-chip  { background: #0d1f3c; border-color: #1e3a6b; color: #adc4f0; }
 .dark .renewal-chip.active { border-color: #4ade80; color: #4ade80; background: rgba(74,222,128,.08); }
+.dark .upgrade-chip.active { border-color: #5b9cf6; color: #5b9cf6; background: rgba(91,156,246,.10); }
 </style>

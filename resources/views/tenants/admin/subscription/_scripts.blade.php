@@ -15,7 +15,7 @@ const planSlugs    = @json($planSlugs);
 const currentPlan  = '{{ $currentPlan }}';
 const currentIndex = planSlugs.indexOf(currentPlan);
 
-// Plan base prices keyed by slug — used for pro-rating renewal prices
+// Plan base prices keyed by slug — used for pro-rating prices
 const PLAN_BASE_PRICES = {};
 @foreach($plans as $plan)
 PLAN_BASE_PRICES['{{ $plan->slug }}'] = {{ (float) $plan->price }};
@@ -25,47 +25,158 @@ PLAN_BASE_PRICES['{{ $plan->slug }}__days'] = {{ (int) $plan->duration_days }};
 // Current tenant expiry (ISO string or empty)
 const TENANT_EXPIRES_AT = '{{ $tenant->expires_at ? $tenant->expires_at->toIso8601String() : '' }}';
 
-// ── Upgrade modal state ───────────────────────────────────────────────────────
-let selectedPlanKey  = null;
-let selectedPlanBase = 0;
-let selectedPlanAuto = 0;
-let validatedCode    = null;
-let activeCodeFinal  = 0;
-let codeTimer        = null;
+// ── Duration chips — shared by both modals ────────────────────────────────────
+const DURATION_CHIPS = [
+    { label: '1 month',  days: 30  },
+    { label: '3 months', days: 90  },
+    { label: '6 months', days: 180 },
+    { label: '1 year',   days: 365 },
+    { label: '2 years',  days: 730 },
+];
+
+// ══════════════════════════════════════════════════════════════════════════════
+// UPGRADE MODAL
+// ══════════════════════════════════════════════════════════════════════════════
+
+let selectedPlanKey      = null;
+let selectedPlanBase     = 0;    // full plan price (for the standard duration)
+let selectedPlanPPD      = 0;    // price-per-day for pro-rating
+let selectedPlanStdDays  = 0;    // standard duration_days for this plan
+let upgradeSelectedDays  = 0;    // days chosen by tenant (0 = use standard)
+let validatedCode        = null;
+let activeCodeFinal      = 0;
+let codeTimer            = null;
 
 // ── Open upgrade modal ────────────────────────────────────────────────────────
 function selectPlan(slug, name, basePrice, autoPrice) {
     const newIndex = planSlugs.indexOf(slug);
     if (newIndex <= currentIndex) return;
 
-    selectedPlanKey  = slug;
-    selectedPlanBase = parseFloat(basePrice) || 0;
-    selectedPlanAuto = parseFloat(autoPrice)  || selectedPlanBase;
-    validatedCode    = null;
-    activeCodeFinal  = 0;
+    selectedPlanKey     = slug;
+    selectedPlanBase    = parseFloat(basePrice) || 0;
+    selectedPlanStdDays = PLAN_BASE_PRICES[slug + '__days'] || 30;
+    selectedPlanPPD     = selectedPlanBase > 0
+        ? selectedPlanBase / selectedPlanStdDays
+        : 0;
+    validatedCode       = null;
+    activeCodeFinal     = 0;
 
     document.getElementById('planName').textContent        = name;
     document.getElementById('successPlanName').textContent = name;
     document.getElementById('modal-discount-code').value   = '';
     document.getElementById('modal-discount-result').style.display = 'none';
 
-    const hasAutoDiscount = selectedPlanAuto < selectedPlanBase;
-    const notice = document.getElementById('auto-discount-notice');
-    if (hasAutoDiscount) {
-        const saved = selectedPlanBase - selectedPlanAuto;
+    // Show duration picker only for paid plans
+    const durSection = document.getElementById('upgrade-duration-section');
+    if (selectedPlanBase > 0) {
+        durSection.style.display = 'block';
+        buildUpgradeChips();
+        setUpgradeDays(selectedPlanStdDays, true); // default to standard duration
+    } else {
+        durSection.style.display = 'none';
+        upgradeSelectedDays = selectedPlanStdDays;
+        refreshUpgradeDurationNote();
+    }
+
+    // Auto-discount notice
+    const autoFinal   = parseFloat(autoPrice) || selectedPlanBase;
+    const hasAutoDisc = autoFinal < selectedPlanBase;
+    const notice      = document.getElementById('auto-discount-notice');
+    if (hasAutoDisc) {
+        const saved = selectedPlanBase - autoFinal;
         document.getElementById('auto-discount-text').textContent =
             'Automatic discount applied — you save ₱' + fmt(saved) +
-            ' (₱' + fmt(selectedPlanBase) + ' → ₱' + fmt(selectedPlanAuto) + ')';
+            ' (₱' + fmt(selectedPlanBase) + ' → ₱' + fmt(autoFinal) + ')';
         notice.style.display = 'block';
     } else {
         notice.style.display = 'none';
     }
 
-    updatePriceSummary(selectedPlanBase, selectedPlanAuto, null);
+    refreshUpgradePriceSummary();
 
     document.getElementById('confirmView').style.display = 'block';
     document.getElementById('successView').style.display  = 'none';
     document.getElementById('upgradeModal').style.display = 'flex';
+}
+
+// ── Build upgrade quick-select chips ─────────────────────────────────────────
+function buildUpgradeChips() {
+    const container = document.getElementById('upgrade-duration-chips');
+    container.innerHTML = '';
+    DURATION_CHIPS.forEach(chip => {
+        const btn = document.createElement('button');
+        btn.type      = 'button';
+        btn.className = 'upgrade-chip';
+        btn.id        = 'upgrade-chip-' + chip.days;
+        btn.textContent = chip.label;
+        btn.onclick   = () => setUpgradeDays(chip.days);
+        container.appendChild(btn);
+    });
+}
+
+// ── Set upgrade duration ──────────────────────────────────────────────────────
+function setUpgradeDays(days, silent) {
+    upgradeSelectedDays = days;
+
+    // Highlight the matching chip (if any)
+    document.querySelectorAll('.upgrade-chip').forEach(c => c.classList.remove('active'));
+    const chip = document.getElementById('upgrade-chip-' + days);
+    if (chip) chip.classList.add('active');
+
+    // Clear the custom input unless called silently (on open)
+    if (!silent) {
+        document.getElementById('upgrade-custom-amount').value = '';
+        document.getElementById('upgrade-custom-unit').value   = 'months';
+    }
+
+    document.getElementById('upgrade-days-label').textContent = days;
+    refreshUpgradeDurationNote();
+    refreshUpgradePriceSummary();
+}
+
+// ── Custom duration input for upgrade ────────────────────────────────────────
+function onUpgradeCustomDurationInput() {
+    const amount = parseInt(document.getElementById('upgrade-custom-amount').value) || 0;
+    const unit   = document.getElementById('upgrade-custom-unit').value;
+
+    let days = 0;
+    if (unit === 'months')     days = Math.round(amount * 30.44);
+    else if (unit === 'years') days = amount * 365;
+    else                       days = amount;
+
+    if (days < 1) return;
+
+    document.querySelectorAll('.upgrade-chip').forEach(c => c.classList.remove('active'));
+
+    upgradeSelectedDays = days;
+    document.getElementById('upgrade-days-label').textContent = days;
+    refreshUpgradeDurationNote();
+    refreshUpgradePriceSummary();
+}
+
+// ── Pro-rated price for selected upgrade days ─────────────────────────────────
+function upgradeBasePrice() {
+    if (selectedPlanPPD <= 0) return selectedPlanBase; // free plan — no pro-rating
+    return Math.round(selectedPlanPPD * upgradeSelectedDays * 100) / 100;
+}
+
+// ── Refresh the "(N days)" note in the price row ──────────────────────────────
+function refreshUpgradeDurationNote() {
+    const note = document.getElementById('upgrade-duration-note');
+    if (note && upgradeSelectedDays && upgradeSelectedDays !== selectedPlanStdDays) {
+        note.textContent = '(' + upgradeSelectedDays + ' days)';
+    } else if (note) {
+        note.textContent = '';
+    }
+}
+
+// ── Refresh upgrade price summary ─────────────────────────────────────────────
+function refreshUpgradePriceSummary() {
+    const base  = upgradeBasePrice();
+    const final = activeCodeFinal > 0 ? activeCodeFinal : base;
+    updatePriceSummary(base, final,
+        validatedCode ? 'Promo code (' + validatedCode + ')' : null
+    );
 }
 
 // ── Upgrade promo code ────────────────────────────────────────────────────────
@@ -76,7 +187,7 @@ function scheduleCodeCheck() {
         validatedCode   = null;
         activeCodeFinal = 0;
         document.getElementById('modal-discount-result').style.display = 'none';
-        updatePriceSummary(selectedPlanBase, selectedPlanAuto, null);
+        refreshUpgradePriceSummary();
         return;
     }
     codeTimer = setTimeout(checkPromoCode, 500);
@@ -99,16 +210,20 @@ function checkPromoCode() {
             result.style.cssText = styleBox('green');
             result.innerHTML = '<i class="fas fa-check-circle" style="margin-right:5px;"></i>' +
                                'Code valid — saves ' + data.formatted_value;
-            validatedCode   = code;
-            activeCodeFinal = parseFloat(data.final_price);
-            updatePriceSummary(selectedPlanBase, activeCodeFinal, 'Promo code (' + code + ')');
+            validatedCode = code;
+
+            // Apply discount ratio to the pro-rated base
+            const base  = upgradeBasePrice();
+            const ratio = data.discount_amount / data.original_price;
+            const saved = Math.min(data.discount_amount, base * ratio);
+            activeCodeFinal = Math.max(0, base - saved);
         } else {
             result.style.cssText = styleBox('red');
             result.innerHTML = '<i class="fas fa-times-circle" style="margin-right:5px;"></i>' + data.message;
             validatedCode   = null;
             activeCodeFinal = 0;
-            updatePriceSummary(selectedPlanBase, selectedPlanAuto, null);
         }
+        refreshUpgradePriceSummary();
     });
 }
 
@@ -137,6 +252,12 @@ function updatePriceSummary(base, final, discountLabel) {
 function confirmUpgrade() {
     if (!selectedPlanKey) return;
 
+    // Require a duration for paid plans
+    if (selectedPlanBase > 0 && !upgradeSelectedDays) {
+        alert('Please choose a duration.');
+        return;
+    }
+
     const btn = document.getElementById('confirmBtn');
     btn.disabled  = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Upgrading…';
@@ -146,6 +267,7 @@ function confirmUpgrade() {
         headers : { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
         body    : JSON.stringify({
             subscription  : selectedPlanKey,
+            duration_days : upgradeSelectedDays || selectedPlanStdDays,
             discount_code : validatedCode ?? '',
         }),
     })
@@ -176,27 +298,17 @@ function closeUpgradeModal(event) {
 // ══════════════════════════════════════════════════════════════════════════════
 
 let renewalPlanKey         = null;
-let renewalPlanBasePPD     = 0;      // price-per-day for the selected plan
-let renewalSelectedDays    = 0;      // total days chosen by tenant
+let renewalPlanBasePPD     = 0;
+let renewalSelectedDays    = 0;
 let renewalValidCode       = null;
 let renewalActiveCodeFinal = 0;
 let renewalCodeTimer       = null;
-
-// Quick-select chips: label → days
-const RENEWAL_CHIPS = [
-    { label: '1 month',  days: 30  },
-    { label: '3 months', days: 90  },
-    { label: '6 months', days: 180 },
-    { label: '1 year',   days: 365 },
-    { label: '2 years',  days: 730 },
-];
 
 function selectRenewal(slug, name, basePrice, autoPrice) {
     renewalPlanKey         = slug;
     renewalValidCode       = null;
     renewalActiveCodeFinal = 0;
 
-    // Price-per-day (used for pro-rating)
     const planDays = PLAN_BASE_PRICES[slug + '__days'] || 30;
     renewalPlanBasePPD = basePrice > 0 ? basePrice / planDays : 0;
 
@@ -207,10 +319,7 @@ function selectRenewal(slug, name, basePrice, autoPrice) {
     document.getElementById('renewal-pending-warning').style.display  = 'none';
     document.getElementById('renewal-auto-discount-notice').style.display = 'none';
 
-    // Build chip buttons
     buildRenewalChips();
-
-    // Default to the plan's standard duration
     setRenewalDays(planDays, true);
 
     document.getElementById('renewalConfirmView').style.display  = 'block';
@@ -218,11 +327,11 @@ function selectRenewal(slug, name, basePrice, autoPrice) {
     document.getElementById('renewalModal').style.display        = 'flex';
 }
 
-// ── Build quick-select chips ──────────────────────────────────────────────────
+// ── Build renewal quick-select chips ─────────────────────────────────────────
 function buildRenewalChips() {
     const container = document.getElementById('renewal-duration-chips');
     container.innerHTML = '';
-    RENEWAL_CHIPS.forEach(chip => {
+    DURATION_CHIPS.forEach(chip => {
         const btn = document.createElement('button');
         btn.type      = 'button';
         btn.className = 'renewal-chip';
@@ -237,12 +346,10 @@ function buildRenewalChips() {
 function setRenewalDays(days, silent) {
     renewalSelectedDays = days;
 
-    // Highlight the matching chip (if any)
     document.querySelectorAll('.renewal-chip').forEach(c => c.classList.remove('active'));
     const chip = document.getElementById('chip-' + days);
     if (chip) chip.classList.add('active');
 
-    // Clear the custom input if a chip was clicked
     if (!silent) {
         document.getElementById('renewal-custom-amount').value = '';
         document.getElementById('renewal-custom-unit').value   = 'months';
@@ -259,13 +366,12 @@ function onCustomDurationInput() {
     const unit   = document.getElementById('renewal-custom-unit').value;
 
     let days = 0;
-    if (unit === 'months') days = Math.round(amount * 30.44);
-    else if (unit === 'years')  days = amount * 365;
-    else                        days = amount; // raw days
+    if (unit === 'months')     days = Math.round(amount * 30.44);
+    else if (unit === 'years') days = amount * 365;
+    else                       days = amount;
 
     if (days < 1) return;
 
-    // Deactivate all chips
     document.querySelectorAll('.renewal-chip').forEach(c => c.classList.remove('active'));
 
     renewalSelectedDays = days;
@@ -274,12 +380,12 @@ function onCustomDurationInput() {
     refreshRenewalDates();
 }
 
-// ── Compute pro-rated price for selected days ─────────────────────────────────
+// ── Compute pro-rated price for renewal ──────────────────────────────────────
 function renewalBasePrice() {
     return Math.round(renewalPlanBasePPD * renewalSelectedDays * 100) / 100;
 }
 
-// ── Refresh price summary ─────────────────────────────────────────────────────
+// ── Refresh renewal price summary ─────────────────────────────────────────────
 function refreshRenewalPriceSummary() {
     const base  = renewalBasePrice();
     const final = renewalActiveCodeFinal > 0 ? renewalActiveCodeFinal : base;
@@ -298,8 +404,8 @@ function refreshRenewalDates() {
     const toEl   = document.getElementById('renewal-to-date');
     if (!fromEl || !toEl) return;
 
-    const now     = new Date();
-    const expiry  = TENANT_EXPIRES_AT ? new Date(TENANT_EXPIRES_AT) : null;
+    const now      = new Date();
+    const expiry   = TENANT_EXPIRES_AT ? new Date(TENANT_EXPIRES_AT) : null;
     const baseDate = (expiry && expiry > now) ? expiry : now;
 
     const toDate = new Date(baseDate);
@@ -341,8 +447,7 @@ function checkRenewalPromoCode() {
             result.innerHTML = '<i class="fas fa-check-circle" style="margin-right:5px;"></i>' +
                                'Code valid — saves ' + data.formatted_value;
 
-            // Apply discount to the pro-rated base
-            const base = renewalBasePrice();
+            const base  = renewalBasePrice();
             const ratio = data.discount_amount / data.original_price;
             const saved = Math.min(data.discount_amount, base * ratio);
             renewalActiveCodeFinal = Math.max(0, base - saved);
