@@ -36,12 +36,14 @@ class SuperAdminPlanController extends Controller
 
     public function index()
     {
-        $plans     = SubscriptionPlan::active()->get();
+        $plans     = SubscriptionPlan::orderBy('sort_order')->get();
         $discounts = Discount::latest()->get();
         $tenants   = Tenant::orderBy('name')->get();
 
         return view('superadmin.plans.index', compact('plans', 'discounts', 'tenants'));
     }
+
+    // ── Plan CRUD ─────────────────────────────────────────────────────────────
 
     public function create()
     {
@@ -51,44 +53,47 @@ class SuperAdminPlanController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'name'                   => ['required', 'string', 'max:100'],
-            'slug'                   => ['required', 'in:basic,standard,premium'],
-            'description'            => ['nullable', 'string'],
-            'price'                  => ['required', 'numeric', 'min:0'],
-            'duration_days'          => ['required', 'integer', 'min:1'],
-            'max_trainees'           => ['nullable', 'integer', 'min:1'],
-            'max_trainers'           => ['nullable', 'integer', 'min:1'],
-            'max_users'              => ['nullable', 'integer', 'min:1'],
-            'max_courses'            => ['nullable', 'integer', 'min:1'],
-            'max_exports_monthly'    => ['nullable', 'integer', 'min:0'],
-            'allowed_export_formats' => ['nullable', 'array'],
+            'name'                     => ['required', 'string', 'max:100'],
+            'slug'                     => ['required', 'in:basic,standard,premium'],
+            'description'              => ['nullable', 'string'],
+            'price'                    => ['required', 'numeric', 'min:0'],
+            'duration_days'            => ['required', 'integer', 'min:1'],
+            'max_trainees'             => ['nullable', 'integer', 'min:1'],
+            'max_trainers'             => ['nullable', 'integer', 'min:1'],
+            'max_users'                => ['nullable', 'integer', 'min:1'],
+            'max_courses'              => ['nullable', 'integer', 'min:1'],
+            'max_exports_monthly'      => ['nullable', 'integer', 'min:0'],
+            'allowed_export_formats'   => ['nullable', 'array'],
             'allowed_export_formats.*' => ['in:csv,excel,pdf'],
-            'has_assessments'        => ['boolean'],
-            'has_certificates'       => ['boolean'],
-            'has_custom_reports'     => ['boolean'],
-            'has_branding'           => ['boolean'],
-            'has_trainers'           => ['boolean'],
-            'is_active'              => ['boolean'],
-            'available_from'         => ['nullable', 'date'],
-            'available_until'        => ['nullable', 'date', 'after_or_equal:available_from'],
-            'sort_order'             => ['integer', 'min:0'],
+            'has_assessments'          => ['boolean'],
+            'has_certificates'         => ['boolean'],
+            'has_custom_reports'       => ['boolean'],
+            'has_branding'             => ['boolean'],
+            'has_trainers'             => ['boolean'],
+            'is_active'                => ['boolean'],
+            'available_from'           => ['nullable', 'date'],
+            'available_until'          => ['nullable', 'date', 'after_or_equal:available_from'],
+            'sort_order'               => ['integer', 'min:0'],
         ]);
 
         // Convert nulls for "unlimited" fields
-        foreach (['max_trainees','max_trainers','max_users','max_courses','max_exports_monthly'] as $field) {
+        foreach (['max_trainees', 'max_trainers', 'max_users', 'max_courses', 'max_exports_monthly'] as $field) {
             $data[$field] = $request->filled($field) ? (int) $data[$field] : null;
         }
 
-        $data['has_assessments']     = $request->boolean('has_assessments');
-        $data['has_certificates']    = $request->boolean('has_certificates');
-        $data['has_custom_reports']  = $request->boolean('has_custom_reports');
-        $data['has_branding']        = $request->boolean('has_branding');
-        $data['has_trainers']        = $request->boolean('has_trainers');
-        $data['is_active']           = $request->boolean('is_active', true);
+        $data['allowed_export_formats'] = $request->input('allowed_export_formats', []);
+        $data['has_assessments']        = $request->boolean('has_assessments');
+        $data['has_certificates']       = $request->boolean('has_certificates');
+        $data['has_custom_reports']     = $request->boolean('has_custom_reports');
+        $data['has_branding']           = $request->boolean('has_branding');
+        $data['has_trainers']           = $request->boolean('has_trainers');
+        $data['is_active']              = $request->boolean('is_active', true);
+        $data['sort_order']             = (int) $request->input('sort_order', 0);
 
         SubscriptionPlan::create($data);
 
-        return back()->with('success', 'Plan created.');
+        return redirect()->route('superadmin.plans.index')
+            ->with('success', "Plan \"{$data['name']}\" created successfully.");
     }
 
     public function edit(SubscriptionPlan $plan)
@@ -98,15 +103,57 @@ class SuperAdminPlanController extends Controller
 
     public function update(Request $request, SubscriptionPlan $plan)
     {
-        // same validation as store, then:
+        $data = $request->validate([
+            'name'                     => ['required', 'string', 'max:100'],
+            'slug'                     => ['required', 'in:basic,standard,premium'],
+            'description'              => ['nullable', 'string'],
+            'price'                    => ['required', 'numeric', 'min:0'],
+            'duration_days'            => ['required', 'integer', 'min:1'],
+            'max_trainees'             => ['nullable', 'integer', 'min:1'],
+            'max_trainers'             => ['nullable', 'integer', 'min:1'],
+            'max_users'                => ['nullable', 'integer', 'min:1'],
+            'max_courses'              => ['nullable', 'integer', 'min:1'],
+            'max_exports_monthly'      => ['nullable', 'integer', 'min:0'],
+            'allowed_export_formats'   => ['nullable', 'array'],
+            'allowed_export_formats.*' => ['in:csv,excel,pdf'],
+            'has_assessments'          => ['boolean'],
+            'has_certificates'         => ['boolean'],
+            'has_custom_reports'       => ['boolean'],
+            'has_branding'             => ['boolean'],
+            'has_trainers'             => ['boolean'],
+            'is_active'                => ['boolean'],
+            'available_from'           => ['nullable', 'date'],
+            'available_until'          => ['nullable', 'date', 'after_or_equal:available_from'],
+            'sort_order'               => ['integer', 'min:0'],
+        ]);
+
+        // Convert nulls for "unlimited" fields
+        foreach (['max_trainees', 'max_trainers', 'max_users', 'max_courses', 'max_exports_monthly'] as $field) {
+            $data[$field] = $request->filled($field) ? (int) $data[$field] : null;
+        }
+
+        $data['allowed_export_formats'] = $request->input('allowed_export_formats', []);
+        $data['has_assessments']        = $request->boolean('has_assessments');
+        $data['has_certificates']       = $request->boolean('has_certificates');
+        $data['has_custom_reports']     = $request->boolean('has_custom_reports');
+        $data['has_branding']           = $request->boolean('has_branding');
+        $data['has_trainers']           = $request->boolean('has_trainers');
+        $data['is_active']              = $request->boolean('is_active', true);
+        $data['sort_order']             = (int) $request->input('sort_order', 0);
+
         $plan->update($data);
-        return back()->with('success', 'Plan updated.');
+
+        return redirect()->route('superadmin.plans.index')
+            ->with('success', "Plan \"{$plan->name}\" updated successfully.");
     }
 
     public function destroy(SubscriptionPlan $plan)
     {
+        $name = $plan->name;
         $plan->delete();
-        return back()->with('success', 'Plan deleted.');
+
+        return redirect()->route('superadmin.plans.index')
+            ->with('success', "Plan \"{$name}\" deleted.");
     }
 
     // ── Plan Assignment ───────────────────────────────────────────────────────
@@ -192,18 +239,6 @@ class SuperAdminPlanController extends Controller
 
     // ── Discount Management ───────────────────────────────────────────────────
 
-    /**
-     * Create a discount.
-     *
-     * is_automatic = true  → shown automatically on plan cards (no code entry needed)
-     * is_automatic = false → tenant must enter the code manually on the upgrade page
-     *
-     * plan_slugs = null        → applies to all plans
-     * plan_slugs = ['standard','premium'] → applies only to those plans
-     *
-     * tenant_ids = null        → promo code applies to any tenant (code-based only)
-     * tenant_ids = ['uuid',…]  → promo code restricted to those tenants
-     */
     public function storeDiscount(Request $request)
     {
         $data = $request->validate([
@@ -227,20 +262,16 @@ class SuperAdminPlanController extends Controller
 
         $isAutomatic = $request->boolean('is_automatic', false);
 
-        // Automatic discounts don't need a code — generate a placeholder so the
-        // column stays non-null (it has a unique constraint)
         if ($isAutomatic) {
             $data['code']       = 'AUTO-' . strtoupper(uniqid());
-            $data['tenant_ids'] = null; // tenant restriction is irrelevant for automatic discounts
+            $data['tenant_ids'] = null;
         } else {
             $data['code'] = strtoupper($data['code'] ?? '');
 
-            // Normalise tenant_ids: empty array → null (means "any tenant")
             $tenantIds          = $request->input('tenant_ids', []);
             $data['tenant_ids'] = (is_array($tenantIds) && count($tenantIds) > 0) ? $tenantIds : null;
         }
 
-        // Normalise plan_slugs: empty array → null (means "all plans")
         $planSlugs = $request->input('plan_slugs', []);
         $data['plan_slugs']   = (is_array($planSlugs) && count($planSlugs) > 0) ? $planSlugs : null;
         $data['is_active']    = $request->boolean('is_active', true);
@@ -280,18 +311,15 @@ class SuperAdminPlanController extends Controller
         $data['is_active']    = $request->boolean('is_active', true);
         $data['is_automatic'] = $isAutomatic;
 
-        // Normalise plan_slugs
         $planSlugs = $request->input('plan_slugs', []);
         $data['plan_slugs'] = (is_array($planSlugs) && count($planSlugs) > 0) ? $planSlugs : null;
 
-        // Keep the auto-generated code for automatic discounts
         if ($isAutomatic) {
-            unset($data['code']); // don't overwrite the AUTO-xxx code
-            $data['tenant_ids'] = null; // tenant restriction is irrelevant for automatic discounts
+            unset($data['code']);
+            $data['tenant_ids'] = null;
         } else {
             $data['code'] = strtoupper($data['code'] ?? $discount->code);
 
-            // Normalise tenant_ids
             $tenantIds          = $request->input('tenant_ids', []);
             $data['tenant_ids'] = (is_array($tenantIds) && count($tenantIds) > 0) ? $tenantIds : null;
         }
@@ -311,12 +339,6 @@ class SuperAdminPlanController extends Controller
 
     // ── AJAX: validate a code-based discount ─────────────────────────────────
 
-    /**
-     * Used by both superadmin Apply-to-Tenant form and tenant upgrade modal
-     * to check a manually entered promo code.
-     *
-     * Returns pricing info only — never triggers a plan change.
-     */
     public function validateCode(Request $request)
     {
         $request->validate([
@@ -324,7 +346,6 @@ class SuperAdminPlanController extends Controller
             'plan_slug' => ['required', 'in:basic,standard,premium'],
         ]);
 
-        // Pass tenant ID if available (from tenant context or explicit param)
         $tenantId = $request->input('tenant_id') ?? optional(tenancy()->tenant)->id;
 
         $discount = Discount::findValidCode($request->code, $request->plan_slug, $tenantId);
