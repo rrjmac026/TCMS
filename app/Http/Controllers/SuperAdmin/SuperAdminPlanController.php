@@ -11,6 +11,7 @@ use Illuminate\Validation\Rule;
 use App\Models\DiscountUsage;
 use App\Models\TenantSubscription;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 /**
  * SuperAdminPlanController
@@ -18,17 +19,11 @@ use Illuminate\Support\Facades\DB;
  * IMPORTANT — Two completely separate responsibilities:
  *
  * 1. PLAN ASSIGNMENT (applyToTenant)
- *    The superadmin can assign/change a tenant's plan (Basic → Standard → Premium).
- *    This is the ONLY action that changes a tenant's subscription plan.
- *    A discount code can optionally be attached to record the discounted price paid,
- *    but applying a discount code here does NOT by itself change any plan.
+ *    The superadmin can assign/change a tenant's plan.
+ *    A discount code can optionally be attached to record the discounted price paid.
  *
  * 2. DISCOUNT MANAGEMENT (store/update/destroyDiscount)
- *    Discounts are purely pricing tools. Two subtypes:
- *    a) Automatic — shown on plan cards with no code required (date-range based).
- *    b) Code-based — tenant must type the code manually on the upgrade page.
- *       Code-based discounts can optionally be restricted to specific tenants.
- *    Neither type changes a tenant's plan on its own.
+ *    Discounts are purely pricing tools — they never change a plan on their own.
  */
 class SuperAdminPlanController extends Controller
 {
@@ -54,7 +49,8 @@ class SuperAdminPlanController extends Controller
     {
         $data = $request->validate([
             'name'                     => ['required', 'string', 'max:100'],
-            'slug'                     => ['required', 'in:basic,standard,premium'],
+            // Slug is free-form but must be unique across plans
+            'slug'                     => ['required', 'string', 'max:50', 'alpha_dash', 'unique:subscription_plans,slug'],
             'description'              => ['nullable', 'string'],
             'price'                    => ['required', 'numeric', 'min:0'],
             'duration_days'            => ['required', 'integer', 'min:1'],
@@ -75,6 +71,9 @@ class SuperAdminPlanController extends Controller
             'available_until'          => ['nullable', 'date', 'after_or_equal:available_from'],
             'sort_order'               => ['integer', 'min:0'],
         ]);
+
+        // Normalize slug: lowercase, hyphens
+        $data['slug'] = Str::slug($data['slug']);
 
         // Convert nulls for "unlimited" fields
         foreach (['max_trainees', 'max_trainers', 'max_users', 'max_courses', 'max_exports_monthly'] as $field) {
@@ -105,7 +104,8 @@ class SuperAdminPlanController extends Controller
     {
         $data = $request->validate([
             'name'                     => ['required', 'string', 'max:100'],
-            'slug'                     => ['required', 'in:basic,standard,premium'],
+            // Slug must be unique but ignore this plan's own slug
+            'slug'                     => ['required', 'string', 'max:50', 'alpha_dash', Rule::unique('subscription_plans', 'slug')->ignore($plan->id)],
             'description'              => ['nullable', 'string'],
             'price'                    => ['required', 'numeric', 'min:0'],
             'duration_days'            => ['required', 'integer', 'min:1'],
@@ -126,6 +126,8 @@ class SuperAdminPlanController extends Controller
             'available_until'          => ['nullable', 'date', 'after_or_equal:available_from'],
             'sort_order'               => ['integer', 'min:0'],
         ]);
+
+        $data['slug'] = Str::slug($data['slug']);
 
         // Convert nulls for "unlimited" fields
         foreach (['max_trainees', 'max_trainers', 'max_users', 'max_courses', 'max_exports_monthly'] as $field) {
@@ -160,16 +162,15 @@ class SuperAdminPlanController extends Controller
 
     /**
      * Assign a plan to a tenant (and optionally record a discounted price).
-     *
-     * KEY RULE: Only this method changes a tenant's subscription plan.
-     * A discount code attached here only affects the amount_paid that is recorded.
-     * The plan change happens regardless of whether a discount is used.
      */
     public function applyToTenant(Request $request)
     {
+        // Get all valid plan slugs dynamically
+        $validSlugs = SubscriptionPlan::pluck('slug')->toArray();
+
         $data = $request->validate([
             'tenant_id'     => ['required', 'exists:tenants,id'],
-            'plan_slug'     => ['required', 'in:basic,standard,premium'],
+            'plan_slug'     => ['required', Rule::in($validSlugs)],
             'discount_code' => ['nullable', 'string'],
         ]);
 
@@ -178,7 +179,6 @@ class SuperAdminPlanController extends Controller
         $price     = (float) $planModel->price;
         $discount  = null;
 
-        // Resolve discount if a code was provided — only affects recorded price
         if (! empty($data['discount_code'])) {
             $discount = Discount::findValidCode($data['discount_code'], $data['plan_slug'], $tenant->id);
 
@@ -209,7 +209,6 @@ class SuperAdminPlanController extends Controller
                 $discountUsageId = $usage->id;
             }
 
-            // Record the subscription history entry
             TenantSubscription::create([
                 'tenant_id'         => $tenant->id,
                 'plan_slug'         => $data['plan_slug'],
@@ -221,7 +220,6 @@ class SuperAdminPlanController extends Controller
                 'applied_by'        => auth()->id(),
             ]);
 
-            // This is the ONLY place a plan change is triggered by the superadmin
             $tenant->subscription = $data['plan_slug'];
             $tenant->expires_at   = $expiresAt;
             $tenant->status       = 'approved';
@@ -241,13 +239,15 @@ class SuperAdminPlanController extends Controller
 
     public function storeDiscount(Request $request)
     {
+        $validSlugs = SubscriptionPlan::pluck('slug')->toArray();
+
         $data = $request->validate([
             'code'         => ['required_if:is_automatic,0', 'nullable', 'string', 'max:50', 'unique:discounts,code'],
             'label'        => ['required', 'string', 'max:150'],
             'type'         => ['required', 'in:percentage,fixed'],
             'value'        => ['required', 'numeric', 'min:0.01'],
             'plan_slugs'   => ['nullable', 'array'],
-            'plan_slugs.*' => ['in:basic,standard,premium'],
+            'plan_slugs.*' => [Rule::in($validSlugs)],
             'tenant_ids'   => ['nullable', 'array'],
             'tenant_ids.*' => ['exists:tenants,id'],
             'valid_from'   => ['nullable', 'date'],
@@ -267,7 +267,6 @@ class SuperAdminPlanController extends Controller
             $data['tenant_ids'] = null;
         } else {
             $data['code'] = strtoupper($data['code'] ?? '');
-
             $tenantIds          = $request->input('tenant_ids', []);
             $data['tenant_ids'] = (is_array($tenantIds) && count($tenantIds) > 0) ? $tenantIds : null;
         }
@@ -285,6 +284,8 @@ class SuperAdminPlanController extends Controller
 
     public function updateDiscount(Request $request, Discount $discount)
     {
+        $validSlugs = SubscriptionPlan::pluck('slug')->toArray();
+
         $data = $request->validate([
             'code'         => [
                 'nullable', 'string', 'max:50',
@@ -294,7 +295,7 @@ class SuperAdminPlanController extends Controller
             'type'         => ['required', 'in:percentage,fixed'],
             'value'        => ['required', 'numeric', 'min:0.01'],
             'plan_slugs'   => ['nullable', 'array'],
-            'plan_slugs.*' => ['in:basic,standard,premium'],
+            'plan_slugs.*' => [Rule::in($validSlugs)],
             'tenant_ids'   => ['nullable', 'array'],
             'tenant_ids.*' => ['exists:tenants,id'],
             'valid_from'   => ['nullable', 'date'],
@@ -319,7 +320,6 @@ class SuperAdminPlanController extends Controller
             $data['tenant_ids'] = null;
         } else {
             $data['code'] = strtoupper($data['code'] ?? $discount->code);
-
             $tenantIds          = $request->input('tenant_ids', []);
             $data['tenant_ids'] = (is_array($tenantIds) && count($tenantIds) > 0) ? $tenantIds : null;
         }
@@ -343,7 +343,7 @@ class SuperAdminPlanController extends Controller
     {
         $request->validate([
             'code'      => ['required', 'string'],
-            'plan_slug' => ['required', 'in:basic,standard,premium'],
+            'plan_slug' => ['required', 'string'],
         ]);
 
         $tenantId = $request->input('tenant_id') ?? optional(tenancy()->tenant)->id;

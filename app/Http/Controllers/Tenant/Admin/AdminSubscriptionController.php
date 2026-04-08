@@ -27,7 +27,7 @@ class AdminSubscriptionController extends Controller
                                 ->orWhereDate('available_until', '>=', $today))
             ->orderBy('sort_order')
             ->get();
-        $planSlugs   = $plans->pluck('slug')->toArray();
+        $planSlugs = $plans->pluck('slug')->toArray();
 
         // Best active automatic discount for each plan
         $autoDiscounts = [];
@@ -45,7 +45,7 @@ class AdminSubscriptionController extends Controller
                 ->first();
         }
 
-        // Any pending renewal request — shown to the tenant so they know
+        // Any pending renewal request
         $pendingRenewal = RenewalRequest::on('mysql')
             ->where('tenant_id', $tenant->id)
             ->where('status', 'pending')
@@ -67,7 +67,7 @@ class AdminSubscriptionController extends Controller
     {
         $request->validate([
             'code'      => ['required', 'string'],
-            'plan_slug' => ['required', 'in:basic,standard,premium'],
+            'plan_slug' => ['required', 'string'],
         ]);
 
         $tenantId = optional(tenancy()->tenant)->id;
@@ -91,25 +91,10 @@ class AdminSubscriptionController extends Controller
 
     // ── AJAX: upgrade plan ────────────────────────────────────────────────
 
-    /**
-     * Upgrade the tenant to a higher plan immediately.
-     *
-     * BILLING RULES enforced here:
-     *
-     * 1. duration_days is now tenant-chosen. If omitted, the plan's standard
-     *    duration is used. expires_at = now + duration_days.
-     *    Remaining days on the old plan are NOT carried over.
-     *
-     * 2. Any pending RENEWAL REQUEST for the OLD plan is automatically cancelled
-     *    because it is now stale — the tenant has already moved to a different plan.
-     *
-     * 3. Central-DB models (TenantSubscription, DiscountUsage, Tenant) are written
-     *    with explicit .on('mysql') to avoid the tenant-context connection interfering.
-     */
     public function upgrade(Request $request)
     {
         $data = $request->validate([
-            'subscription'  => ['required', 'in:basic,standard,premium'],
+            'subscription'  => ['required', 'string'],
             'duration_days' => ['nullable', 'integer', 'min:1'],
             'discount_code' => ['nullable', 'string'],
         ]);
@@ -118,11 +103,12 @@ class AdminSubscriptionController extends Controller
         $planModel = SubscriptionPlan::where('slug', $data['subscription'])->firstOrFail();
         $basePrice = (float) $planModel->price;
 
-        // Enforce upgrade-only (no downgrades via this endpoint)
-        $planOrder     = ['basic' => 0, 'standard' => 1, 'premium' => 2];
-        $currentRank   = $planOrder[$tenant->subscription] ?? 0;
-        $requestedRank = $planOrder[$data['subscription']] ?? 0;
+        // Build a dynamic plan order keyed by sort_order
+        $allPlans   = SubscriptionPlan::orderBy('sort_order')->pluck('sort_order', 'slug')->toArray();
+        $currentRank   = $allPlans[$tenant->subscription] ?? 0;
+        $requestedRank = $allPlans[$data['subscription']]  ?? 0;
 
+        // Enforce upgrade-only (no downgrades)
         if ($requestedRank <= $currentRank) {
             return response()->json([
                 'success' => false,
@@ -131,14 +117,12 @@ class AdminSubscriptionController extends Controller
         }
 
         // ── Resolve duration ──────────────────────────────────────────────
-        // Use the tenant-chosen duration, or fall back to the plan's standard duration.
         $durationDays = (int) ($data['duration_days'] ?? $planModel->duration_days);
         if ($durationDays < 1) {
             $durationDays = $planModel->duration_days;
         }
 
         // Pro-rate the price based on the chosen duration vs the standard duration.
-        // e.g. Standard is ₱1,499 for 180 days → 90 days = ₱749.50
         $proratedBase = $planModel->duration_days > 0
             ? round(($basePrice / $planModel->duration_days) * $durationDays, 2)
             : $basePrice;
@@ -173,27 +157,25 @@ class AdminSubscriptionController extends Controller
             }
         }
 
-        // New expiry: now + chosen duration.
-        // Old remaining time is intentionally not carried over.
         $expiresAt = now()->addDays($durationDays);
         $appliedBy = auth()->id();
 
         // ── Cancel stale pending renewal requests ─────────────────────────
+        // Cancel any pending renewals for plans at or below the new plan's rank
+        $staleSlug = array_keys(
+            array_filter($allPlans, fn($rank) => $rank <= $requestedRank)
+        );
+
         RenewalRequest::on('mysql')
             ->where('tenant_id', $tenant->id)
             ->where('status', 'pending')
-            ->where(function ($q) use ($planOrder, $requestedRank) {
-                $stalePlanSlugs = array_keys(
-                    array_filter($planOrder, fn($rank) => $rank <= $requestedRank)
-                );
-                $q->whereIn('plan_slug', $stalePlanSlugs);
-            })
+            ->whereIn('plan_slug', $staleSlug)
             ->update([
                 'status' => 'cancelled_by_upgrade',
                 'notes'  => 'Automatically cancelled — tenant upgraded to a higher plan.',
             ]);
 
-        // ── Write discount usage to central DB ────────────────────────────
+        // ── Write discount usage ──────────────────────────────────────────
         $discountUsageId = null;
         if ($discount) {
             $usage = DiscountUsage::on('mysql')->create([
@@ -209,7 +191,7 @@ class AdminSubscriptionController extends Controller
             $discountUsageId = $usage->id;
         }
 
-        // ── Write subscription history to central DB ──────────────────────
+        // ── Write subscription history ────────────────────────────────────
         TenantSubscription::on('mysql')->create([
             'tenant_id'         => $tenant->id,
             'plan_slug'         => $data['subscription'],
@@ -221,7 +203,7 @@ class AdminSubscriptionController extends Controller
             'applied_by'        => $appliedBy,
         ]);
 
-        // ── Update tenant record on central DB ────────────────────────────
+        // ── Update tenant ─────────────────────────────────────────────────
         DB::connection('mysql')->table('tenants')
             ->where('id', $tenant->id)
             ->update([
@@ -230,7 +212,6 @@ class AdminSubscriptionController extends Controller
                 'updated_at'   => now(),
             ]);
 
-        // Keep in-memory model in sync for any code later in this request
         $tenant->subscription = $data['subscription'];
         $tenant->expires_at   = $expiresAt;
 

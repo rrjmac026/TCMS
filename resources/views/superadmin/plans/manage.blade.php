@@ -60,20 +60,15 @@
     .fi .hint { font-size: 11px; color: var(--sa-muted); margin-top: 1px; }
     .fi-full { grid-column: 1 / -1; }
 
-    /* Slug pills */
-    .slug-group { display: flex; gap: 10px; }
-    .slug-pill { flex: 1; position: relative; }
-    .slug-pill input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
-    .slug-pill label {
-        display: flex; flex-direction: column; align-items: center; gap: 6px;
-        padding: 14px 10px; border-radius: 12px; border: 1.5px solid var(--sa-border);
-        background: var(--sa-surface); cursor: pointer; transition: all .15s;
-        text-align: center; font-size: 13px; font-weight: 600; color: var(--sa-muted); user-select: none;
+    /* Slug preview badge */
+    .slug-preview {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 4px 12px; border-radius: 100px;
+        font-size: 12px; font-weight: 700; letter-spacing: .5px;
+        background: rgba(0,87,184,.10); color: var(--sa-accent);
+        border: 1.5px solid rgba(0,87,184,.20);
+        margin-top: 6px; transition: all .2s;
     }
-    .slug-pill label .sp-icon { font-size: 20px; }
-    .slug-pill label .sp-name { font-size: 12px; font-weight: 700; color: var(--sa-text); text-transform: uppercase; letter-spacing: .5px; }
-    .slug-pill input:checked + label { border-color: var(--sa-accent); background: rgba(0,87,184,.07); color: var(--sa-accent); }
-    .slug-pill input:checked + label .sp-name { color: var(--sa-accent); }
 
     /* Feature toggles */
     .feat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
@@ -150,6 +145,18 @@
     .price-preview .pp-val { font-size: 22px; font-weight: 800; color: var(--sa-primary); }
     .price-preview .pp-dur { font-size: 12px; color: var(--sa-muted); }
 
+    /* Icon picker */
+    .icon-picker { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+    .icon-opt { position: relative; }
+    .icon-opt input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
+    .icon-opt label {
+        display: flex; align-items: center; justify-content: center;
+        width: 42px; height: 42px; border-radius: 10px; font-size: 20px;
+        border: 1.5px solid var(--sa-border); background: var(--sa-surface);
+        cursor: pointer; transition: all .15s; user-select: none;
+    }
+    .icon-opt input:checked + label { border-color: var(--sa-accent); background: rgba(0,87,184,.08); }
+
     /* Buttons */
     .btn {
         display: inline-flex; align-items: center; gap: 7px; padding: 10px 20px;
@@ -166,7 +173,6 @@
 
     @media (max-width: 640px) {
         .form-grid-2, .form-grid-3 { grid-template-columns: 1fr; }
-        .slug-group { flex-direction: column; }
         .date-row { grid-template-columns: 1fr; }
         .pm-card { padding: 20px 18px; }
     }
@@ -216,40 +222,65 @@
         <div class="pm-card">
             <div class="pm-card-title"><i class="fas fa-id-card"></i> Plan Identity</div>
 
-            <div class="fi" style="margin-bottom:18px;">
-                <label>Plan Tier *</label>
-                <div class="slug-group">
-                    @foreach([
-                        'basic'    => ['🌱', 'Basic',    'Free starter plan'],
-                        'standard' => ['🚀', 'Standard', 'Mid-tier plan'],
-                        'premium'  => ['💎', 'Premium',  'Full-featured plan'],
-                    ] as $slug => [$icon, $label, $desc])
-                        <div class="slug-pill">
-                            <input type="radio" name="slug" value="{{ $slug }}" id="slug-{{ $slug }}"
-                                   {{ old('slug', $plan->slug ?? '') === $slug ? 'checked' : '' }} required>
-                            <label for="slug-{{ $slug }}">
-                                <span class="sp-icon">{{ $icon }}</span>
-                                <span class="sp-name">{{ $label }}</span>
-                                <span style="font-size:11px;font-weight:400;color:var(--sa-muted);">{{ $desc }}</span>
-                            </label>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-
-            <div class="form-grid-2">
+            <div class="form-grid-2" style="margin-bottom:18px;">
+                {{-- Display Name --}}
                 <div class="fi">
                     <label>Display Name *</label>
-                    <input type="text" name="name"
+                    <input type="text" name="name" id="inp-name"
                            value="{{ old('name', $plan->name ?? '') }}"
-                           placeholder="e.g. Standard Plan" required maxlength="100">
+                           placeholder="e.g. Gold Plan" required maxlength="100"
+                           oninput="autoSlug()">
                 </div>
+
+                {{-- Plan Icon --}}
+                <div class="fi">
+                    <label>Plan Icon</label>
+                    <div class="icon-picker" id="icon-picker">
+                        @php
+                            $iconOptions = ['🌱','🚀','💎','⭐','🔥','👑','🏆','🎯','💡','🛡️','⚡','🌟'];
+                            $currentIcon = old('icon', $plan->icon ?? '🌱');
+                        @endphp
+                        @foreach($iconOptions as $ico)
+                            <div class="icon-opt">
+                                <input type="radio" name="icon" value="{{ $ico }}"
+                                       id="icon-{{ $loop->index }}"
+                                       {{ $currentIcon === $ico ? 'checked' : '' }}>
+                                <label for="icon-{{ $loop->index }}">{{ $ico }}</label>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                {{-- Slug --}}
+                <div class="fi">
+                    <label>Plan Slug (ID) *</label>
+                    <input type="text" name="slug" id="inp-slug"
+                           value="{{ old('slug', $plan->slug ?? '') }}"
+                           placeholder="e.g. gold-plan"
+                           {{ isset($plan) ? '' : '' }}
+                           oninput="sanitizeSlug(this)"
+                           maxlength="50" required>
+                    <span class="hint">
+                        Unique identifier — lowercase letters, numbers, hyphens only.
+                        @if(isset($plan))
+                            ⚠️ Changing the slug will break existing tenant subscriptions on this plan.
+                        @endif
+                    </span>
+                    <div id="slug-preview" class="slug-preview" style="{{ old('slug', $plan->slug ?? '') ? '' : 'display:none' }}">
+                        <i class="fas fa-tag" style="font-size:10px;"></i>
+                        <span id="slug-preview-text">{{ old('slug', $plan->slug ?? '') }}</span>
+                    </div>
+                </div>
+
+                {{-- Sort Order --}}
                 <div class="fi">
                     <label>Sort Order</label>
                     <input type="number" name="sort_order"
                            value="{{ old('sort_order', $plan->sort_order ?? 0) }}" min="0" max="99">
-                    <span class="hint">Lower numbers appear first on plan cards.</span>
+                    <span class="hint">Lower numbers appear first on plan cards (0, 1, 2…).</span>
                 </div>
+
+                {{-- Description --}}
                 <div class="fi fi-full">
                     <label>Description</label>
                     <textarea name="description" rows="2"
@@ -268,6 +299,7 @@
                     <input type="number" name="price" id="inp-price"
                            value="{{ old('price', $plan->price ?? 0) }}"
                            min="0" step="0.01" required oninput="updatePreview()">
+                    <span class="hint">Set to 0 for a free plan.</span>
                 </div>
                 <div class="fi">
                     <label>Duration (days) *</label>
@@ -294,7 +326,7 @@
             <div class="pm-card-title">
                 <i class="fas fa-sliders-h"></i> Usage Limits
                 <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--sa-muted);">
-                    — toggle "Unlimited" to remove the cap (null = unlimited, 0 = none allowed)
+                    — toggle "Unlimited" to remove the cap (null = unlimited, 0 = not allowed)
                 </span>
             </div>
 
@@ -471,7 +503,6 @@
                 Deleting this plan is permanent. Tenants currently on
                 <strong>{{ $plan->name }}</strong> will keep their <code>subscription</code>
                 value in the database, but the plan record itself will no longer exist.
-                Use with caution.
             </p>
             <form action="{{ route('superadmin.plans.manage.destroy', $plan) }}"
                   method="POST"
@@ -487,9 +518,45 @@
 </div>
 
 <script>
+// ── Slug auto-generate from name ──────────────────────────────────────────────
+let slugManuallyEdited = {{ isset($plan) ? 'true' : 'false' }};
+
+function autoSlug() {
+    if (slugManuallyEdited) return;
+    const name = document.getElementById('inp-name').value;
+    const slug = name.toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .trim()
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-');
+    document.getElementById('inp-slug').value = slug;
+    updateSlugPreview(slug);
+}
+
+function sanitizeSlug(input) {
+    slugManuallyEdited = true;
+    let val = input.value.toLowerCase()
+        .replace(/[^a-z0-9-]/g, '')
+        .replace(/-+/g, '-');
+    input.value = val;
+    updateSlugPreview(val);
+}
+
+function updateSlugPreview(slug) {
+    const preview = document.getElementById('slug-preview');
+    const text    = document.getElementById('slug-preview-text');
+    if (slug) {
+        text.textContent     = slug;
+        preview.style.display = 'inline-flex';
+    } else {
+        preview.style.display = 'none';
+    }
+}
+
+// ── Price preview ─────────────────────────────────────────────────────────────
 function updatePreview() {
-    const price    = parseFloat(document.getElementById('inp-price').value)    || 0;
-    const duration = parseInt(document.getElementById('inp-duration').value)   || 30;
+    const price    = parseFloat(document.getElementById('inp-price').value)  || 0;
+    const duration = parseInt(document.getElementById('inp-duration').value)  || 30;
 
     document.getElementById('preview-price').textContent =
         '₱' + price.toLocaleString('en-PH', { minimumFractionDigits: 2 });
@@ -507,12 +574,14 @@ function updatePreview() {
         ppd > 0 ? '≈ ₱' + ppd.toFixed(2) + ' / day' : '';
 }
 
+// ── Limit toggles ─────────────────────────────────────────────────────────────
 function toggleUnlimited(field, isUnlimited) {
     const inp = document.getElementById('inp-' + field);
     inp.disabled = isUnlimited;
     if (isUnlimited) inp.value = '';
 }
 
+// ── Availability ──────────────────────────────────────────────────────────────
 function toggleAvailability(always) {
     ['wrap-from', 'wrap-until'].forEach(function(id) {
         document.getElementById(id).style.display = always ? 'none' : '';
@@ -523,10 +592,12 @@ function toggleAvailability(always) {
     }
 }
 
+// ── Active switch ─────────────────────────────────────────────────────────────
 document.getElementById('sw-active').addEventListener('change', function() {
     document.getElementById('active-label').textContent = this.checked ? 'Active' : 'Inactive';
 });
 
+// ── Feature check sync ────────────────────────────────────────────────────────
 function syncFeatCheck(cb) {
     const check = document.getElementById('check-' + cb.id.replace('flag-', ''));
     if (!check) return;
@@ -535,8 +606,10 @@ function syncFeatCheck(cb) {
     check.style.color       = cb.checked ? '#fff' : 'transparent';
 }
 
+// ── Init ──────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
     updatePreview();
+    updateSlugPreview(document.getElementById('inp-slug').value);
 
     document.querySelectorAll('[id^="flag-"]').forEach(function(cb) {
         syncFeatCheck(cb);

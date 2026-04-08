@@ -5,15 +5,17 @@ use App\Models\SubscriptionPlan;
 
 class SubscriptionHelper
 {
-    protected static array $plans = ['basic', 'standard', 'premium'];
-
+    /**
+     * Feature map: which MINIMUM plan slug a feature requires.
+     * For custom plans beyond the 3 canonical ones, access is based on
+     * the plan's sort_order compared to the required plan's sort_order.
+     */
     protected static array $featurePlans = [
-        // Basic (all plans)
+        // Available on all plans (sort_order 0 equivalent)
         'trainees'           => 'basic',
         'courses'            => 'basic',
         'enrollments'        => 'basic',
         'attendances'        => 'basic',
-        
 
         // Standard+
         'trainers'           => 'standard',
@@ -21,21 +23,44 @@ class SubscriptionHelper
         'training-schedules' => 'standard',
         'users'              => 'standard',
         'reports'            => 'standard',
-        
 
         // Premium only
         'certificates'       => 'premium',
-        'custom-reports' => 'premium',
-        'branding' => 'premium',
+        'custom-reports'     => 'premium',
+        'branding'           => 'premium',
     ];
 
+    /**
+     * Get all plans ordered by sort_order, cached per request.
+     */
+    protected static ?array $planOrder = null;
+
+    protected static function getPlanOrder(): array
+    {
+        if (static::$planOrder !== null) return static::$planOrder;
+
+        static::$planOrder = SubscriptionPlan::orderBy('sort_order')
+            ->pluck('sort_order', 'slug')
+            ->toArray();
+
+        return static::$planOrder;
+    }
+
+    /**
+     * Returns true if $currentPlan has access to $feature.
+     * Comparison is based on sort_order in the DB, not hardcoded position.
+     */
     public static function canAccess(string $currentPlan, string $feature): bool
     {
-        $required      = static::$featurePlans[$feature] ?? 'basic';
-        $currentIndex  = array_search($currentPlan, static::$plans);
-        $requiredIndex = array_search($required, static::$plans);
+        $required     = static::$featurePlans[$feature] ?? 'basic';
+        $planOrder    = static::getPlanOrder();
 
-        return $currentIndex !== false && $currentIndex >= $requiredIndex;
+        $currentIndex  = $planOrder[$currentPlan]  ?? null;
+        $requiredIndex = $planOrder[$required]      ?? 0;
+
+        if ($currentIndex === null) return false;
+
+        return $currentIndex >= $requiredIndex;
     }
 
     public static function getLimit(string $plan, string $resource): ?int
@@ -67,9 +92,6 @@ class SubscriptionHelper
 
     /**
      * Returns the allowed export formats for a given plan.
-     * Basic  → none
-     * Standard → ['csv'] with a 3,000 record/month cap
-     * Premium  → ['csv', 'excel', 'pdf'] unlimited
      */
     public static function getAllowedExportFormats(string $plan): array
     {
@@ -82,6 +104,7 @@ class SubscriptionHelper
      */
     public static function canExport(string $plan): bool
     {
-        return in_array($plan, ['standard', 'premium']);
+        $formats = static::getAllowedExportFormats($plan);
+        return count($formats) > 0;
     }
 }

@@ -17,7 +17,7 @@ class CreateTenantsTable extends Migration
             $table->string('name');
             $table->string('admin_email')->unique();
             $table->string('subdomain')->unique();
-            $table->enum('subscription', ['basic', 'standard', 'premium'])->default('basic');
+            $table->string('subscription')->default('basic');
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->boolean('is_active')->default(true);
             $table->string('brand_name')->nullable();         // Custom app name
