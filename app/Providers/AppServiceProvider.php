@@ -6,21 +6,11 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Auth;
-use App\Models\Notification;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
-    public function register(): void
-    {
-        //
-    }
+    public function register(): void {}
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
         Blade::directive('plan', function ($feature) {
@@ -31,12 +21,21 @@ class AppServiceProvider extends ServiceProvider
             return "<?php endif; ?>";
         });
 
-        // Share notifications with navigation layout
         View::composer('layouts.navigation', function ($view) {
             $notifications = collect();
+
             if (Auth::check()) {
-                $notifications = Auth::user()->notifications()->latest()->get();
+                try {
+                    $notifications = Auth::user()
+                        ->notifications()
+                        ->latest()
+                        ->take(20)       // prevent unbounded queries on active tenants
+                        ->get();
+                } catch (\Throwable) {
+                    // Fail silently — never crash a page over missing notifications
+                }
             }
+
             $view->with('notifications', $notifications);
         });
     }
