@@ -14,6 +14,7 @@ return new class extends Migration
             // Slug matches the existing 'basic' | 'standard' | 'premium' values in tenants table
             $table->string('slug')->unique();           // basic, standard, premium
             $table->string('name');                     // Basic Plan, Standard Plan, Premium Plan
+            $table->string('icon', 20)->default('📦');
             $table->text('description')->nullable();
 
             // Pricing
@@ -120,6 +121,11 @@ return new class extends Migration
                 'updated_at'             => now(),
             ],
         ]);
+
+        // Set default icons based on slug
+        DB::table('subscription_plans')->where('slug', 'basic')->update(['icon' => '🌱']);
+        DB::table('subscription_plans')->where('slug', 'standard')->update(['icon' => '🚀']);
+        DB::table('subscription_plans')->where('slug', 'premium')->update(['icon' => '💎']);
     }
 
     public function down(): void

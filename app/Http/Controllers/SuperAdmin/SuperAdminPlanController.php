@@ -49,6 +49,7 @@ class SuperAdminPlanController extends Controller
     {
         $data = $request->validate([
             'name'                     => ['required', 'string', 'max:100'],
+            'icon'                     => ['required', 'string', 'max:20'],
             // Slug is free-form but must be unique across plans
             'slug'                     => ['required', 'string', 'max:50', 'alpha_dash', 'unique:subscription_plans,slug'],
             'description'              => ['nullable', 'string'],
@@ -104,6 +105,7 @@ class SuperAdminPlanController extends Controller
     {
         $data = $request->validate([
             'name'                     => ['required', 'string', 'max:100'],
+            'icon'                     => ['required', 'string', 'max:20'],
             // Slug must be unique but ignore this plan's own slug
             'slug'                     => ['required', 'string', 'max:50', 'alpha_dash', Rule::unique('subscription_plans', 'slug')->ignore($plan->id)],
             'description'              => ['nullable', 'string'],

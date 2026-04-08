@@ -79,45 +79,180 @@
         padding: 24px;
         transition: border-color .2s, box-shadow .2s;
         position: relative;
+        overflow: hidden;
+    }
+    .plan-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: #7c8faa;
+    }
+    .plan-card-basic::before {
+        background: linear-gradient(90deg, #5a7aaa, #8fa5c7);
+    }
+    .plan-card-standard::before {
+        background: linear-gradient(90deg, var(--sa-accent), #0075d6);
+    }
+    .plan-card-premium::before {
+        background: linear-gradient(90deg, var(--sa-gold), #d4a800);
+        box-shadow: 0 1px 4px rgba(245,197,24,.3);
+    }
+    .plan-card-custom::before {
+        background: linear-gradient(90deg, #9333ea, #c084fc);
+        box-shadow: 0 1px 4px rgba(147,51,234,.3);
     }
     .plan-card:hover {
         border-color: var(--sa-accent);
         box-shadow: 0 8px 30px rgba(0,87,184,.12);
     }
-    .plan-card.inactive { opacity: .65; }
+    .plan-card.inactive { 
+        opacity: .65;
+    }
 
     .plan-card-header {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
         margin-bottom: 12px;
     }
-    .plan-icon { font-size: 28px; line-height: 1; }
+    .plan-header-top {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 8px;
+    }
+    .plan-icon-wrapper {
+        flex-shrink: 0;
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--sa-surface);
+        font-size: 24px;
+    }
+    .plan-card-basic .plan-icon-wrapper {
+        background: rgba(90,122,170,.1);
+    }
+    .plan-card-standard .plan-icon-wrapper {
+        background: rgba(0,87,184,.1);
+    }
+    .plan-card-premium .plan-icon-wrapper {
+        background: rgba(245,197,24,.12);
+    }
+    .plan-card-custom .plan-icon-wrapper {
+        background: rgba(147,51,234,.12);
+    }
+    .plan-icon {
+        line-height: 1;
+    }
+    .plan-header-meta {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .plan-header-status {
+        display: flex;
+        justify-content: flex-end;
+    }
     .plan-slug-badge {
-        padding: 3px 12px;
+        padding: 4px 12px;
         border-radius: 100px;
         font-size: 10px;
         font-weight: 800;
         text-transform: uppercase;
         letter-spacing: .6px;
     }
-    .slug-basic    { background: rgba(90,122,170,.12);  color: var(--sa-muted); }
-    .slug-standard { background: rgba(0,87,184,.12);    color: var(--sa-accent); }
-    .slug-premium  { background: rgba(245,197,24,.15);  color: #a07800; }
+    .slug-basic    {
+        background: rgba(90,122,170,.12);
+        color: var(--sa-muted);
+    }
+    .slug-standard {
+        background: rgba(0,87,184,.12);
+        color: var(--sa-accent);
+    }
+    .slug-premium {
+        background: rgba(245,197,24,.15);
+        color: #a07800;
+    }
+    .slug-custom {
+        background: rgba(147,51,234,.15);
+        color: #9333ea;
+    }
 
-    .plan-name { font-size: 18px; font-weight: 800; color: var(--sa-primary); margin-bottom: 2px; }
-    .dark .plan-name { color: #dde8ff; }
+    .status-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 12px;
+        border-radius: 100px;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: .4px;
+    }
+    .status-active {
+        background: rgba(22,163,74,.12);
+        color: var(--sa-success);
+    }
+    .status-scheduled {
+        background: rgba(179,138,0,.12);
+        color: var(--sa-warning);
+    }
+    .status-inactive {
+        background: rgba(90,122,170,.12);
+        color: var(--sa-muted);
+    }
+
+    .plan-name {
+        font-size: 18px;
+        font-weight: 800;
+        color: var(--sa-primary);
+        margin-bottom: 2px;
+        line-height: 1.3;
+    }
+    .dark .plan-name {
+        color: #dde8ff;
+    }
     .plan-desc { font-size: 12px; color: var(--sa-muted); line-height: 1.5; margin-bottom: 14px; }
 
+    .plan-price-section {
+        margin-bottom: 16px;
+    }
     .plan-price-row {
         display: flex;
         align-items: baseline;
-        gap: 6px;
-        margin-bottom: 14px;
+        gap: 3px;
+        margin-bottom: 0;
     }
-    .plan-price { font-size: 30px; font-weight: 800; color: var(--sa-primary); }
-    .dark .plan-price { color: #dde8ff; }
-    .plan-duration { font-size: 12px; color: var(--sa-muted); }
+    .plan-currency {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--sa-muted);
+        align-self: flex-start;
+        margin-top: 2px;
+    }
+    .plan-amount {
+        font-size: 32px;
+        font-weight: 900;
+        color: var(--sa-primary);
+        line-height: 1;
+    }
+    .dark .plan-amount {
+        color: #dde8ff;
+    }
+    .plan-duration {
+        font-size: 11px;
+        color: var(--sa-muted);
+        font-weight: 500;
+        margin-left: 2px;
+    }
+    .plan-price-free {
+        font-size: 24px;
+        font-weight: 800;
+        color: var(--sa-muted);
+        letter-spacing: .5px;
+    }
 
     .plan-limits {
         display: flex;
@@ -129,12 +264,30 @@
     .plan-limit-row {
         display: flex;
         justify-content: space-between;
-        padding: 5px 8px;
-        border-radius: 7px;
+        padding: 8px 10px;
+        border-radius: 8px;
         background: var(--sa-surface);
+        align-items: center;
     }
-    .plan-limit-key { color: var(--sa-muted); font-weight: 600; }
-    .plan-limit-val { font-weight: 700; color: var(--sa-text); }
+    .plan-limit-key {
+        color: var(--sa-muted);
+        font-weight: 600;
+        font-size: 11px;
+    }
+    .plan-limit-val {
+        font-weight: 700;
+        color: var(--sa-text);
+    }
+    .unlimited-badge {
+        background: rgba(22,163,74,.12);
+        color: var(--sa-success);
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-weight: 700;
+        font-size: 11px;
+        display: inline-block;
+        letter-spacing: .3px;
+    }
 
     .plan-flags {
         display: flex;
