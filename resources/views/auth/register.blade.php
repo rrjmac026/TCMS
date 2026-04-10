@@ -138,119 +138,160 @@
                     </div>
                 </div>
 
-                {{-- Hidden select keeps validation working --}}
+                {{-- Hidden input keeps Laravel validation working --}}
                 <input type="hidden" name="subscription" id="subscription-value" value="{{ old('subscription', '') }}">
 
-                @php
-                    // Helper: get a value from the DB plan if available, otherwise use the fallback
-                    $p = fn(string $slug, string $field, mixed $fallback) =>
-                        isset($plans[$slug]) ? $plans[$slug]->$field : $fallback;
-
-                    // Formatted prices
-                    $basicPrice    = $p('basic',    'price', 0)    == 0   ? 'Free'   : '₱' . number_format($p('basic',    'price', 0),    0);
-                    $standardPrice = '₱' . number_format($p('standard', 'price', 1499), 0);
-                    $premiumPrice  = '₱' . number_format($p('premium',  'price', 3999), 0);
-
-                    // Duration labels
-                    $basicDuration    = $p('basic',    'duration_label', '30 days');
-                    $standardDuration = $p('standard', 'duration_label', '6 months');
-                    $premiumDuration  = $p('premium',  'duration_label', '1 year');
-
-                    // Trainee limits
-                    $basicTrainees    = $p('basic',    'max_trainees', 100)  ?? 'Unlimited';
-                    $standardTrainees = $p('standard', 'max_trainees', 500)  ?? 'Unlimited';
-                    $premiumTrainees  = $p('premium',  'max_trainees', null) ?? 'Unlimited';
-
-                    // Feature flags
-                    $stdHasTrainers    = $p('standard', 'has_trainers',   true);
-                    $stdHasAssess      = $p('standard', 'has_assessments', true);
-                    $preHasCerts       = $p('premium',  'has_certificates', true);
-                    $preHasBranding    = $p('premium',  'has_branding',    true);
-                    $preHasCustomRep   = $p('premium',  'has_custom_reports', true);
-
-                    // Export formats
-                    $stdExportFmts  = $p('standard', 'allowed_export_formats', ['csv']);
-                    $preExportFmts  = $p('premium',  'allowed_export_formats', ['csv','excel','pdf']);
-                    $stdExportLabel = $stdExportFmts ? strtoupper(implode('/', $stdExportFmts)) . ' export' : 'No exports';
-                    $preExportLabel = $preExportFmts ? strtoupper(implode('/', $preExportFmts)) . ' export' : 'No exports';
-
-                    // Export monthly limit
-                    $stdExportLimit = $p('standard', 'max_exports_monthly', 3000);
-                    $stdExportDesc  = $stdExportLimit ? number_format($stdExportLimit) . ' records/mo' : 'Unlimited';
-                @endphp
-
-                <div class="plan-grid" id="plan-grid">
-
-                    {{-- ── Basic ── --}}
-                    <div class="plan-card {{ old('subscription') === 'basic' ? 'selected' : '' }}"
-                         data-plan="basic" onclick="selectPlan('basic')">
-                        <div class="plan-check"><i class="fas fa-check"></i></div>
-                        <div class="plan-icon basic"><i class="fas fa-seedling"></i></div>
-                        <div class="plan-name">Basic</div>
-                        <div class="plan-price">Starts at <span>{{ $basicPrice }}</span></div>
-                        <ul class="plan-features">
-                            <li><i class="fas fa-check"></i> Up to {{ $basicTrainees }} trainees</li>
-                            <li><i class="fas fa-check"></i> Courses & enrollments</li>
-                            <li><i class="fas fa-check"></i> Attendance tracking</li>
-                            <li class="muted"><i class="fas fa-xmark"></i> Trainer management</li>
-                            <li class="muted"><i class="fas fa-xmark"></i> Assessments & reports</li>
-                        </ul>
-                        <div style="margin-top:10px;">
-                            <span style="font-size:10px;background:var(--light);color:var(--blue);padding:3px 8px;border-radius:5px;font-weight:700;">
-                                {{ $basicDuration }}
-                            </span>
-                        </div>
+                @if($plans->isEmpty())
+                    {{-- ── Empty state: table not yet migrated or no active plans ── --}}
+                    <div style="text-align:center;padding:32px 24px;border:2px dashed #c5d8f5;border-radius:14px;color:#5a7aaa;">
+                        <i class="fas fa-layer-group" style="font-size:28px;opacity:.3;margin-bottom:10px;display:block;"></i>
+                        <p style="font-size:13.5px;">No subscription plans are available at this time.<br>Please contact the administrator.</p>
                     </div>
+                @else
+                    <div class="plan-grid" id="plan-grid">
+                        @foreach($plans as $plan)
+                            @php
+                                $slug       = $plan->slug;
+                                $isCustom   = !in_array($slug, ['basic', 'standard', 'premium']);
+                                $isFree     = $plan->price == 0;
+                                $isPopular  = $slug === 'standard';
+                                $isBest     = $slug === 'premium';
 
-                    {{-- ── Standard ── --}}
-                    <div class="plan-card {{ old('subscription') === 'standard' ? 'selected' : '' }}"
-                         data-plan="standard" onclick="selectPlan('standard')">
-                        <div class="plan-badge popular">Popular</div>
-                        <div class="plan-check"><i class="fas fa-check"></i></div>
-                        <div class="plan-icon standard"><i class="fas fa-rocket"></i></div>
-                        <div class="plan-name">Standard</div>
-                        <div class="plan-price">Up to <span>{{ $standardTrainees }}</span> trainees</div>
-                        <ul class="plan-features">
-                            <li><i class="fas fa-check"></i> Up to {{ $standardTrainees }} trainees</li>
-                            @if($stdHasTrainers)<li><i class="fas fa-check"></i> Trainer management</li>@endif
-                            @if($stdHasAssess)<li><i class="fas fa-check"></i> Assessments & schedules</li>@endif
-                            <li><i class="fas fa-check"></i> {{ $stdExportLabel }} ({{ $stdExportDesc }})</li>
-                            <li class="muted"><i class="fas fa-xmark"></i> Certificates</li>
-                        </ul>
-                        <div style="margin-top:10px;">
-                            <span style="font-size:10px;background:#fff0f2;color:var(--red);padding:3px 8px;border-radius:5px;font-weight:700;">
-                                {{ $standardDuration }}
-                            </span>
-                        </div>
+                                // Icon from DB, fall back to slug-based default
+                                $icon = $plan->icon ?? match($slug) {
+                                    'basic'    => '🌱',
+                                    'standard' => '🚀',
+                                    'premium'  => '💎',
+                                    default    => '📦',
+                                };
+
+                                // Price display
+                                $formattedPrice = $isFree
+                                    ? 'Free'
+                                    : '₱' . number_format($plan->price, 0);
+
+                                // Trainee limit label
+                                $traineeLabel = $plan->max_trainees
+                                    ? 'Up to ' . number_format($plan->max_trainees) . ' trainees'
+                                    : 'Unlimited trainees';
+
+                                // Export formats
+                                $exportFmts   = $plan->allowed_export_formats ?? [];
+                                $exportLabel  = count($exportFmts) === 0
+                                    ? null
+                                    : strtoupper(implode('/', $exportFmts)) . ' export';
+                                $exportLimit  = $plan->max_exports_monthly;
+                                $exportDesc   = $exportLimit === null
+                                    ? 'unlimited'
+                                    : number_format($exportLimit) . ' records/mo';
+
+                                // Color theme per slug (custom plans get a purple accent)
+                                $accentColor = match($slug) {
+                                    'basic'    => '#5a7aaa',
+                                    'standard' => '#CE1126',
+                                    'premium'  => '#b38a00',
+                                    default    => '#7c3aed',
+                                };
+                                $badgeBg = match($slug) {
+                                    'basic'    => 'rgba(90,122,170,.12)',
+                                    'standard' => '#fff0f2',
+                                    'premium'  => 'rgba(245,197,24,.14)',
+                                    default    => 'rgba(124,58,237,.12)',
+                                };
+                                $badgeText = match($slug) {
+                                    'basic'    => '#5a7aaa',
+                                    'standard' => 'var(--red)',
+                                    'premium'  => '#b38a00',
+                                    default    => '#7c3aed',
+                                };
+                            @endphp
+
+                            <div class="plan-card {{ old('subscription') === $slug ? 'selected' . ($slug === 'premium' ? ' selected-premium' : '') : '' }}"
+                                 data-plan="{{ $slug }}"
+                                 onclick="selectPlan('{{ $slug }}')">
+
+                                {{-- Badge (Popular / Best Value / Custom) --}}
+                                @if($isPopular)
+                                    <div class="plan-badge popular">Popular</div>
+                                @elseif($isBest)
+                                    <div class="plan-badge best">Best Value</div>
+                                @elseif($isCustom)
+                                    <div class="plan-badge" style="background:rgba(124,58,237,.15);color:#7c3aed;">Custom</div>
+                                @endif
+
+                                <div class="plan-check"><i class="fas fa-check"></i></div>
+
+                                {{-- Icon --}}
+                                <div class="plan-icon {{ $slug }}" style="font-size:22px;line-height:1;margin-bottom:6px;">
+                                    {{ $icon }}
+                                </div>
+
+                                <div class="plan-name">{{ $plan->name }}</div>
+
+                                {{-- Price --}}
+                                <div class="plan-price">
+                                    @if($isFree)
+                                        <span style="font-size:22px;font-weight:800;color:#5a7aaa;">Free</span>
+                                    @else
+                                        Starts at <span>{{ $formattedPrice }}</span>
+                                    @endif
+                                </div>
+
+                                {{-- Feature list --}}
+                                <ul class="plan-features">
+                                    <li><i class="fas fa-check"></i> {{ $traineeLabel }}</li>
+
+                                    @if($plan->max_courses)
+                                        <li><i class="fas fa-check"></i> Up to {{ number_format($plan->max_courses) }} courses</li>
+                                    @else
+                                        <li><i class="fas fa-check"></i> Unlimited courses</li>
+                                    @endif
+
+                                    <li><i class="fas fa-check"></i> Enrollments &amp; attendance</li>
+
+                                    @if($plan->has_trainers)
+                                        <li><i class="fas fa-check"></i> Trainer management</li>
+                                    @else
+                                        <li class="muted"><i class="fas fa-xmark"></i> Trainer management</li>
+                                    @endif
+
+                                    @if($plan->has_assessments)
+                                        <li><i class="fas fa-check"></i> Assessments &amp; schedules</li>
+                                    @else
+                                        <li class="muted"><i class="fas fa-xmark"></i> Assessments &amp; reports</li>
+                                    @endif
+
+                                    @if($exportLabel)
+                                        <li><i class="fas fa-check"></i> {{ $exportLabel }} ({{ $exportDesc }})</li>
+                                    @else
+                                        <li class="muted"><i class="fas fa-xmark"></i> Data exports</li>
+                                    @endif
+
+                                    @if($plan->has_certificates)
+                                        <li><i class="fas fa-check"></i> Certifications</li>
+                                    @else
+                                        <li class="muted"><i class="fas fa-xmark"></i> Certificates</li>
+                                    @endif
+
+                                    @if($plan->has_branding)
+                                        <li><i class="fas fa-check"></i> Custom branding</li>
+                                    @endif
+
+                                    @if($plan->has_custom_reports)
+                                        <li><i class="fas fa-check"></i> Custom reports</li>
+                                    @endif
+                                </ul>
+
+                                {{-- Duration badge --}}
+                                <div style="margin-top:10px;">
+                                    <span style="font-size:10px;background:{{ $badgeBg }};color:{{ $badgeText }};padding:3px 8px;border-radius:5px;font-weight:700;">
+                                        {{ $plan->duration_label }}
+                                    </span>
+                                </div>
+                            </div>
+                        @endforeach
                     </div>
-
-                    {{-- ── Premium ── --}}
-                    <div class="plan-card {{ old('subscription') === 'premium' ? 'selected selected-premium' : '' }}"
-                         data-plan="premium" onclick="selectPlan('premium')">
-                        <div class="plan-badge best">Best Value</div>
-                        <div class="plan-check"><i class="fas fa-check"></i></div>
-                        <div class="plan-icon premium"><i class="fas fa-crown"></i></div>
-                        <div class="plan-name">Premium</div>
-                        <div class="plan-price">
-                            @if($premiumTrainees === 'Unlimited') Unlimited trainees
-                            @else Up to <span>{{ $premiumTrainees }}</span> trainees
-                            @endif
-                        </div>
-                        <ul class="plan-features">
-                            <li><i class="fas fa-check"></i> Unlimited trainees & courses</li>
-                            @if($preHasCerts)<li><i class="fas fa-check"></i> Certifications</li>@endif
-                            <li><i class="fas fa-check"></i> {{ $preExportLabel }} (unlimited)</li>
-                            @if($preHasBranding)<li><i class="fas fa-check"></i> Custom branding</li>@endif
-                            @if($preHasCustomRep)<li><i class="fas fa-check"></i> Custom reports</li>@endif
-                        </ul>
-                        <div style="margin-top:10px;">
-                            <span style="font-size:10px;background:rgba(245,197,24,0.14);color:#b38a00;padding:3px 8px;border-radius:5px;font-weight:700;">
-                                {{ $premiumDuration }}
-                            </span>
-                        </div>
-                    </div>
-
-                </div>
+                @endif
 
                 @error('subscription')
                     <div class="field-error" style="margin-top:8px;"><i class="fas fa-exclamation-circle"></i> {{ $message }}</div>
@@ -286,9 +327,14 @@
     <script>
         function selectPlan(plan) {
             document.getElementById('subscription-value').value = plan;
-            document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected','selected-premium'));
+            document.querySelectorAll('.plan-card').forEach(c => {
+                c.classList.remove('selected', 'selected-premium');
+            });
             const sel = document.querySelector('[data-plan="' + plan + '"]');
+            if (!sel) return;
             sel.classList.add('selected');
+            // Keep the gold glow for premium; apply it to any card whose accent is gold-ish
+            // We detect this by checking if the card has the "best" badge or slug === 'premium'
             if (plan === 'premium') sel.classList.add('selected-premium');
         }
 
@@ -297,11 +343,13 @@
             if (val) selectPlan(val);
 
             const subdomainInput = document.getElementById('subdomain');
-            subdomainInput.addEventListener('input', function () {
-                const suffix = this.closest('.subdomain-wrap').querySelector('.subdomain-suffix');
-                suffix.style.color      = this.value.length > 0 ? 'var(--blue)' : '';
-                suffix.style.fontWeight = this.value.length > 0 ? '700' : '';
-            });
+            if (subdomainInput) {
+                subdomainInput.addEventListener('input', function () {
+                    const suffix = this.closest('.subdomain-wrap').querySelector('.subdomain-suffix');
+                    suffix.style.color      = this.value.length > 0 ? 'var(--blue)' : '';
+                    suffix.style.fontWeight = this.value.length > 0 ? '700' : '';
+                });
+            }
         });
     </script>
 
