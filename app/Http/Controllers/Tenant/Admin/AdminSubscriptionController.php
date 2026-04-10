@@ -9,6 +9,7 @@ use App\Models\Notification;
 use App\Models\RenewalRequest;
 use App\Models\SubscriptionPlan;
 use App\Models\TenantSubscription;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -215,19 +216,18 @@ class AdminSubscriptionController extends Controller
         $tenant->subscription = $data['subscription'];
         $tenant->expires_at   = $expiresAt;
 
-        // ── Bell notification → tenant admin ──────────────────────────────
-        // Runs inside the tenant DB so the admin sees it in their bell.
+        // ── Bell notification → tenant admin (tenant DB) ──────────────────
+        // auth()->user() is the tenant admin logged into the tenant DB,
+        // so a plain Notification::create() correctly targets the tenant DB here.
         try {
-            $planName     = $planModel->name;
+            $planName        = $planModel->name;
             $expiryFormatted = $expiresAt->format('F d, Y');
-            $discountNote = $discount
+            $discountNote    = $discount
                 ? ' A ' . $discount->formatted_value . ' discount was applied.'
                 : '';
 
-            $admin = auth()->user(); // the currently logged-in admin
-
             Notification::create([
-                'user_id' => $admin->id,
+                'user_id' => auth()->id(),
                 'title'   => '🎉 Plan Upgraded to ' . $planName . '!',
                 'message' => 'Your subscription has been upgraded to the '
                            . $planName . ' Plan.'
@@ -237,6 +237,37 @@ class AdminSubscriptionController extends Controller
                 'is_read' => false,
                 'link'    => '/admin/subscription',
             ]);
+        } catch (\Throwable) {
+            // Never fail the upgrade because of a notification error
+        }
+
+        // ── Bell notification → all superadmins (central DB) ─────────────
+        // IMPORTANT: Must use ::on('mysql') so the notification lands in the
+        // central database where the superadmin bell reads from — NOT the
+        // tenant DB that is currently active in this request context.
+        try {
+            $planName        = $planModel->name;
+            $expiryFormatted = $expiresAt->format('F d, Y');
+            $discountNote    = $discount
+                ? ' Discount applied: ' . $discount->formatted_value . '.'
+                : '';
+            $priceLabel      = $price > 0
+                ? ' Final price: ₱' . number_format($price, 2) . '.'
+                : '';
+
+            User::on('mysql')->where('role', 'superadmin')
+                ->each(function (User $superadmin) use ($tenant, $planName, $expiryFormatted, $discountNote, $priceLabel) {
+                    Notification::on('mysql')->create([
+                        'user_id' => $superadmin->id,
+                        'title'   => '⬆️ Plan Upgraded — ' . $tenant->name,
+                        'message' => "'{$tenant->name}' has self-upgraded to the {$planName} Plan."
+                                   . $discountNote
+                                   . $priceLabel
+                                   . " New expiry: {$expiryFormatted}.",
+                        'is_read' => false,
+                        'link'    => route('superadmin.tenants.index'),
+                    ]);
+                });
         } catch (\Throwable) {
             // Never fail the upgrade because of a notification error
         }

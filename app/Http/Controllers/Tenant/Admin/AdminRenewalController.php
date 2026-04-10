@@ -8,6 +8,7 @@ use App\Models\Notification;
 use App\Models\RenewalRequest;
 use App\Models\SubscriptionPlan;
 use App\Models\Tenant;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class AdminRenewalController extends Controller
@@ -119,8 +120,7 @@ class AdminRenewalController extends Controller
             'status'          => 'pending',
         ]);
 
-        // ── Bell notification → tenant admin ──────────────────────────────
-        // Notify the currently logged-in admin in the tenant DB.
+        // ── Bell notification → tenant admin (tenant DB) ──────────────────
         try {
             $planName    = $planModel->name;
             $daysLabel   = $this->daysLabel($durationDays);
@@ -147,6 +147,36 @@ class AdminRenewalController extends Controller
             // Never fail the submission because of a notification error
         }
 
+        // ── Bell notification → all superadmins (central DB) ─────────────
+        // IMPORTANT: Must use ::on('mysql') so the notification lands in the
+        // central database where the superadmin bell reads from — NOT the
+        // tenant DB that is currently active in this request context.
+        try {
+            $planName    = $planModel->name;
+            $daysLabel   = $this->daysLabel($durationDays);
+            $priceLabel  = $finalPrice > 0
+                ? ' (₱' . number_format($finalPrice, 2) . ')'
+                : '';
+            $discountLine = $discountAmt > 0
+                ? ' Discount applied: ₱' . number_format($discountAmt, 2) . '.'
+                : '';
+
+            User::on('mysql')->where('role', 'superadmin')
+                ->each(function (User $superadmin) use ($tenant, $planName, $daysLabel, $priceLabel, $discountLine) {
+                    Notification::on('mysql')->create([
+                        'user_id' => $superadmin->id,
+                        'title'   => '🔔 Renewal Request — ' . $tenant->name,
+                        'message' => "'{$tenant->name}' has submitted a renewal request for the "
+                                   . "{$planName} Plan ({$daysLabel}){$priceLabel}.{$discountLine}"
+                                   . ' Please review it in the renewals dashboard.',
+                        'is_read' => false,
+                        'link'    => route('superadmin.renewals.index'),
+                    ]);
+                });
+        } catch (\Throwable) {
+            // Never fail the submission because of a notification error
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Renewal request submitted. Please wait for super admin approval.',
@@ -164,7 +194,7 @@ class AdminRenewalController extends Controller
             ->where('status', 'pending')
             ->delete();
 
-        // ── Bell notification → tenant admin ──────────────────────────────
+        // ── Bell notification → tenant admin (tenant DB) ──────────────────
         try {
             Notification::create([
                 'user_id' => auth()->id(),
@@ -178,6 +208,22 @@ class AdminRenewalController extends Controller
             // Never fail because of a notification error
         }
 
+        // ── Bell notification → all superadmins (central DB) ─────────────
+        try {
+            User::on('mysql')->where('role', 'superadmin')
+                ->each(function (User $superadmin) use ($tenant) {
+                    Notification::on('mysql')->create([
+                        'user_id' => $superadmin->id,
+                        'title'   => '🚫 Renewal Request Cancelled — ' . $tenant->name,
+                        'message' => "'{$tenant->name}' has cancelled their pending renewal request.",
+                        'is_read' => false,
+                        'link'    => route('superadmin.renewals.index'),
+                    ]);
+                });
+        } catch (\Throwable) {
+            // Never fail because of a notification error
+        }
+
         return redirect()->back()->with('success', 'Renewal request cancelled.');
     }
 
@@ -185,10 +231,6 @@ class AdminRenewalController extends Controller
 
     /**
      * Pro-rate the plan price proportionally to the requested duration.
-     *
-     * e.g. Standard is ₱1,499 for 180 days.
-     *      If tenant asks for 90 days → ₱749.50
-     *      If tenant asks for 360 days → ₱2,998
      */
     private function priceForDuration(SubscriptionPlan $plan, int $days): float
     {
@@ -201,7 +243,6 @@ class AdminRenewalController extends Controller
 
     /**
      * Human-readable label for a day count.
-     * e.g. 30 → "1 month", 90 → "3 months", 365 → "1 year", 45 → "45 days"
      */
     private function daysLabel(int $days): string
     {
