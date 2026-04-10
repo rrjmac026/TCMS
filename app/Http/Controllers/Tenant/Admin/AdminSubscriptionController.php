@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Tenant\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Discount;
 use App\Models\DiscountUsage;
+use App\Models\Notification;
 use App\Models\RenewalRequest;
 use App\Models\SubscriptionPlan;
 use App\Models\TenantSubscription;
@@ -104,7 +105,7 @@ class AdminSubscriptionController extends Controller
         $basePrice = (float) $planModel->price;
 
         // Build a dynamic plan order keyed by sort_order
-        $allPlans   = SubscriptionPlan::orderBy('sort_order')->pluck('sort_order', 'slug')->toArray();
+        $allPlans      = SubscriptionPlan::orderBy('sort_order')->pluck('sort_order', 'slug')->toArray();
         $currentRank   = $allPlans[$tenant->subscription] ?? 0;
         $requestedRank = $allPlans[$data['subscription']]  ?? 0;
 
@@ -161,7 +162,6 @@ class AdminSubscriptionController extends Controller
         $appliedBy = auth()->id();
 
         // ── Cancel stale pending renewal requests ─────────────────────────
-        // Cancel any pending renewals for plans at or below the new plan's rank
         $staleSlug = array_keys(
             array_filter($allPlans, fn($rank) => $rank <= $requestedRank)
         );
@@ -214,6 +214,32 @@ class AdminSubscriptionController extends Controller
 
         $tenant->subscription = $data['subscription'];
         $tenant->expires_at   = $expiresAt;
+
+        // ── Bell notification → tenant admin ──────────────────────────────
+        // Runs inside the tenant DB so the admin sees it in their bell.
+        try {
+            $planName     = $planModel->name;
+            $expiryFormatted = $expiresAt->format('F d, Y');
+            $discountNote = $discount
+                ? ' A ' . $discount->formatted_value . ' discount was applied.'
+                : '';
+
+            $admin = auth()->user(); // the currently logged-in admin
+
+            Notification::create([
+                'user_id' => $admin->id,
+                'title'   => '🎉 Plan Upgraded to ' . $planName . '!',
+                'message' => 'Your subscription has been upgraded to the '
+                           . $planName . ' Plan.'
+                           . $discountNote
+                           . ' Access expires on ' . $expiryFormatted . '.'
+                           . ' New features are now active.',
+                'is_read' => false,
+                'link'    => '/admin/subscription',
+            ]);
+        } catch (\Throwable) {
+            // Never fail the upgrade because of a notification error
+        }
 
         return response()->json(['success' => true]);
     }
