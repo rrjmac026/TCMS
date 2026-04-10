@@ -12,7 +12,8 @@
         'slug'  => $p->slug,
         'name'  => $p->name,
         'price' => (float) $p->price,
-        'icon'  => match($p->slug) {
+        // ── Read icon from DB, fall back to slug-based default ──────────────
+        'icon'  => $p->icon ?? match($p->slug) {
             'basic'    => '🌱',
             'standard' => '🚀',
             'premium'  => '💎',
@@ -158,7 +159,6 @@
         --up-input-bg: #0d1f3c;
     }
 
-    /* ── Section wrapper ── */
     .promo-section {
         max-width: 1100px;
         margin: 0 auto 40px;
@@ -167,7 +167,6 @@
         gap: 12px;
     }
 
-    /* ── Automatic discount banner ── */
     .promo-auto-banner {
         display: flex;
         align-items: center;
@@ -203,7 +202,6 @@
         color: var(--up-success);
     }
 
-    /* ── Promo code card ── */
     .promo-code-card {
         border-radius: 14px;
         border: 1.5px solid var(--up-border);
@@ -221,7 +219,6 @@
         box-shadow: 0 0 0 3px rgba(91,156,246,.12);
     }
 
-    /* ── Toggle button (always visible header) ── */
     .promo-code-toggle {
         width: 100%;
         display: flex; align-items: center; justify-content: space-between;
@@ -249,7 +246,6 @@
     }
     .promo-chevron.open { transform: rotate(180deg); }
 
-    /* ── Expandable body ── */
     .promo-code-body {
         padding: 0 18px 18px;
         border-top: 1px solid var(--up-border);
@@ -260,12 +256,10 @@
         to   { opacity: 1; transform: translateY(0); }
     }
 
-    /* ── Input row ── */
     .promo-input-row {
         display: flex; gap: 8px; margin-top: 14px;
     }
 
-    /* ── Apply button ── */
     .promo-apply-btn {
         padding: 10px 18px; border-radius: 10px; border: none;
         background: var(--up-accent); color: #fff;
@@ -281,7 +275,6 @@
         opacity: .88; transform: translateY(-1px);
     }
 
-    /* ── Applied summary box ── */
     .promo-applied-summary {
         padding: 12px 14px;
         border-radius: 10px;
@@ -293,7 +286,6 @@
         background: rgba(74,222,128,.05);
     }
 
-    /* ── Savings pill per plan ── */
     .savings-plan-pill {
         display: flex; flex-direction: column; align-items: center;
         padding: 8px 10px; border-radius: 10px;
@@ -313,7 +305,6 @@
         font-weight: 700; color: var(--up-text); font-size: 12px;
     }
 
-    /* ── Result feedback ── */
     .promo-result-valid {
         padding: 9px 13px; border-radius: 9px; font-size: 13px; font-weight: 600;
         background: rgba(22,163,74,.08); border: 1.5px solid rgba(22,163,74,.28);
@@ -325,13 +316,11 @@
         color: var(--up-danger); display: flex; align-items: center; gap: 7px;
     }
 
-    /* ── Entrance animation ── */
     @keyframes promoBannerIn {
         from { opacity: 0; transform: translateY(-8px); }
         to   { opacity: 1; transform: translateY(0); }
     }
 
-    /* ── Responsive ── */
     @media (max-width: 520px) {
         .promo-auto-banner { flex-wrap: wrap; }
         .promo-input-row   { flex-direction: column; }
@@ -341,7 +330,6 @@
 
 <script>
 (function () {
-    // ── Plan data from Blade ──────────────────────────────────────────────
     const PLANS = @json($plansJson);
     const CURRENT_PLAN  = '{{ $currentPlan }}';
     const VALIDATE_URL  = '{{ route("admin.subscription.validate-code") }}';
@@ -349,12 +337,9 @@
     const PLAN_SLUGS    = @json($plans->pluck('slug'));
     const CURRENT_INDEX = PLAN_SLUGS.indexOf(CURRENT_PLAN);
 
-    // ── Shared state (read by _scripts.blade.php) ─────────────────────────
-    // These are set on window so the modal's confirmUpgrade() can read them
-    window.standaloneCode      = null;   // validated promo code string
-    window.standaloneFinalMap  = {};     // { slug: finalPrice } for each plan
+    window.standaloneCode      = null;
+    window.standaloneFinalMap  = {};
 
-    // ── Toggle widget ─────────────────────────────────────────────────────
     window.togglePromoWidget = function () {
         const body    = document.getElementById('promo-code-body');
         const chevron = document.getElementById('promo-chevron');
@@ -368,16 +353,12 @@
         btn.setAttribute('aria-expanded', String(!isOpen));
     };
 
-    // ── Input handler: enable/disable Apply button ────────────────────────
     window.onStandaloneCodeInput = function () {
         const val = document.getElementById('standalone-promo-input').value.trim();
         document.getElementById('standalone-apply-btn').disabled = val.length < 2;
-
-        // If code was cleared, reset state
         if (!val) clearStandaloneCode();
     };
 
-    // ── Apply button ──────────────────────────────────────────────────────
     window.applyStandaloneCode = function () {
         const code = document.getElementById('standalone-promo-input').value.trim();
         if (!code) return;
@@ -389,7 +370,6 @@
         btn.innerHTML = '<i class="fas fa-spinner fa-spin" style="font-size:11px;"></i>';
         result.style.display = 'none';
 
-        // We validate against the lowest upgradeable plan; the server checks scope
         const upgradeable = PLANS.filter((_, i) => i > CURRENT_INDEX);
         const testSlug    = upgradeable.length ? upgradeable[0].slug : PLAN_SLUGS[PLAN_SLUGS.length - 1];
 
@@ -407,19 +387,13 @@
             if (data.valid) {
                 window.standaloneCode = code;
 
-                // Build per-plan savings map (re-use discount_amount ratio)
-                const ratio = data.discount_amount / data.original_price; // e.g. 0.20 for 20%
+                const ratio = data.discount_amount / data.original_price;
                 window.standaloneFinalMap = {};
-
                 PLANS.forEach(plan => {
                     const base  = plan.price;
-                    const saved = Math.min(data.discount_amount, base * ratio); // proportional
+                    const saved = Math.min(data.discount_amount, base * ratio);
                     window.standaloneFinalMap[plan.slug] = Math.max(0, base - saved);
                 });
-
-                // If fixed discount, the saved amount is the same for all plans
-                // Re-fetch for each plan would be ideal but we approximate here:
-                // The actual final price is computed server-side on confirmUpgrade.
 
                 result.className = 'promo-result-valid';
                 result.innerHTML =
@@ -429,11 +403,9 @@
                 showAppliedSummary(code, data);
                 updateToggleSubtext(code, data.formatted_value);
 
-                // Pre-fill the modal's code input so confirmUpgrade() picks it up
                 const modalInput = document.getElementById('modal-discount-code');
                 if (modalInput) {
                     modalInput.value = code;
-                    // Trigger the modal's code check if it's already open
                     if (typeof scheduleCodeCheck === 'function') scheduleCodeCheck();
                 }
 
@@ -459,23 +431,20 @@
         });
     };
 
-    // ── Show per-plan savings grid ────────────────────────────────────────
     function showAppliedSummary(code, data) {
-        const summary  = document.getElementById('standalone-applied-summary');
-        const grid     = document.getElementById('applied-savings-grid');
+        const summary   = document.getElementById('standalone-applied-summary');
+        const grid      = document.getElementById('applied-savings-grid');
         const codeLabel = document.getElementById('applied-code-label');
         const codeDesc  = document.getElementById('applied-code-desc');
 
         codeLabel.textContent = code;
         codeDesc.textContent  = data.formatted_value + ' discount on eligible plans';
 
-        // Build savings pills for upgradeable plans only
         const upgradeable = PLANS.filter((_, i) => PLAN_SLUGS.indexOf(_.slug) > CURRENT_INDEX);
         grid.innerHTML = upgradeable.map(plan => {
             const base  = plan.price;
-            if (base <= 0) return ''; // skip free plans
+            if (base <= 0) return '';
 
-            // Estimate final using the ratio from the validated plan
             const saved = Math.round(data.discount_amount / data.original_price * base * 100) / 100;
             const final = Math.max(0, base - saved);
 
@@ -494,19 +463,17 @@
         summary.style.display = 'block';
     }
 
-    // ── Clear applied code ────────────────────────────────────────────────
     window.clearStandaloneCode = function () {
         window.standaloneCode     = null;
         window.standaloneFinalMap = {};
 
-        document.getElementById('standalone-promo-input').value        = '';
-        document.getElementById('standalone-result').style.display     = 'none';
+        document.getElementById('standalone-promo-input').value             = '';
+        document.getElementById('standalone-result').style.display          = 'none';
         document.getElementById('standalone-applied-summary').style.display = 'none';
-        document.getElementById('standalone-apply-btn').disabled       = true;
+        document.getElementById('standalone-apply-btn').disabled            = true;
 
         resetToggleSubtext();
 
-        // Clear the modal code input too
         const modalInput = document.getElementById('modal-discount-code');
         if (modalInput) {
             modalInput.value = '';
@@ -514,7 +481,6 @@
         }
     };
 
-    // ── Subtext helpers ───────────────────────────────────────────────────
     function updateToggleSubtext(code, fmtVal) {
         const el = document.getElementById('promo-toggle-sub');
         if (el) {
@@ -528,28 +494,22 @@
         if (el) el.textContent = 'Enter a code to get a discount on your upgrade';
     }
 
-    // ── Number formatter ─────────────────────────────────────────────────
     function fmt(n) {
         return parseFloat(n).toLocaleString('en-PH', { minimumFractionDigits: 2 });
     }
 
-    // ── Hook into selectPlan() so pre-applied code is used in modal ───────
-    // Wrap the original selectPlan defined in _scripts.blade.php
     document.addEventListener('DOMContentLoaded', function () {
         const origSelectPlan = window.selectPlan;
         if (typeof origSelectPlan === 'function') {
             window.selectPlan = function (slug, name, basePrice, autoPrice) {
-                // If a standalone code was already validated, use its final price
                 if (window.standaloneCode && window.standaloneFinalMap[slug] !== undefined) {
                     autoPrice = window.standaloneFinalMap[slug];
                 }
                 origSelectPlan(slug, name, basePrice, autoPrice);
 
-                // Pre-fill modal code input
                 const modalInput = document.getElementById('modal-discount-code');
                 if (modalInput && window.standaloneCode) {
                     modalInput.value = window.standaloneCode;
-                    // Trigger validation inside the modal
                     setTimeout(function () {
                         if (typeof checkPromoCode === 'function') checkPromoCode();
                     }, 100);

@@ -15,6 +15,14 @@
             $formattedBase  = number_format($basePrice, 0);
             $formattedFinal = number_format($finalPrice, 0);
 
+            // ── Use icon from DB, fall back to slug-based default ──────────
+            $planIcon = $plan->icon ?? match($plan->slug) {
+                'basic'    => '🌱',
+                'standard' => '🚀',
+                'premium'  => '💎',
+                default    => '📦',
+            };
+
             $features = [];
             $features[] = [
                 'label'  => $plan->max_trainees ? 'Up to ' . number_format($plan->max_trainees) . ' trainees' : 'Unlimited trainees',
@@ -59,7 +67,8 @@
             @endif
 
             <div class="up-card-inner">
-                <div class="up-plan-icon">{{ ['basic' => '🌱', 'standard' => '🚀', 'premium' => '💎'][$plan->slug] ?? '📦' }}</div>
+                {{-- ── Icon from DB ── --}}
+                <div class="up-plan-icon">{{ $planIcon }}</div>
 
                 <div class="up-duration-badge">
                     <i class="fas fa-clock"></i> {{ $plan->duration_label }} access
@@ -67,7 +76,7 @@
 
                 <div class="up-plan-name">{{ $plan->name }}</div>
 
-                {{-- Price block: show strikethrough original + discounted if auto-discount active --}}
+                {{-- Price block --}}
                 <div class="up-plan-price">
                     @if($autoDiscount && $canUpgrade)
                         <div style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;">
