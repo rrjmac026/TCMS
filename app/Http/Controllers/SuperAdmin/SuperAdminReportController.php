@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
+use App\Models\SubscriptionPlan;
 use App\Models\Tenant;
 use App\Services\Reports\ReportExportService;
 use Illuminate\Http\Request;
@@ -10,14 +11,33 @@ use Illuminate\Support\Facades\DB;
 
 class SuperAdminReportController extends Controller
 {
-    // ── Report definitions ────────────────────────────────────────────────────
-    // Each entry describes what we collect per approved tenant.
-
     protected ReportExportService $exporter;
 
     public function __construct(ReportExportService $exporter)
     {
         $this->exporter = $exporter;
+    }
+
+    /**
+     * Load all subscription plans ordered for display.
+     * Returns an empty collection if the table doesn't exist yet.
+     */
+    private function getPlans(): \Illuminate\Support\Collection
+    {
+        try {
+            return SubscriptionPlan::orderBy('sort_order')->get();
+        } catch (\Throwable) {
+            return collect();
+        }
+    }
+
+    /**
+     * Resolve a plan's display name from slug.
+     * Falls back to ucfirst(slug) if not found.
+     */
+    private function planName(string $slug, \Illuminate\Support\Collection $plans): string
+    {
+        return $plans->firstWhere('slug', $slug)?->name ?? ucfirst($slug);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -26,22 +46,57 @@ class SuperAdminReportController extends Controller
 
     public function index()
     {
+        $plans = $this->getPlans();
+
         $totalTenants    = Tenant::count();
         $approvedTenants = Tenant::where('status', 'approved')->count();
         $pendingTenants  = Tenant::where('status', 'pending')->count();
         $rejectedTenants = Tenant::where('status', 'rejected')->count();
 
-        // Subscription breakdown
-        $subscriptionBreakdown = Tenant::where('status', 'approved')
+        // Subscription breakdown — built dynamically from DB plans
+        // Raw counts keyed by slug
+        $rawCounts = Tenant::where('status', 'approved')
             ->selectRaw('subscription, COUNT(*) as count')
             ->groupBy('subscription')
             ->pluck('count', 'subscription')
             ->toArray();
 
-        $subscriptionBreakdown = array_merge(
-            ['basic' => 0, 'standard' => 0, 'premium' => 0],
-            $subscriptionBreakdown
-        );
+        // Build an ordered breakdown using plan slugs from DB.
+        // If a tenant has a slug not in the plans table (orphaned), it still appears.
+        $subscriptionBreakdown = [];
+
+        if ($plans->isNotEmpty()) {
+            foreach ($plans as $plan) {
+                $subscriptionBreakdown[$plan->slug] = [
+                    'name'  => $plan->name,
+                    'icon'  => $plan->icon,
+                    'count' => $rawCounts[$plan->slug] ?? 0,
+                    'color' => $this->planColor($plan->sort_order),
+                ];
+            }
+        } else {
+            // Fallback: build from whatever slugs exist in the tenants table
+            foreach ($rawCounts as $slug => $count) {
+                $subscriptionBreakdown[$slug] = [
+                    'name'  => ucfirst($slug),
+                    'icon'  => null,
+                    'count' => $count,
+                    'color' => '#5a7aaa',
+                ];
+            }
+        }
+
+        // Add any orphaned slugs (tenants on a plan that no longer exists in subscription_plans)
+        foreach ($rawCounts as $slug => $count) {
+            if (! isset($subscriptionBreakdown[$slug])) {
+                $subscriptionBreakdown[$slug] = [
+                    'name'  => ucfirst($slug),
+                    'icon'  => null,
+                    'count' => $count,
+                    'color' => '#aaaaaa',
+                ];
+            }
+        }
 
         // Expiring soon
         $expiringSoon = Tenant::where('status', 'approved')
@@ -74,8 +129,29 @@ class SuperAdminReportController extends Controller
             'subscriptionBreakdown',
             'expiringSoon',
             'expiredCount',
-            'monthlyRegistrations'
+            'monthlyRegistrations',
+            'plans'
         ));
+    }
+
+    /**
+     * Returns a distinct color per sort_order position so the plan breakdown
+     * looks visually varied even for custom plans.
+     */
+    private function planColor(int $sortOrder): string
+    {
+        $palette = [
+            '#7fa8d4',  // sort_order 0 – soft blue
+            '#0057B8',  // sort_order 1 – royal blue
+            '#d4a800',  // sort_order 2 – gold
+            '#16a34a',  // sort_order 3 – green
+            '#CE1126',  // sort_order 4 – red
+            '#7c3aed',  // sort_order 5 – purple
+            '#0891b2',  // sort_order 6 – cyan
+            '#ea580c',  // sort_order 7 – orange
+        ];
+
+        return $palette[$sortOrder] ?? '#5a7aaa';
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -85,6 +161,7 @@ class SuperAdminReportController extends Controller
     public function exportTenants(Request $request)
     {
         $format = $request->input('format', 'excel');
+        $plans  = $this->getPlans();
 
         $tenants = Tenant::orderBy('created_at', 'desc')->get();
 
@@ -93,7 +170,7 @@ class SuperAdminReportController extends Controller
             'Organization' => $t->name,
             'Admin Email'  => $t->admin_email,
             'Subdomain'    => $t->subdomain . '.tcm.com',
-            'Plan'         => ucfirst($t->subscription),
+            'Plan'         => $this->planName($t->subscription, $plans),
             'Status'       => ucfirst($t->status),
             'Expires At'   => $t->expires_at ? $t->expires_at->format('Y-m-d') : '—',
             'Registered'   => $t->created_at->format('Y-m-d'),
@@ -104,7 +181,7 @@ class SuperAdminReportController extends Controller
             filename: 'tenants-report-' . now()->format('Ymd'),
             format:   $format,
             title:    'Tenant Overview Report',
-            plan:     'premium'   // SuperAdmin always gets premium export
+            plan:     'premium'
         );
     }
 
@@ -115,6 +192,7 @@ class SuperAdminReportController extends Controller
     public function exportSubscriptions(Request $request)
     {
         $format = $request->input('format', 'excel');
+        $plans  = $this->getPlans();
 
         $tenants = Tenant::where('status', 'approved')
             ->orderBy('subscription')
@@ -125,7 +203,7 @@ class SuperAdminReportController extends Controller
             'Organization'  => $t->name,
             'Admin Email'   => $t->admin_email,
             'Subdomain'     => $t->subdomain . '.tcm.com',
-            'Plan'          => ucfirst($t->subscription),
+            'Plan'          => $this->planName($t->subscription, $plans),
             'Expires At'    => $t->expires_at ? $t->expires_at->format('Y-m-d') : '—',
             'Days Left'     => $t->expires_at
                                     ? max(0, (int) now()->diffInDays($t->expires_at, false))
@@ -149,6 +227,7 @@ class SuperAdminReportController extends Controller
     public function exportActivity(Request $request)
     {
         $format = $request->input('format', 'excel');
+        $plans  = $this->getPlans();
 
         $approvedTenants = Tenant::where('status', 'approved')->get();
 
@@ -175,7 +254,7 @@ class SuperAdminReportController extends Controller
             $data[] = [
                 'Organization'  => $tenant->name,
                 'Subdomain'     => $tenant->subdomain . '.tcm.com',
-                'Plan'          => ucfirst($tenant->subscription),
+                'Plan'          => $this->planName($tenant->subscription, $plans),
                 'Trainers'      => $stats['trainers'],
                 'Trainees'      => $stats['trainees'],
                 'Courses'       => $stats['courses'],
@@ -203,7 +282,8 @@ class SuperAdminReportController extends Controller
     {
         $format = $request->input('format', 'excel');
         $months = (int) $request->input('months', 12);
-        $months = min(max($months, 1), 24); // clamp to 1–24
+        $months = min(max($months, 1), 24);
+        $plans  = $this->getPlans();
 
         $data = [];
         for ($i = $months - 1; $i >= 0; $i--) {
@@ -217,7 +297,7 @@ class SuperAdminReportController extends Controller
                     'Month'        => $month->format('F Y'),
                     'Organization' => $t->name,
                     'Admin Email'  => $t->admin_email,
-                    'Plan'         => ucfirst($t->subscription),
+                    'Plan'         => $this->planName($t->subscription, $plans),
                     'Status'       => ucfirst($t->status),
                     'Registered'   => $t->created_at->format('Y-m-d H:i'),
                 ];

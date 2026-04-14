@@ -119,7 +119,7 @@
     }
     .filter-row select:focus { border-color: var(--sa-accent); }
 
-    /* ── Plan breakdown mini ── */
+    /* ── Plan breakdown ── */
     .plan-row {
         display: flex; align-items: center; justify-content: space-between;
         padding: 10px 0; border-bottom: 1px solid var(--sa-border); font-size: 13px;
@@ -260,29 +260,24 @@
         </div>
         <div class="report-card-body">
 
-            {{-- Mini plan breakdown ── --}}
+            {{-- ── Dynamic plan breakdown ── --}}
             <div class="mb-3">
-                <div class="plan-row">
-                    <div class="flex items-center gap-2">
-                        <div class="plan-dot" style="background:#7fa8d4;"></div>
-                        <span style="color:var(--sa-text);font-weight:600;">Basic</span>
+                @forelse($subscriptionBreakdown as $slug => $info)
+                    <div class="plan-row">
+                        <div class="flex items-center gap-2">
+                            <div class="plan-dot" style="background:{{ $info['color'] }};"></div>
+                            <span style="color:var(--sa-text);font-weight:600;">
+                                @if($info['icon'])
+                                    {{ $info['icon'] }}
+                                @endif
+                                {{ $info['name'] }}
+                            </span>
+                        </div>
+                        <span class="font-bold" style="color:var(--sa-primary);">{{ $info['count'] }}</span>
                     </div>
-                    <span class="font-bold" style="color:var(--sa-primary);">{{ $subscriptionBreakdown['basic'] }}</span>
-                </div>
-                <div class="plan-row">
-                    <div class="flex items-center gap-2">
-                        <div class="plan-dot" style="background:var(--sa-accent);"></div>
-                        <span style="color:var(--sa-text);font-weight:600;">Standard</span>
-                    </div>
-                    <span class="font-bold" style="color:var(--sa-primary);">{{ $subscriptionBreakdown['standard'] }}</span>
-                </div>
-                <div class="plan-row">
-                    <div class="flex items-center gap-2">
-                        <div class="plan-dot" style="background:#d4a800;"></div>
-                        <span style="color:var(--sa-text);font-weight:600;">Premium</span>
-                    </div>
-                    <span class="font-bold" style="color:var(--sa-primary);">{{ $subscriptionBreakdown['premium'] }}</span>
-                </div>
+                @empty
+                    <p class="text-sm" style="color:var(--sa-muted);">No approved tenants yet.</p>
+                @endforelse
             </div>
 
             <div class="export-group">
@@ -411,6 +406,35 @@
     </div>
 
 </div>
+
+{{-- ══════════════════════════════════════════════════════════════ --}}
+{{-- Plans quick-reference (dynamic)                               --}}
+{{-- ══════════════════════════════════════════════════════════════ --}}
+@if($plans->isNotEmpty())
+<div class="rounded-2xl border-2 p-5 mb-6" style="border-color:var(--sa-border);background:var(--sa-bg);">
+    <div class="font-bold text-sm mb-3" style="color:var(--sa-primary);">
+        <i class="fas fa-tags mr-2" style="color:var(--sa-accent);"></i>
+        Active Subscription Plans
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        @foreach($plans as $plan)
+            @php
+                $count = $subscriptionBreakdown[$plan->slug]['count'] ?? 0;
+                $color = $subscriptionBreakdown[$plan->slug]['color'] ?? '#5a7aaa';
+            @endphp
+            <div class="rounded-xl p-3 text-center" style="background:var(--sa-surface);border:1.5px solid var(--sa-border);">
+                @if($plan->icon)
+                    <div class="text-lg mb-1">{{ $plan->icon }}</div>
+                @endif
+                <div class="font-bold text-sm" style="color:var(--sa-text);">{{ $plan->name }}</div>
+                <div class="text-xs mt-0.5" style="color:var(--sa-muted);">{{ $plan->duration_label }}</div>
+                <div class="mt-2 text-xl font-extrabold" style="color:{{ $color }};">{{ $count }}</div>
+                <div class="text-xs" style="color:var(--sa-muted);">tenants</div>
+            </div>
+        @endforeach
+    </div>
+</div>
+@endif
 
 {{-- ══════════════════════════════════════════════════════════════ --}}
 {{-- Help / Notes                                                   --}}
