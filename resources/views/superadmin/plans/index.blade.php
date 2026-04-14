@@ -189,7 +189,14 @@
                                             <span class="plan-pill pill-all">All plans</span>
                                         @else
                                             @foreach($d->plan_slugs as $slug)
-                                                <span class="plan-pill pill-{{ $slug }}">{{ ucfirst($slug) }}</span>
+                                                @php
+                                                    $matchedPlan = $plans->firstWhere('slug', $slug);
+                                                    $pillLabel   = $matchedPlan ? $matchedPlan->name : ucfirst($slug);
+                                                    $isCustom    = !in_array($slug, ['basic','standard','premium']);
+                                                @endphp
+                                                <span class="plan-pill {{ $isCustom ? 'pill-custom' : 'pill-'.$slug }}">
+                                                    {{ $pillLabel }}
+                                                </span>
                                             @endforeach
                                         @endif
                                     </td>
@@ -278,7 +285,7 @@
         <form action="{{ route('superadmin.plans.discounts.store') }}" method="POST">
             @csrf
             <div class="modal-body space-y-4">
-                @include('superadmin.plans._discount_fields', ['tenants' => $tenants])
+                @include('superadmin.plans._discount_fields', ['tenants' => $tenants, 'plans' => $plans])
             </div>
             <div class="modal-footer">
                 <button type="button" onclick="closeModal('modal-new-discount')" class="btn btn-outline">Cancel</button>
@@ -300,7 +307,7 @@
         <form id="edit-discount-form" method="POST">
             @csrf @method('PATCH')
             <div class="modal-body space-y-4">
-                @include('superadmin.plans._discount_fields', ['isEdit' => true, 'tenants' => $tenants])
+                @include('superadmin.plans._discount_fields', ['isEdit' => true, 'tenants' => $tenants, 'plans' => $plans])
             </div>
             <div class="modal-footer">
                 <button type="button" onclick="closeModal('modal-edit-discount')" class="btn btn-outline">Cancel</button>
@@ -311,24 +318,19 @@
 </div>
 
 <script>
-// ── Tab switching ─────────────────────────────────────────────────────────────
 function switchTab(tab) {
-    document.getElementById('tab-plans').style.display    = tab === 'plans'    ? '' : 'none';
+    document.getElementById('tab-plans').style.display     = tab === 'plans'     ? '' : 'none';
     document.getElementById('tab-discounts').style.display = tab === 'discounts' ? '' : 'none';
-    document.getElementById('tab-plans-btn').classList.toggle('active',    tab === 'plans');
+    document.getElementById('tab-plans-btn').classList.toggle('active',     tab === 'plans');
     document.getElementById('tab-discounts-btn').classList.toggle('active', tab === 'discounts');
-
-    // Persist in session storage so refresh keeps the tab
     sessionStorage.setItem('planTab', tab);
 }
 
-// Restore last active tab on page load
 document.addEventListener('DOMContentLoaded', function () {
     const saved = sessionStorage.getItem('planTab');
     if (saved) switchTab(saved);
 });
 
-// ── Modal helpers ─────────────────────────────────────────────────────────────
 function openModal(id) {
     document.getElementById(id).classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -344,7 +346,6 @@ document.querySelectorAll('.modal-overlay').forEach(el => {
     });
 });
 
-// ── Populate edit discount modal ──────────────────────────────────────────────
 function openEditDiscount(id) {
     const d = document.getElementById('disc-data-' + id).dataset;
     document.getElementById('edit-discount-form').action = d.updateUrl;
@@ -363,20 +364,22 @@ function openEditDiscount(id) {
     document.getElementById('ed-active').checked    = d.active === '1';
 
     let planSlugs = [];
-    try { planSlugs = JSON.parse(d.planSlugs || '[]'); } catch(e) {}
-    ['basic', 'standard', 'premium'].forEach(slug => {
-        const cb = document.getElementById('ed-plan-' + slug);
-        if (cb) {
-            cb.checked = planSlugs.includes(slug);
-            syncPlanRow('ed-', slug,
-                { basic: '#5a7aaa', standard: '#0057B8', premium: '#a07800' }[slug],
-                { basic: 'rgba(90,122,170', standard: 'rgba(0,87,184', premium: 'rgba(161,122,0' }[slug]
-            );
-        }
+    try { planSlugs = JSON.parse(d.planSlugs || '[]'); } catch (e) {}
+
+    // Dynamic: works for all plans including custom ones
+    document.querySelectorAll('input[name="plan_slugs[]"]').forEach(cb => {
+        if (!cb.id.startsWith('ed-plan-')) return;
+        const slug = cb.value;
+        cb.checked = planSlugs.includes(slug);
+        const onch = cb.getAttribute('onchange') || '';
+        const m    = onch.match(/syncPlanRow\('[^']*','[^']*','([^']*)','([^']*)'\)/);
+        const accent    = m ? m[1] : '#9333ea';
+        const colorBase = m ? m[2] : 'rgba(147,51,234';
+        syncPlanRow('ed-', slug, accent, colorBase);
     });
 
     let tenantIds = [];
-    try { tenantIds = JSON.parse(d.tenantIds || '[]'); } catch(e) {}
+    try { tenantIds = JSON.parse(d.tenantIds || '[]'); } catch (e) {}
     const searchEl = document.getElementById('ed-tenant-search');
     if (searchEl) { searchEl.value = ''; filterTenants('ed-'); }
     document.querySelectorAll('#ed-tenant-list input[type="checkbox"]').forEach(cb => {
@@ -387,10 +390,8 @@ function openEditDiscount(id) {
     openModal('modal-edit-discount');
 }
 
-// Switch to discounts tab if there are errors from a discount form
 @if($errors->any())
-    document.addEventListener('DOMContentLoaded', function() {
-        // Check if errors came from discount forms by looking at session
+    document.addEventListener('DOMContentLoaded', function () {
         @if(session('_old_input.label') || session('_old_input.code'))
             switchTab('discounts');
         @endif

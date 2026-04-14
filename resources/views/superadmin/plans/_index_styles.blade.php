@@ -485,7 +485,7 @@
     .pill-basic    { background: rgba(90,122,170,.12); color: var(--sa-muted); }
     .pill-standard { background: rgba(0,87,184,.12);   color: var(--sa-accent); }
     .pill-premium  { background: rgba(245,197,24,.15); color: #a07800; }
-    .pill-all      { background: rgba(22,163,74,.10);  color: var(--sa-success); }
+    .pill-custom   { background: rgba(147,51,234,.12); color: #9333ea; }
 
     .tenant-pill {
         display: inline-flex; align-items: center; gap: 4px;
