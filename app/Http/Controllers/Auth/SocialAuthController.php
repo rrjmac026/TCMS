@@ -3,11 +3,12 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
+use App\Models\ActivityLog;
 use App\Models\Notification;
+use App\Models\Tenant;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Facades\Socialite;
 
 class SocialAuthController extends Controller
@@ -26,29 +27,43 @@ class SocialAuthController extends Controller
     // ─────────────────────────────────────────────────────────────────────
     // STEP 1 — Tenant side: acme.tcm.com/auth/google
     //
-    // Encode the tenant subdomain in the OAuth `with()` state so we can
-    // recover it after Google bounces back to the central domain.
+    // Encode tenant context (host, port, csrf) into an encrypted state
+    // so we can securely recover it after Google bounces back to the
+    // central domain. No plain-text subdomain in the URL anymore.
     // ─────────────────────────────────────────────────────────────────────
 
     public function redirectToGoogle()
     {
-        $subdomain = trim(tenancy()->tenant?->subdomain);
+        $request = request();
+
+        // Build a structured, encrypted state — tamper-proof unlike a plain subdomain string
+        $state = encrypt([
+            'subdomain' => tenancy()->tenant?->subdomain,
+            'host'      => $request->getHost(),
+            'port'      => $request->getPort(),
+            'csrf'      => \Illuminate\Support\Str::random(40),
+        ]);
+
+        Log::info('Google OAuth: redirecting to Google', [
+            'host'      => $request->getHost(),
+            'subdomain' => tenancy()->tenant?->subdomain,
+        ]);
 
         return Socialite::driver('google')
             ->redirectUrl($this->centralCallbackUrl())
-            ->with(['state' => $subdomain])
+            ->stateless()                    // consistent with state approach
+            ->with(['state' => $state])
             ->redirect();
     }
 
     // ─────────────────────────────────────────────────────────────────────
     // STEP 2 — Central side: tcm.com/auth/google/callback
     //
-    // Registered in Google Console. Reads the state (subdomain), finds or
-    // creates the user in the TENANT database, stores a short-lived token
-    // in cache, then bounces the browser back to the tenant subdomain.
+    // Registered in Google Console. Decrypts the state, finds/creates the
+    // user in the TENANT database, encrypts a short-lived payload, then
+    // bounces the browser back to the tenant subdomain.
     //
-    // This method is called from a CENTRAL route (routes/web.php),
-    // so tenancy is NOT initialised here — we must boot it manually.
+    // Called from a CENTRAL route — tenancy is NOT initialised here.
     // ─────────────────────────────────────────────────────────────────────
 
     public function handleGoogleCallback()
@@ -60,35 +75,55 @@ class SocialAuthController extends Controller
                 ->stateless()
                 ->user();
         } catch (\Exception $e) {
-            return redirect('http://tcm.com:8000/login')
-                ->withErrors(['email' => 'Google authentication failed. Please try again.']);
+            Log::error('Google OAuth: callback exchange failed', ['error' => $e->getMessage()]);
+
+            return $this->centralError('Google authentication failed. Please try again.');
         }
 
-        // ── 2. Recover the tenant subdomain from state ────────────────────
-        $subdomain = trim(request('state'));
+        // ── 2. Decrypt and validate the state ────────────────────────────
+        try {
+            $state = decrypt(request('state'));
+        } catch (\Exception $e) {
+            Log::error('Google OAuth: state decryption failed', ['error' => $e->getMessage()]);
 
-        if (! $subdomain) {
-            return redirect('http://tcm.com:8000/login')
-                ->withErrors(['email' => 'Could not determine your organisation. Please try again.']);
+            return $this->centralError('Invalid OAuth state. Please try again.');
         }
 
-        // ── 3. Find the tenant and boot its database ──────────────────────
-        $tenant = \App\Models\Tenant::where('subdomain', $subdomain)
+        $subdomain = $state['subdomain'] ?? null;
+        $host      = $state['host']      ?? null;
+        $port      = $state['port']      ?? null;
+
+        if (! $subdomain || ! $host) {
+            Log::warning('Google OAuth: missing subdomain/host in state');
+
+            return $this->centralError('Could not determine your organisation. Please try again.');
+        }
+
+        Log::info('Google OAuth: callback received', [
+            'email'     => $googleUser->getEmail(),
+            'subdomain' => $subdomain,
+            'host'      => $host,
+        ]);
+
+        // ── 3. Find the approved tenant ───────────────────────────────────
+        $tenant = Tenant::where('subdomain', $subdomain)
             ->where('status', 'approved')
             ->first();
 
         if (! $tenant) {
-            return redirect('http://tcm.com:8000/login')
-                ->withErrors(['email' => 'Organisation not found or not yet approved.']);
+            Log::warning('Google OAuth: tenant not found or not approved', ['subdomain' => $subdomain]);
+
+            return $this->centralError('Organisation not found or not yet approved.');
         }
 
         // ── 4. Find or create the user INSIDE the tenant database ─────────
         $user = null;
 
-        $tenant->run(function () use ($googleUser, $tenant, &$user) {
+        $tenant->run(function () use ($googleUser, &$user) {
             $user = User::where('email', $googleUser->getEmail())->first();
 
             if (! $user) {
+                // Auto-register as trainee (same behaviour as before)
                 $user = User::create([
                     'name'              => $googleUser->getName(),
                     'email'             => $googleUser->getEmail(),
@@ -98,6 +133,11 @@ class SocialAuthController extends Controller
                     'email_verified_at' => now(),
                 ]);
 
+                Log::info('Google OAuth: new trainee auto-registered', [
+                    'email' => $user->email,
+                ]);
+
+                // Notify the tenant admin
                 $admin = User::where('role', 'admin')->first();
                 if ($admin) {
                     Notification::create([
@@ -108,70 +148,137 @@ class SocialAuthController extends Controller
                     ]);
                 }
             } else {
+                // Link Google ID to existing account if not yet set
                 if (! $user->google_id) {
                     $user->update(['google_id' => $googleUser->getId()]);
                 }
             }
         });
 
-        // ── 5. Generate a short-lived one-time token ──────────────────────
-        $token = Str::random(64);
-
-        Cache::store('file')->put("google_oauth_{$token}", [
+        // ── 5. Build an encrypted short-lived cross-domain token ──────────
+        //
+        // encrypt() uses Laravel's APP_KEY — cryptographically signed and
+        // tamper-proof. No file cache required, no race conditions.
+        //
+        $payload = encrypt([
             'user_id'   => $user->id,
             'user_role' => $user->role,
             'subdomain' => $subdomain,
-        ], now()->addMinutes(2));
+            'expires'   => now()->addMinutes(2)->timestamp,
+        ]);
 
         // ── 6. Bounce back to the tenant subdomain ────────────────────────
-        $tenantUrl = "http://{$subdomain}.tcm.com:8000/auth/google/finish?token={$token}";
+        //
+        // Dynamic host+port construction — no hardcoded URLs.
+        //
+        $tenantUrl = 'http://' . $host
+            . ($port && $port != 80 ? ":$port" : '')
+            . '/auth/google/finish';
 
-        return redirect($tenantUrl);
+        Log::info('Google OAuth: forwarding to tenant', ['url' => $tenantUrl]);
+
+        return redirect($tenantUrl . '?' . http_build_query(['token' => $payload]));
     }
 
     // ─────────────────────────────────────────────────────────────────────
     // STEP 3 — Tenant side: acme.tcm.com/auth/google/finish
     //
-    // Consumes the one-time cache token, logs the user into the tenant
-    // session, and redirects to their dashboard.
+    // Decrypts the encrypted payload, validates expiry and subdomain,
+    // logs the user into the tenant session, and redirects to dashboard.
     // ─────────────────────────────────────────────────────────────────────
 
     public function finishGoogleLogin()
     {
-        $token = request('token');
+        $request = request();
+        $raw     = $request->get('token');
 
-        if (! $token) {
+        if (! $raw) {
             return redirect()->route('login')
                 ->withErrors(['email' => 'Invalid or missing login token.']);
         }
 
-        // ── Change this line ──
-        $data = Cache::store('file')->pull("google_oauth_{$token}");
+        // ── Decrypt and validate ──────────────────────────────────────────
+        try {
+            $data = decrypt($raw);
+        } catch (\Exception $e) {
+            Log::error('Google OAuth: finish token decryption failed', ['error' => $e->getMessage()]);
 
-        if (! $data) {
             return redirect()->route('login')
-                ->withErrors(['email' => 'Login token expired or already used. Please try again.']);
+                ->withErrors(['email' => 'Login token is invalid or was tampered with. Please try again.']);
         }
 
-        if ($data['subdomain'] !== tenancy()->tenant?->subdomain) {
+        // Expiry check
+        if (now()->timestamp > ($data['expires'] ?? 0)) {
+            return redirect()->route('login')
+                ->withErrors(['email' => 'Login token expired. Please try again.']);
+        }
+
+        // Subdomain check — prevents a token from one tenant being used on another
+        if (($data['subdomain'] ?? null) !== tenancy()->tenant?->subdomain) {
+            Log::warning('Google OAuth: subdomain mismatch', [
+                'token_subdomain'  => $data['subdomain'] ?? null,
+                'tenant_subdomain' => tenancy()->tenant?->subdomain,
+            ]);
+
             return redirect()->route('login')
                 ->withErrors(['email' => 'Token mismatch. Please try again.']);
         }
 
-        $user = User::find($data['user_id']);
+        // ── Find the user ─────────────────────────────────────────────────
+        $user = User::find($data['user_id'] ?? null);
 
         if (! $user) {
             return redirect()->route('login')
                 ->withErrors(['email' => 'User not found. Please try again.']);
         }
 
+        // ── Log in ────────────────────────────────────────────────────────
         Auth::login($user, remember: true);
+        $request->session()->regenerate();
 
+        // Activity log — mirrors TenantLoginController behaviour
+        ActivityLog::create([
+            'tenant_id'   => tenancy()->tenant?->id,
+            'tenant_name' => tenancy()->tenant?->name,
+            'user_id'     => $user->id,
+            'user_name'   => $user->name,
+            'user_email'  => $user->email,
+            'role'        => $user->role,
+            'action'      => 'login_success',
+            'ip_address'  => $request->ip(),
+            'user_agent'  => $request->userAgent(),
+            'success'     => true,
+        ]);
+
+        Log::info('Google OAuth: login successful', [
+            'email' => $user->email,
+            'role'  => $user->role,
+        ]);
+
+        // ── Redirect to role dashboard ────────────────────────────────────
         return match ($user->role) {
             'admin'   => redirect()->intended(route('admin.dashboard')),
             'trainer' => redirect()->intended(route('trainer.dashboard')),
             'trainee' => redirect()->intended(route('trainee.dashboard')),
             default   => redirect('/'),
         };
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Helpers
+    // ─────────────────────────────────────────────────────────────────────
+
+    /**
+     * Redirect to the central login with an error message.
+     * Builds the URL dynamically instead of hardcoding http://tcm.com:8000.
+     */
+    private function centralError(string $message)
+    {
+        $centralDomain = config('tenancy.central_domains')[0] ?? 'tcm.com';
+        $port          = request()->getPort();
+        $base          = 'http://' . $centralDomain . ($port && $port != 80 ? ":$port" : '');
+
+        return redirect($base . '/login')
+            ->withErrors(['email' => $message]);
     }
 }
