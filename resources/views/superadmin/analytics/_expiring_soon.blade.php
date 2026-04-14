@@ -1,21 +1,26 @@
-<div style="background:var(--c-amber-lt);border:0.5px solid var(--c-amber);border-radius:12px;padding:16px 18px;margin-bottom:20px;">
-    <div style="font-size:12px;font-weight:500;color:var(--c-amber);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;">
-        <i class="fas fa-exclamation-triangle" style="font-size:12px;"></i>
-        {{ $expiringSoon->count() }} tenant{{ $expiringSoon->count() > 1 ? 's' : '' }} expiring within 7 days
+<div class="expiry-strip mb-6">
+    <div class="flex items-center gap-2 mb-3">
+        <i class="fas fa-exclamation-triangle" style="color:var(--sa-warning);"></i>
+        <span class="font-bold text-sm" style="color:var(--sa-warning);">
+            {{ $expiringSoon->count() }} tenant{{ $expiringSoon->count() > 1 ? 's' : '' }} expiring within 7 days
+        </span>
     </div>
     @foreach($expiringSoon as $t)
-    <div class="brow" style="border-color:rgba(217,119,6,.2);">
-        <div>
-            <span style="font-weight:500;color:var(--c-ink);">{{ $t->name }}</span>
-            <span style="font-size:12px;color:var(--c-muted);margin-left:8px;">{{ $t->subdomain }}.tcm.com</span>
+        <div class="expiry-row">
+            <div>
+                <span class="font-semibold" style="color:var(--sa-text);">{{ $t->name }}</span>
+                <span class="text-xs ml-2" style="color:var(--sa-muted);">{{ $t->subdomain }}.tcm.com</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="text-xs font-semibold" style="color:var(--sa-warning);">
+                    expires {{ $t->expires_at->format('M d, Y') }}
+                </span>
+                <a href="{{ route('superadmin.tenants.show', $t) }}"
+                   class="text-xs px-3 py-1 rounded-lg font-semibold transition"
+                   style="background:var(--sa-accent);color:#fff;">
+                    Manage
+                </a>
+            </div>
         </div>
-        <div style="display:flex;align-items:center;gap:10px;">
-            <span style="font-size:12px;color:var(--c-amber);">{{ $t->expires_at->format('M d, Y') }}</span>
-            <a href="{{ route('superadmin.tenants.show', $t) }}"
-               style="font-size:12px;padding:4px 12px;border-radius:6px;background:var(--c-amber);color:#fff;text-decoration:none;font-weight:500;">
-                Manage
-            </a>
-        </div>
-    </div>
     @endforeach
 </div>

@@ -1,17 +1,18 @@
-<div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:24px;">
-    <div>
-        <p style="font-size:12px;color:var(--c-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.6px;">
-            Super Admin
-        </p>
-        <h1 style="font-size:24px;font-weight:500;color:var(--c-ink);margin:0;">
-            Platform analytics
-        </h1>
-        <p style="font-size:13px;color:var(--c-muted);margin-top:4px;">
-            as of {{ now()->format('M d, Y · H:i') }}
-        </p>
+<div class="mb-6">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+            <h1 class="text-3xl font-bold" style="color:var(--sa-primary);">
+                <i class="fas fa-chart-line mr-2" style="color:var(--sa-accent);"></i>
+                Platform Analytics
+            </h1>
+            <p class="text-sm mt-1" style="color:var(--sa-muted);">
+                Consolidated insights across all tenants · as of {{ now()->format('M d, Y H:i') }}
+            </p>
+        </div>
+        <a href="{{ route('superadmin.dashboard') }}"
+           class="text-sm px-4 py-2 rounded-lg font-semibold transition"
+           style="background:rgba(0,48,135,.08);color:var(--sa-accent);">
+            <i class="fas fa-arrow-left mr-1"></i> Dashboard
+        </a>
     </div>
-    <a href="{{ route('superadmin.dashboard') }}"
-       style="font-size:13px;padding:7px 14px;border-radius:8px;border:0.5px solid var(--c-line);color:var(--c-muted);text-decoration:none;">
-        ← Dashboard
-    </a>
 </div>

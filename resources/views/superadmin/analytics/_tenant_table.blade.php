@@ -1,63 +1,77 @@
-<div class="ac">
-    <div class="ac-title" style="justify-content:space-between;">
-        <span><i class="fas fa-table" style="font-size:12px;color:var(--c-blue);"></i> Tenant activity</span>
-        <span style="font-size:12px;color:var(--c-muted);">{{ count($tenantStats) }} approved tenant(s)</span>
+<div class="section-card">
+    <div class="section-title">
+        <i class="fas fa-table" style="color:var(--sa-accent);"></i>
+        Tenant Activity Breakdown
+        <span class="ml-auto text-xs font-normal" style="color:var(--sa-muted);">{{ count($tenantStats) }} approved tenant(s)</span>
     </div>
 
     @if(count($tenantStats) > 0)
-    <div style="overflow-x:auto;">
-        <table style="width:100%;border-collapse:collapse;font-size:13px;">
-            <thead>
-                <tr style="border-bottom:0.5px solid var(--c-line);">
-                    @foreach(['Organization','Plan','Trainers','Trainees','Courses','Enrollments','Assessments','Certs','Expires',''] as $h)
-                    <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:500;color:var(--c-muted);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;">{{ $h }}</th>
-                    @endforeach
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($tenantStats as $row)
-                @php
-                    $t = $row['tenant'];
-                    $expired = $t->expires_at && $t->expires_at->isPast();
-                @endphp
-                <tr style="border-bottom:0.5px solid var(--c-line);" onmouseover="this.style.background='var(--color-background-secondary)'" onmouseout="this.style.background=''">
-                    <td style="padding:10px 12px;">
-                        <div style="font-weight:500;color:var(--c-ink);">{{ $t->name }}</div>
-                        <div style="font-size:11px;color:var(--c-muted);">{{ $t->subdomain }}.tcm.com</div>
-                    </td>
-                    <td style="padding:10px 12px;">
+        <div class="overflow-x-auto">
+            <table class="tenant-table">
+                <thead>
+                    <tr>
+                        <th>Organization</th>
+                        <th>Plan</th>
+                        <th>Trainers</th>
+                        <th>Trainees</th>
+                        <th>Courses</th>
+                        <th>Enrollments</th>
+                        <th>Assessments</th>
+                        <th>Certificates</th>
+                        <th>Expires</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($tenantStats as $row)
                         @php
-                            $planColors = [
-                                'basic'    => 'background:var(--color-background-secondary);color:var(--c-muted);',
-                                'standard' => 'background:var(--c-blue-lt);color:var(--c-blue);',
-                                'premium'  => 'background:var(--c-gold-lt);color:var(--c-gold);',
-                            ];
-                            $pStyle = $planColors[$t->subscription] ?? 'background:var(--c-blue-lt);color:var(--c-blue);';
+                            $t = $row['tenant'];
+                            $expired = $t->expires_at && $t->expires_at->isPast();
+                            $planBadgeClass = match($t->subscription) {
+                                'basic'    => 'plan-basic',
+                                'standard' => 'plan-standard',
+                                'premium'  => 'plan-premium',
+                                default    => 'plan-custom',
+                            };
                         @endphp
-                        <span class="badge" style="{{ $pStyle }}">{{ ucfirst($t->subscription) }}</span>
-                    </td>
-                    @foreach(['trainers','trainees','courses','enrollments','assessments','certificates'] as $col)
-                    <td style="padding:10px 12px;text-align:center;font-weight:500;color:var(--c-ink2);">{{ $row[$col] }}</td>
+                        <tr>
+                            <td>
+                                <div class="font-semibold" style="color:var(--sa-text);">{{ $t->name }}</div>
+                                <div class="text-xs" style="color:var(--sa-muted);">{{ $t->subdomain }}.tcm.com</div>
+                            </td>
+                            <td>
+                                <span class="plan-badge {{ $planBadgeClass }}">
+                                    {{ ucfirst($t->subscription) }}
+                                </span>
+                            </td>
+                            <td class="text-center font-semibold">{{ $row['trainers'] }}</td>
+                            <td class="text-center font-semibold">{{ $row['trainees'] }}</td>
+                            <td class="text-center font-semibold">{{ $row['courses'] }}</td>
+                            <td class="text-center font-semibold">{{ $row['enrollments'] }}</td>
+                            <td class="text-center font-semibold">{{ $row['assessments'] }}</td>
+                            <td class="text-center font-semibold">{{ $row['certificates'] }}</td>
+                            <td class="text-xs" style="color:{{ $expired ? 'var(--sa-danger)' : 'var(--sa-muted)' }};">
+                                {{ $t->expires_at ? $t->expires_at->format('M d, Y') : '—' }}
+                                @if($expired)
+                                    <span class="ml-1 font-bold">(expired)</span>
+                                @endif
+                            </td>
+                            <td>
+                                <a href="{{ route('superadmin.tenants.show', $t) }}"
+                                   class="text-xs px-3 py-1 rounded-lg font-semibold transition"
+                                   style="background:rgba(0,87,184,.10);color:var(--sa-accent);">
+                                    View
+                                </a>
+                            </td>
+                        </tr>
                     @endforeach
-                    <td style="padding:10px 12px;font-size:12px;color:{{ $expired ? 'var(--c-red)' : 'var(--c-muted)' }};white-space:nowrap;">
-                        {{ $t->expires_at ? $t->expires_at->format('M d, Y') : '—' }}
-                        @if($expired) <span style="font-weight:500;">(expired)</span> @endif
-                    </td>
-                    <td style="padding:10px 12px;">
-                        <a href="{{ route('superadmin.tenants.show', $t) }}"
-                           style="font-size:12px;padding:4px 10px;border-radius:6px;border:0.5px solid var(--c-line);color:var(--c-blue);text-decoration:none;white-space:nowrap;">
-                            View
-                        </a>
-                    </td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
-    </div>
+                </tbody>
+            </table>
+        </div>
     @else
-    <div style="text-align:center;padding:32px;color:var(--c-muted);">
-        <i class="fas fa-inbox" style="font-size:28px;opacity:.3;display:block;margin-bottom:8px;"></i>
-        No approved tenants yet.
-    </div>
+        <div class="flex flex-col items-center justify-center py-10 text-center">
+            <i class="fas fa-inbox text-4xl mb-3" style="color:var(--sa-muted);opacity:.4;"></i>
+            <p style="color:var(--sa-muted);">No approved tenants yet.</p>
+        </div>
     @endif
 </div>

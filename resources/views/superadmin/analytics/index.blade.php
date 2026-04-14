@@ -8,7 +8,7 @@
 @include('superadmin.analytics._platform_totals')
 
 @if($expiringSoon->count() > 0)
-@include('superadmin.analytics._expiring_soon')
+    @include('superadmin.analytics._expiring_soon')
 @endif
 
 @include('superadmin.analytics._renewals_storage')
