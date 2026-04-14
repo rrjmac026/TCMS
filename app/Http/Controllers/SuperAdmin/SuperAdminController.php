@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use App\Services\HostsFileService;
 
 class SuperAdminController extends Controller
 {
@@ -144,7 +145,7 @@ class SuperAdminController extends Controller
                 'id'           => $tenantId,
                 'name'         => $request->name,
                 'admin_email'  => $request->admin_email,
-                'subdomain'    => strtolower($request->subdomain),
+                'subdomain'    => trim(strtolower($request->subdomain)),
                 'subscription' => $request->subscription,
                 'status'       => 'pending',
                 'is_active'    => true,
@@ -186,24 +187,24 @@ class SuperAdminController extends Controller
         if ($tenant->status === 'approved') {
             return back()->with('error', 'Tenant is already approved.');
         }
-
+    
         try {
             $password = 'TCM' . str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
             $domain   = $tenant->subdomain . '.tcm.com';
-
+    
             $tenant->domains()->create(['domain' => $domain]);
-
+    
             $tenant->status     = 'approved';
             $tenant->is_active  = true;
             $tenant->expires_at = $this->expiresAt($tenant->subscription);
             $tenant->save();
-
+    
             $tenant->run(function () use ($tenant, $password) {
                 Artisan::call('migrate', [
                     '--path'  => 'database/migrations/tenant',
                     '--force' => true,
                 ]);
-
+    
                 DB::connection('tenant')->table('users')->insert([
                     'name'       => $tenant->name,
                     'email'      => $tenant->admin_email,
@@ -213,18 +214,30 @@ class SuperAdminController extends Controller
                     'updated_at' => now(),
                 ]);
             });
-
+    
             Mail::to($tenant->admin_email)->send(new TenantApprovalMail($tenant, $password));
-
+    
+            // ✅ NEW: Write the subdomain to the hosts file automatically.
+            // Matches exactly what the diagram shows: approve() → HostsFileService::addTenantEntry()
+            // Wrapped in try/catch so a hosts-file failure never blocks the approval.
+            try {
+                (new HostsFileService())->addTenantEntry($tenant->subdomain, $tenant->name);
+            } catch (\Throwable $e) {
+                // Log the warning but don't fail — admin can run `php artisan tenants:sync-hosts`
+                \Illuminate\Support\Facades\Log::warning(
+                    "Tenant approved but hosts file could not be updated: " . $e->getMessage()
+                );
+            }
+    
             return redirect()->route('superadmin.tenants.index')
                 ->with('success', "Tenant approved. Credentials sent to {$tenant->admin_email}.");
-
+    
         } catch (\Exception $e) {
             $tenant->domains()->where('domain', $tenant->subdomain . '.tcm.com')->delete();
             $tenant->status     = 'pending';
             $tenant->expires_at = null;
             $tenant->save();
-
+    
             return back()->with('error', 'Error approving tenant: ' . $e->getMessage());
         }
     }
@@ -338,13 +351,25 @@ class SuperAdminController extends Controller
     public function destroy(Tenant $tenant)
     {
         try {
+            $subdomain = $tenant->subdomain; // capture before deletion
+    
             $tenant->delete();
-
+    
+            // ✅ NEW: Clean up the hosts file entry when a tenant is deleted.
+            try {
+                (new HostsFileService())->removeTenantEntry($subdomain);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning(
+                    "Tenant deleted but hosts file entry could not be removed: " . $e->getMessage()
+                );
+            }
+    
             return redirect()->route('superadmin.tenants.index')
                 ->with('success', 'Tenant deleted successfully.');
-
+    
         } catch (\Exception $e) {
             return back()->with('error', 'Error deleting tenant: ' . $e->getMessage());
         }
     }
+
 }

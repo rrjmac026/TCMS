@@ -70,7 +70,7 @@ class SuperAdminRegisterController extends Controller
                 'id'           => Str::uuid()->toString(),
                 'name'         => $request->name,
                 'admin_email'  => $request->admin_email,
-                'subdomain'    => strtolower($request->subdomain),
+                'subdomain' => trim(strtolower($request->subdomain)),
                 'subscription' => $request->subscription,
                 'status'       => 'pending',
                 'is_active'    => true,

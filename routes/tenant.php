@@ -65,8 +65,8 @@ Route::middleware([
         Route::post('/login',    [TenantLoginController::class, 'login']);
         Route::get('/register',  [TraineeRegisterController::class, 'showRegistrationForm'])->name('register');
         Route::post('/register', [TraineeRegisterController::class, 'register']);
-        Route::get('/auth/google',          [SocialAuthController::class, 'redirectToGoogle'])->name('auth.google');
-        Route::get('/auth/google/callback', [SocialAuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
+        Route::get('/auth/google',        [SocialAuthController::class, 'redirectToGoogle'])->name('auth.google');
+        Route::get('/auth/google/finish', [SocialAuthController::class, 'finishGoogleLogin'])->name('auth.google.finish');
     });
 
     // ── Authenticated routes ───────────────────────────────────────────────
