@@ -5,6 +5,9 @@ namespace App\Http\Controllers\SuperAdmin;
 use App\Http\Controllers\Controller;
 use App\Models\Tenant;
 use Illuminate\Support\Facades\DB;
+use App\Models\RenewalRequest;
+use App\Models\SubscriptionPlan;
+use App\Models\TenantUsageStat;
 
 class SuperAdminAnalyticsController extends Controller
 {
@@ -95,6 +98,45 @@ class SuperAdminAnalyticsController extends Controller
             'certificates' => array_sum(array_column($tenantStats, 'certificates')),
         ];
 
+        // ── Renewal Request Stats ──────────────────────────────────────────────
+        $renewalStats = RenewalRequest::selectRaw('status, COUNT(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status')
+            ->toArray();
+
+        $renewalStats = array_merge(
+            ['pending' => 0, 'approved' => 0, 'rejected' => 0, 'cancelled_by_upgrade' => 0],
+            $renewalStats
+        );
+
+        $pendingRenewals = RenewalRequest::with('tenant')
+            ->where('status', 'pending')
+            ->latest()
+            ->get();
+
+        // ── Subscription Plans (all, including custom) ─────────────────────────
+        $allPlans = SubscriptionPlan::orderBy('sort_order')->get();
+
+        // Count how many approved tenants are on each plan slug
+        $tenantCountByPlan = Tenant::where('status', 'approved')
+            ->selectRaw('subscription, COUNT(*) as count')
+            ->groupBy('subscription')
+            ->pluck('count', 'subscription')
+            ->toArray();
+
+        // ── Storage Aggregates ─────────────────────────────────────────────────
+        $storageAggregates = [
+            'db_bytes'    => TenantUsageStat::sum('db_size_bytes'),
+            'file_bytes'  => TenantUsageStat::sum('file_size_bytes'),
+        ];
+        $storageAggregates['total_bytes'] = $storageAggregates['db_bytes'] + $storageAggregates['file_bytes'];
+
+        $topDbStorage = TenantUsageStat::with('tenant')
+            ->orderByDesc('db_size_bytes')
+            ->take(8)
+            ->get();
+        $maxDbBytes = $topDbStorage->max('db_size_bytes') ?: 1;
+
         return view('superadmin.analytics.index', compact(
             'totalTenants',
             'approvedTenants',
@@ -105,7 +147,10 @@ class SuperAdminAnalyticsController extends Controller
             'expiredTenants',
             'monthlyRegistrations',
             'tenantStats',
-            'platformTotals'
+            'platformTotals',
+            'renewalStats', 'pendingRenewals',
+            'allPlans', 'tenantCountByPlan',
+            'storageAggregates', 'topDbStorage', 'maxDbBytes',
         ));
     }
 }
