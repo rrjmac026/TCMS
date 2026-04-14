@@ -1,52 +1,184 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# TCM - Training Course Management System
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A comprehensive multi-tenant web application built with Laravel for managing training courses, enrollments, assessments, and certifications across multiple organizations.
 
-## About Laravel
+## Overview
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+TCM is a SaaS platform designed to streamline training and certification processes. It supports multiple tenants (organizations) where each tenant can manage their own courses, trainers, trainees, and training programs. The system includes role-based access control with SuperAdmin, Admin, Trainer, and Trainee roles.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Features
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Multi-Tenancy
+- Isolated tenant environments with separate domains
+- Centralized superadmin management
+- Tenant-specific branding and customization
 
-## Learning Laravel
+### User Management
+- **SuperAdmin**: Manages tenants, subscriptions, and system-wide analytics
+- **Admin**: Manages their organization's courses, users, and settings
+- **Trainer**: Conducts training sessions, manages attendance, and assessments
+- **Trainee**: Enrolls in courses, views schedules, and accesses certificates
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+### Core Functionality
+- **Course Management**: Create and organize training courses
+- **Enrollment System**: Handle trainee registrations and course assignments
+- **Training Schedules**: Plan and manage training sessions
+- **Attendance Tracking**: Record and monitor session attendance
+- **Assessments**: Create and grade quizzes and evaluations
+- **Certificate Generation**: Automated PDF certificate creation
+- **Subscription Management**: Handle plan upgrades and renewals
+- **Reporting & Analytics**: Comprehensive reports and dashboards
+- **Notifications**: Email notifications for important events
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### Technical Features
+- Social authentication (Google OAuth)
+- PDF generation for certificates and reports
+- Excel export for data analysis
+- Real-time notifications
+- Bandwidth tracking
+- Activity logging
 
-## Laravel Sponsors
+## Tech Stack
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+- **Backend**: Laravel 12 (PHP 8.2+)
+- **Database**: MySQL/PostgreSQL with Eloquent ORM
+- **Frontend**: Vite, Tailwind CSS, PostCSS
+- **Authentication**: Laravel Sanctum, Socialite
+- **Multi-Tenancy**: stancl/tenancy package
+- **PDF Generation**: DomPDF, FPDF
+- **Spreadsheet Handling**: PhpSpreadsheet
+- **Testing**: Pest PHP
+- **Queue Processing**: Laravel Queues
+- **Caching**: Multiple cache backends
 
-### Premium Partners
+## Installation
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### Prerequisites
+- PHP 8.2 or higher
+- Composer
+- Node.js and npm
+- MySQL/PostgreSQL database
+
+### Setup Steps
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd tcm
+   ```
+
+2. **Install PHP dependencies**
+   ```bash
+   composer install
+   ```
+
+3. **Install Node.js dependencies**
+   ```bash
+   npm install
+   ```
+
+4. **Environment configuration**
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
+
+5. **Database setup**
+   ```bash
+   php artisan migrate --force
+   php artisan db:seed
+   ```
+
+6. **Build assets**
+   ```bash
+   npm run build
+   ```
+
+7. **Start the application**
+   ```bash
+   php artisan serve
+   ```
+
+## Configuration
+
+### Multi-Tenancy Setup
+Configure central domains in `config/tenancy.php`:
+```php
+'central_domains' => [
+    'app.tcm.com',
+    // Add your central domain
+],
+```
+
+### Social Authentication
+Set up Google OAuth in `.env`:
+```
+GOOGLE_CLIENT_ID=your_client_id
+GOOGLE_CLIENT_SECRET=your_client_secret
+```
+
+### Database
+Configure your database connection in `.env`:
+```
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=tcm
+DB_USERNAME=your_username
+DB_PASSWORD=your_password
+```
+
+## Usage
+
+### SuperAdmin Access
+- Access the central domain (e.g., app.tcm.com)
+- Register/login as superadmin
+- Manage tenants, view analytics, and system reports
+
+### Tenant Access
+- Each tenant has their own subdomain (e.g., company.tcm.com)
+- Admins can manage courses, users, and settings
+- Trainers conduct sessions and assessments
+- Trainees enroll and participate in courses
+
+## Testing
+
+Run the test suite with Pest:
+```bash
+./vendor/bin/pest
+```
+
+## Deployment
+
+### Production Considerations
+- Set `APP_ENV=production` in `.env`
+- Configure proper database credentials
+- Set up queue workers for background processing
+- Configure mail settings for notifications
+- Enable SSL certificates
+- Set up proper file permissions
+
+### Queue Processing
+Start queue workers:
+```bash
+php artisan queue:work
+```
 
 ## Contributing
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Run tests
+5. Submit a pull request
 
-## Code of Conduct
+## License
+
+This project is licensed under the MIT License.
+
+## Support
+
+For support and questions, please contact the development team or create an issue in the repository.
 
 In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
 
