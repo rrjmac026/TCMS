@@ -32,11 +32,13 @@ TCM is a SaaS platform designed to streamline training and certification process
 
 ### Technical Features
 - Social authentication (Google OAuth)
+- SocialAuth Controller for enhanced social login management
 - PDF generation for certificates and reports
 - Excel export for data analysis
 - Real-time notifications
 - Bandwidth tracking
 - Activity logging
+- New hosting method/function for improved deployment options
 
 ## Tech Stack
 
